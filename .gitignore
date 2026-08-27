@@ -12,3 +12,14 @@
 /captures
 .externalNativeBuild
 /app/debug
+venv/
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+logs/
+records/
+*.db
+*.log
+*.csv
