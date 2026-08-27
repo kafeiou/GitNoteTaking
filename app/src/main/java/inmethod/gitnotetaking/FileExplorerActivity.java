@@ -46,8 +46,11 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.appcompat.widget.Toolbar;
+import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 import androidx.preference.PreferenceManager;
+import android.content.pm.PackageManager;
+import inmethod.gitnotetaking.utility.PermissionHelper;
 
 import com.hbisoft.pickit.PickiT;
 import com.hbisoft.pickit.PickiTCallbacks;
@@ -560,12 +563,40 @@ Log.d(TAG,"m_item name = "+m_item.get(position)+",position number = "+ position+
     }
 
     void addFile() {
+        PermissionHelper.requestMedia(this, new PermissionHelper.PermissionCallback() {
+            @Override
+            public void onGranted() {
+                openDocumentPicker();
+            }
+
+            @Override
+            public void onDenied() {
+                // Silent cancel per user requirements
+            }
+        });
+    }
+
+    private void openDocumentPicker() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");
         intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
         intent.setFlags(FLAG_GRANT_READ_URI_PERMISSION | FLAG_GRANT_WRITE_URI_PERMISSION);
         myActivityResultLauncher.launch(intent);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PermissionHelper.REQUEST_CODE_MEDIA) {
+            String primary = PermissionHelper.getMediaPrimaryPermission();
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                PermissionHelper.resetDenialCount(this, primary);
+                openDocumentPicker();
+            } else {
+                PermissionHelper.incrementDenialCount(this, primary);
+            }
+        }
     }
 
     boolean searchTextFileContent(File aFile,String sSearch) throws FileNotFoundException {

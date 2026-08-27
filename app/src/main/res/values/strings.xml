@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">GIT Note Taking</string>
     <string name="action_settings">Settings</string>
@@ -21,15 +22,13 @@
     <string name="dialog_cancel">Cancel</string>
     <string name="dialog_reset">Reset</string>
 
-
-    // Preference
+    <!-- Preference -->
     <string name="GitEditTextSize">Notes Text Size</string>
     <string name="GitLocalDirName">Local Git directory(Backup first，rebuild all notes)</string>
     <string name="GitRemoteName">Remote GIT Branch</string>
     <string name="GitCheckBoxCommitMessage">Show Commit Dialog</string>
 
-
-    // MainActivity
+    <!-- MainActivity -->
     <string name="tv_title_first_time">Starting</string>
     <string name="tv_first_time">Please Setup your name and email</string>
     <string name="action_clone">Clone Notes(Remote GIT)</string>
@@ -45,7 +44,7 @@
     <string name="main_notes_show_changelog">Show changelog</string>
     <string name="main_notes_show_all_remote_branches">Show remote branch</string>
 
-    // FileExplorerActivity
+    <!-- FileExplorerActivity -->
     <string name="create_folder">Create Folder</string>
     <string name="create_file">Create File</string>
     <string name="select_file_or_directory">Select File or Directory</string>
@@ -56,7 +55,7 @@
     <string name="file_add_external_file">Add File</string>
     <string name="file_filter_external_file">Search</string>
 
-    // ViewFileActivity
+    <!-- ViewFileActivity -->
     <string name="commit">Commit</string>
     <string name="commit_messages">Please input your  messages</string>
     <string name="view_attach_files"> attachment(s). Click to list files</string>
@@ -70,8 +69,7 @@
     <string name="view_file_add_attachment_file_commit">add file : </string>
     <string name="view_file_action_camera_picture">Take Photo From Camera</string>
 
-    // GitCloneActivity
-    // Layout
+    <!-- GitCloneActivity -->
     <string name="tv_clone_git_repository">Clone GIT Repository</string>
     <string name="tv_remote_name">Branch</string>
     <string name="tv_remote_url">Remote GIT URL</string>
@@ -79,7 +77,6 @@
     <string name="tv_git_nick_name">Notes Name</string>
     <string name="tv_password">Password</string>
     <string name="tv_please_wait">Please wait! This may take a moment.</string>
-    // activity
     <string name="tv_all_parametes_must_be_set">All Parametes must be set</string>
     <string name="tv_title_remote_git_clone">Remote Git Clone</string>
     <string name="tv_local_git_already_exists">Local Git Repository already exists</string>
@@ -87,11 +84,9 @@
     <string name="tv_clone_fail">Clone Failed!</string>
     <string name="tv_git_already_cloned">Git already cloned</string>
 
-    // CreateLocalGitActivity
-    // layout
+    <!-- CreateLocalGitActivity -->
     <string name="tv_create_local_git_repository">Create Local GIT Repository</string>
     <string name="tv_local_git_name">GIT Name</string>
-    // activity
     <string name="tv_title_create_local_git">Create Local GIT</string>
     <string name="tv_create_local_git_success">Create Local GIT success!</string>
     <string name="tv_create_local_git_fail">Create Local GIT failed!</string>
@@ -113,9 +108,21 @@
     <string name="Sort11">DateAsc</string>
     <string name="download">download</string>
     <string name="Backup">Backup</string>
-    <string name="backup_success">Backup to "Download" Success</string>
+    <string name="backup_success">Backup to \"Download\" Success</string>
     <string name="backup_failed">Backup Failed</string>
     <string name="GitCloneSkipLocal">Skip git clone if local exists</string>
 
-
+    <!-- Permission strings -->
+    <string name="permission_camera_title">Camera Permission Required</string>
+    <string name="permission_camera_rationale">To allow you to take photos directly and save them as note attachments, GIT Note Taking requires access to your camera.\n\nWe only use the camera when you tap the photo button, and never capture images in the background.</string>
+    <string name="permission_media_title">Media &amp; File Access Required</string>
+    <string name="permission_media_rationale">To allow you to select photos, videos, or audio files and import them as note attachments, GIT Note Taking requires access to your media files.\n\nWe only read the files you choose, and never access unrelated personal data.</string>
+    <string name="permission_camera_denied_msg">Camera permission is required to take photos. Please tap \"Re-authorize\" to grant permission.</string>
+    <string name="permission_media_denied_msg">Media access permission is required to attach files. Please tap \"Re-authorize\" to grant permission.</string>
+    <string name="permission_camera_settings_msg">Camera permission was permanently denied.\n\nTo use this feature, please tap \"Settings\" and enable Camera permission in App Settings.</string>
+    <string name="permission_media_settings_msg">Media access permission was permanently denied.\n\nTo use this feature, please tap \"Settings\" and enable Media permissions in App Settings.</string>
+    <string name="permission_btn_agree">Agree &amp; Authorize</string>
+    <string name="permission_btn_disagree">Not Now</string>
+    <string name="permission_btn_reauth">Re-authorize</string>
+    <string name="permission_btn_settings">Settings</string>
 </resources>

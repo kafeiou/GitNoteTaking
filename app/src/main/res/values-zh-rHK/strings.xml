@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">GIT文字筆記</string>
     <string name="action_settings">設定</string>
@@ -18,13 +19,13 @@
     <string name="no_file_or_dir_selected">沒有選擇檔案或目錄</string>
     <string name="modify_remote_settings_branches_fetched">分支已更新</string>
 
-    // Preference
+    <!-- Preference -->
     <string name="GitEditTextSize">筆記字型大小</string>
     <string name="GitLocalDirName">手機端根目錄(請先備份，修改後需刪除重建已有的筆記)</string>
     <string name="GitRemoteName">遠端分支名稱</string>
     <string name="GitCheckBoxCommitMessage">是否要求輸入修改理由</string>
 
-    // MainActivity
+    <!-- MainActivity -->
     <string name="tv_title_first_time">設定</string>
     <string name="tv_first_time">請先設定您的名字與郵件</string>
     <string name="action_clone">建立筆記(遠端GIT)</string>
@@ -40,7 +41,7 @@
     <string name="main_notes_show_changelog">查看修改紀錄</string>
     <string name="main_notes_show_all_remote_branches">列出遠端分支</string>
 
-    // FileExplorerActivity
+    <!-- FileExplorerActivity -->
     <string name="create_folder">建立目錄</string>
     <string name="create_file">建立檔案</string>
     <string name="select_file_or_directory">必須選擇檔案或目錄</string>
@@ -51,8 +52,7 @@
     <string name="file_add_external_file">加入檔案</string>
     <string name="file_filter_external_file">搜尋</string>
 
-
-    // ViewFileActivity
+    <!-- ViewFileActivity -->
     <string name="commit">提交</string>
     <string name="commit_messages">請輸入修改原因</string>
     <string name="view_attach_files"> 附件. 點此觀看</string>
@@ -66,7 +66,7 @@
     <string name="view_file_add_attachment_file_commit">新增檔案 : </string>
     <string name="view_file_action_camera_picture">拍照存擋</string>
 
-    // GitCloneActivity Layout
+    <!-- GitCloneActivity -->
     <string name="tv_clone_git_repository">複製筆記(遠端GIT)</string>
     <string name="tv_remote_name">分支名稱</string>
     <string name="tv_remote_url">遠端GIT URL</string>
@@ -74,7 +74,6 @@
     <string name="tv_git_nick_name">筆記本名稱</string>
     <string name="tv_password">密碼</string>
     <string name="tv_please_wait">請稍等</string>
-    // activity
     <string name="tv_all_parametes_must_be_set">所有參數必須都輸入</string>
     <string name="tv_title_remote_git_clone">複製筆記本(遠端GIT)</string>
     <string name="tv_local_git_already_exists">本地筆記本已存在!</string>
@@ -82,11 +81,9 @@
     <string name="tv_clone_fail">複製失敗!</string>
     <string name="tv_git_already_cloned">筆記本已經複製過!</string>
 
-    // CreateLocalGitActivity
-    // layout
+    <!-- CreateLocalGitActivity -->
     <string name="tv_create_local_git_repository">建立本地筆記本</string>
     <string name="tv_local_git_name">筆記本名稱</string>
-    // activity
     <string name="tv_title_create_local_git">建立本地筆記本</string>
     <string name="tv_create_local_git_success">新增成功</string>
     <string name="tv_create_local_git_fail">新增失敗</string>
@@ -111,8 +108,21 @@
     <string name="Sort11">日期(小到大)</string>
     <string name="download">下載</string>
     <string name="Backup">備份</string>
-    <string name="backup_success">備份到"Download"成功</string>
+    <string name="backup_success">備份到\"Download\"成功</string>
     <string name="backup_failed">備份失敗</string>
-    <string name="GitCloneSkipLocal">如果本機有資料，不克隆 git clone</string>
+    <string name="GitCloneSkipLocal">如果本機已有資料，不需要 git clone</string>
 
+    <!-- Permission strings -->
+    <string name="permission_camera_title">需要「相機」權限</string>
+    <string name="permission_camera_rationale">為了讓您能直接拍攝照片並自動儲存為當前筆記的附件檔案，GIT文字筆記 需要存取您的裝置相機。\n\n我們僅會在您主動點擊拍照時使用相機，絕不會在背景存取或拍攝未經授權的影像。</string>
+    <string name="permission_media_title">需要「媒體與檔案存取」權限</string>
+    <string name="permission_media_rationale">為了讓您能從手機相簿或裝置中選取照片、影片或音訊檔案，並匯入作為筆記的附件與版本庫管理，GIT文字筆記 需要讀取您的媒體檔案。\n\n我們僅會讀取您主動選取的檔案並複製至筆記附件目錄，絕不會在背景掃描或存取其他無關的個人資料。</string>
+    <string name="permission_camera_denied_msg">您尚未授權相機權限，因此無法進行拍照存檔。如需使用此功能，請點擊「重新授權」開啟說明並允許權限。</string>
+    <string name="permission_media_denied_msg">您尚未授權媒體檔案讀取權限，無法選取本機檔案附加至筆記。如需使用此功能，請點擊「重新授權」。</string>
+    <string name="permission_camera_settings_msg">您先前已拒絕相機權限（或勾選了不再詢問），系統無法自動彈出授權視窗。\n\n若您希望使用拍照存檔功能，請點擊「前往設定」，在應用程式設定中手動開啟「相機」權限。</string>
+    <string name="permission_media_settings_msg">您先前已拒絕媒體存取權限，系統無法自動彈出授權視窗。\n\n若您希望匯入照片或檔案作為附件，請點擊「前往設定」，在應用程式設定中開啟「相片與影片」或「音樂與音訊」權限。</string>
+    <string name="permission_btn_agree">同意並授權</string>
+    <string name="permission_btn_disagree">暫不同意</string>
+    <string name="permission_btn_reauth">重新授權</string>
+    <string name="permission_btn_settings">前往設定</string>
 </resources>

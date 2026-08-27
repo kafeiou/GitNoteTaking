@@ -34,12 +34,16 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.FileProvider;
 import androidx.preference.PreferenceManager;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import inmethod.gitnotetaking.utility.PermissionHelper;
 
 import com.hbisoft.pickit.PickiT;
 import com.hbisoft.pickit.PickiTCallbacks;
@@ -570,29 +574,18 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
             isModify = true;
             return true;
         } else if (id == R.id.view_file_action_camera_picture) {
-         //   Log.d(TAG, "asdfdddddd");
-            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            // Ensure that there's a camera activity to handle the intent
-            if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-                // Create the File where the photo should go
-                photoFile = null;
-                try {
-                    photoFile = createImageFile();
-                } catch (IOException ex) {
-
+            PermissionHelper.requestCamera(this, new PermissionHelper.PermissionCallback() {
+                @Override
+                public void onGranted() {
+                    launchCamera();
                 }
-                // Continue only if the File was successfully created
-                String authority = activity.getPackageName() + ".fileprovider";
-                if (photoFile != null) {
-                    Uri photoURI = FileProvider.getUriForFile(this,
-                            authority,
-                            photoFile);
-                    Log.d(TAG, "photoURI" + photoURI.toString());
-                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
 
-                    startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+                @Override
+                public void onDenied() {
+                    // Silent cancel per user requirements
                 }
-            }
+            });
+            return true;
         } else if (id == R.id.view_file_action_save) {
             FileWriter fw = null;
             final EditText txtUrl = new EditText(this);
@@ -689,16 +682,71 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
             }
             return true;
         } else if (id == R.id.view_file_action_select_file) {
+            PermissionHelper.requestMedia(this, new PermissionHelper.PermissionCallback() {
+                @Override
+                public void onGranted() {
+                    openDocumentPicker();
+                }
 
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType("*/*");
-            intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
-            intent.setFlags(FLAG_GRANT_READ_URI_PERMISSION | FLAG_GRANT_WRITE_URI_PERMISSION);
-
-            startActivityForResult(intent, READ_REQUEST_CODE);
+                @Override
+                public void onDenied() {
+                    // Silent cancel per user requirements
+                }
+            });
+            return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void launchCamera() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                Log.e(TAG, "createImageFile failed", ex);
+            }
+            String authority = activity.getPackageName() + ".fileprovider";
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        authority,
+                        photoFile);
+                Log.d(TAG, "photoURI" + photoURI.toString());
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+            }
+        }
+    }
+
+    private void openDocumentPicker() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+        intent.setFlags(FLAG_GRANT_READ_URI_PERMISSION | FLAG_GRANT_WRITE_URI_PERMISSION);
+        startActivityForResult(intent, READ_REQUEST_CODE);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PermissionHelper.REQUEST_CODE_CAMERA) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                PermissionHelper.resetDenialCount(this, Manifest.permission.CAMERA);
+                launchCamera();
+            } else {
+                PermissionHelper.incrementDenialCount(this, Manifest.permission.CAMERA);
+            }
+        } else if (requestCode == PermissionHelper.REQUEST_CODE_MEDIA) {
+            String primary = PermissionHelper.getMediaPrimaryPermission();
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                PermissionHelper.resetDenialCount(this, primary);
+                openDocumentPicker();
+            } else {
+                PermissionHelper.incrementDenialCount(this, primary);
+            }
+        }
     }
 
     @Override

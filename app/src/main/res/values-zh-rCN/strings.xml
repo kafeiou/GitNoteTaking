@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GIT文字笔记</string>
+    <string name="action_settings">设置</string>
+    <string name="view_file_action_edit">编辑</string>
+    <string name="view_file_action_save">保存</string>
+    <string name="GitAuthorName">名字</string>
+    <string name="GitAuthorEmail">电子邮件</string>
+    <string name="action_create_file">新建文件</string>
+    <string name="action_create_folder">新建目录</string>
+    <string name="action_delete">删除</string>
+    <string name="title_remove">移除</string>
+    <string name="message_remove">移除笔记?</string>
+    <string name="title_push">同步至远端</string>
+    <string name="title_pull">同步至手机端</string>
+    <string name="action_cut">剪切</string>
+    <string name="action_copy">复制</string>
+    <string name="action_paste">粘贴</string>
+    <string name="no_file_or_dir_selected">没有选择文件或目录</string>
+    <string name="modify_remote_settings_branches_fetched">分支已更新</string>
+
+    <!-- Preference -->
+    <string name="GitEditTextSize">笔记字体大小</string>
+    <string name="GitLocalDirName">手机端根目录(请先备份，修改后需删除重建已有的笔记)</string>
+    <string name="GitRemoteName">远端分支名称</string>
+    <string name="GitCheckBoxCommitMessage">是否要求输入修改理由</string>
+
+    <!-- MainActivity -->
+    <string name="tv_title_first_time">设置</string>
+    <string name="tv_first_time">请先设置您的名字与邮件</string>
+    <string name="action_clone">克隆笔记(远端GIT)</string>
+    <string name="action_create_local_git">新建笔记(本地)</string>
+    <string name="tv_localhost">本地</string>
+    <string name="main_menu_add">新建</string>
+    <string name="main_notes_need_push">(请长按同步至远端)</string>
+    <string name="main_notes_cloning"> 同步中 ... </string>
+    <string name="main_notes_title_modify">修改设置</string>
+    <string name="main_notes_not_found">找不到笔记本</string>
+    <string name="main_notes_author_name">名字</string>
+    <string name="main_notes_author_email">电子邮件</string>
+    <string name="main_notes_show_changelog">查看修改记录</string>
+    <string name="main_notes_show_all_remote_branches">列出远端分支</string>
+
+    <!-- FileExplorerActivity -->
+    <string name="create_folder">新建目录</string>
+    <string name="create_file">新建文件</string>
+    <string name="select_file_or_directory">必须选择文件或目录</string>
+    <string name="file_exists">文件已存在</string>
+    <string name="download_file_exists">文件已在Download目录</string>
+    <string name="download_success">成功复制到Download目录</string>
+    <string name="file_create_failed">文件创建失败!</string>
+    <string name="file_add_external_file">添加文件</string>
+    <string name="file_filter_external_file">搜索</string>
+
+    <!-- ViewFileActivity -->
+    <string name="commit">提交</string>
+    <string name="commit_messages">请输入修改原因</string>
+    <string name="view_attach_files"> 附件. 点击查看</string>
+    <string name="view_title_remove_attach">删除</string>
+    <string name="view_remove_attach">删除附件</string>
+    <string name="view_file_action_select_file">添加附件</string>
+    <string name="dialog_title_modify">修改</string>
+    <string name="dialog_file_name">文件名称</string>
+    <string name="view_file_delete_attachment_file_commit">删除 : </string>
+    <string name="view_file_paste_attachment_file_commit">复制文件</string>
+    <string name="view_file_add_attachment_file_commit">添加文件 : </string>
+    <string name="view_file_action_camera_picture">拍照保存</string>
+
+    <!-- GitCloneActivity -->
+    <string name="tv_clone_git_repository">克隆笔记(远端GIT)</string>
+    <string name="tv_remote_name">分支名称</string>
+    <string name="tv_remote_url">远端GIT URL</string>
+    <string name="tv_user_account">账号</string>
+    <string name="tv_git_nick_name">笔记本名称</string>
+    <string name="tv_password">密码</string>
+    <string name="tv_please_wait">请稍候</string>
+    <string name="tv_all_parametes_must_be_set">所有参数必须都输入</string>
+    <string name="tv_title_remote_git_clone">克隆笔记本(远端GIT)</string>
+    <string name="tv_local_git_already_exists">本地笔记本已存在!</string>
+    <string name="tv_clone_success">克隆成功!</string>
+    <string name="tv_clone_fail">克隆失败!</string>
+    <string name="tv_git_already_cloned">笔记本已经克隆过!</string>
+
+    <!-- CreateLocalGitActivity -->
+    <string name="tv_create_local_git_repository">新建本地笔记本</string>
+    <string name="tv_local_git_name">笔记本名称</string>
+    <string name="tv_title_create_local_git">新建本地笔记本</string>
+    <string name="tv_create_local_git_success">添加成功</string>
+    <string name="tv_create_local_git_fail">添加失败</string>
+    <string name="dialog_title_add">添加文件</string>
+    <string name="toast_pulling">后台同步中,请稍候</string>
+    <string name="toast_cloning">克隆中,请稍候</string>
+    <string name="title_search_text">搜索</string>
+    <string name="message_search_text">" "</string>
+    <string name="search_mode">搜索字符串</string>
+    <string name="dialog_ok">确定</string>
+    <string name="dialog_reset">重置</string>
+    <string name="dialog_cancel">取消</string>
+    <string name="attachment">附件</string>
+    <string name="refres_files">刷新</string>
+    <string name="GitShowAttachDir">显示附件目录</string>
+    <string name="textViewSearch">搜索</string>
+    <string name="pulling_success">同步成功</string>
+    <string name="pulling_failed">同步失败，请重试或删除笔记后重建</string>
+    <string name="pushing_success">同步成功</string>
+    <string name="pushing_failed">同步失败，请重试或删除笔记后重建</string>
+    <string name="Sort">文件排序</string>
+    <string name="Sort11">日期(小到大)</string>
+    <string name="download">下载</string>
+    <string name="Backup">备份</string>
+    <string name="backup_success">备份到\"Download\"成功</string>
+    <string name="backup_failed">备份失败</string>
+    <string name="GitCloneSkipLocal">如果本机已有数据，不需要 git clone</string>
+
+    <!-- Permission strings -->
+    <string name="permission_camera_title">需要「相机」权限</string>
+    <string name="permission_camera_rationale">为了让您能直接拍摄照片并自动保存为当前笔记的附件文件，GIT文字笔记 需要访问您的设备相机。\n\n我们仅会在您主动点击拍照时使用相机，绝不会在后台访问或拍摄未授权的图像。</string>
+    <string name="permission_media_title">需要「媒体与文件访问」权限</string>
+    <string name="permission_media_rationale">为了让您能从手机相册或设备中选取照片、视频或音频文件，并导入作为笔记的附件与版本库管理，GIT文字笔记 需要读取您的媒体文件。\n\n我们仅会读取您主动选取的外部文件并复制到笔记附件目录，绝不会在后台扫描或访问其他个人资料。</string>
+    <string name="permission_camera_denied_msg">您尚未授权相机权限，因此无法进行拍照保存。如需使用此功能，请点击「重新授权」开启说明并允许权限。</string>
+    <string name="permission_media_denied_msg">您尚未授权媒体文件读取权限，无法选取本机文件附加至笔记。如需使用此功能，请点击「重新授权」。</string>
+    <string name="permission_camera_settings_msg">您先前已拒绝相机权限（或勾选了不再询问），系统无法自动弹出授权窗口。\n\n若您希望使用拍照保存功能，请点击「前往设置」，在应用设置中手动开启「相机」权限。</string>
+    <string name="permission_media_settings_msg">您先前已拒绝媒体访问权限，系统无法自动弹出授权窗口。\n\n若您希望导入照片或文件作为附件，请点击「前往设置」，在应用设置中开启「照片和视频」或「音乐和音频」权限。</string>
+    <string name="permission_btn_agree">同意并授权</string>
+    <string name="permission_btn_disagree">暂不同意</string>
+    <string name="permission_btn_reauth">重新授权</string>
+    <string name="permission_btn_settings">前往设置</string>
+</resources>

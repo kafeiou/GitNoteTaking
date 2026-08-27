@@ -1,7 +1,9 @@
-# OpenSpec 規格說明書總覽 (Specs Overview)
+# InMethodGitNoteTaking 規格總覽 (Specs Index)
 
-本目錄存放 InMethodGitNoteTaking 專案之核心規格說明書 (Master Specs)。
+本目錄包含專案的核心規格說明文件（Master Specifications）：
 
-## 目錄清單
-
-- [platform-compatibility](platform-compatibility/spec.md): 定義應用程式對 Android 16 (API 級別 36) 的目標相容性規範、建置設定要求與執行期系統整合標準。
+| 規格模組 (Capability) | 說明 (Purpose) | 規格路徑 |
+| :--- | :--- | :--- |
+| **platform-compatibility** | Android 16 (Target SDK 36) 與建置環境相容性規格 | [platform-compatibility/spec.md](platform-compatibility/spec.md) |
+| **permission-handling** | 危險權限前置告知 (BottomSheet)、按需請求與防呆機制 | [permission-handling/spec.md](permission-handling/spec.md) |
+| **multilingual-support** | 全 App 多語系 (繁中/簡中/日文/英文) 與防跑版規範 | [multilingual-support/spec.md](multilingual-support/spec.md) |

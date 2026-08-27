@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GIT文字ノート</string>
+    <string name="action_settings">設定</string>
+    <string name="view_file_action_edit">編集</string>
+    <string name="view_file_action_save">保存</string>
+    <string name="GitAuthorName">名前</string>
+    <string name="GitAuthorEmail">メールアドレス</string>
+    <string name="action_create_file">ファイル作成</string>
+    <string name="action_create_folder">フォルダ作成</string>
+    <string name="action_delete">削除</string>
+    <string name="title_remove">削除</string>
+    <string name="message_remove">ノートを削除しますか?</string>
+    <string name="title_push">リモートにプッシュ</string>
+    <string name="title_pull">端末にプル</string>
+    <string name="action_cut">切り取り</string>
+    <string name="action_copy">コピー</string>
+    <string name="action_paste">貼り付け</string>
+    <string name="no_file_or_dir_selected">ファイルまたはフォルダが選択されていません</string>
+    <string name="modify_remote_settings_branches_fetched">ブランチを更新しました</string>
+
+    <!-- Preference -->
+    <string name="GitEditTextSize">フォントサイズ</string>
+    <string name="GitLocalDirName">ローカルルートディレクトリ(バックアップ推奨)</string>
+    <string name="GitRemoteName">リモートブランチ名</string>
+    <string name="GitCheckBoxCommitMessage">コミット理由の入力を要求する</string>
+
+    <!-- MainActivity -->
+    <string name="tv_title_first_time">初期設定</string>
+    <string name="tv_first_time">お名前とメールアドレスを設定してください</string>
+    <string name="action_clone">ノート作成(リモートGIT)</string>
+    <string name="action_create_local_git">ノート作成(ローカル)</string>
+    <string name="tv_localhost">ローカル</string>
+    <string name="main_menu_add">新規作成</string>
+    <string name="main_notes_need_push">(長押しでリモートに同期)</string>
+    <string name="main_notes_cloning"> 同期中 ... </string>
+    <string name="main_notes_title_modify">設定変更</string>
+    <string name="main_notes_not_found">ノートが見つかりません</string>
+    <string name="main_notes_author_name">名前</string>
+    <string name="main_notes_author_email">メールアドレス</string>
+    <string name="main_notes_show_changelog">更新履歴を表示</string>
+    <string name="main_notes_show_all_remote_branches">リモートブランチ一覧</string>
+
+    <!-- FileExplorerActivity -->
+    <string name="create_folder">フォルダ作成</string>
+    <string name="create_file">ファイル作成</string>
+    <string name="select_file_or_directory">ファイルまたはフォルダを選択してください</string>
+    <string name="file_exists">ファイルが既に存在します</string>
+    <string name="download_file_exists">Downloadフォルダにファイルが存在します</string>
+    <string name="download_success">Downloadフォルダにコピーしました</string>
+    <string name="file_create_failed">ファイルの作成に失敗しました!</string>
+    <string name="file_add_external_file">ファイル追加</string>
+    <string name="file_filter_external_file">検索</string>
+
+    <!-- ViewFileActivity -->
+    <string name="commit">コミット</string>
+    <string name="commit_messages">変更理由を入力してください</string>
+    <string name="view_attach_files"> 添付ファイル. タップして一覧表示</string>
+    <string name="view_title_remove_attach">削除</string>
+    <string name="view_remove_attach">添付ファイルを削除</string>
+    <string name="view_file_action_select_file">ファイル追加</string>
+    <string name="dialog_title_modify">変更</string>
+    <string name="dialog_file_name">ファイル名</string>
+    <string name="view_file_delete_attachment_file_commit">削除 : </string>
+    <string name="view_file_paste_attachment_file_commit">ファイルを貼り付け</string>
+    <string name="view_file_add_attachment_file_commit">ファイル追加 : </string>
+    <string name="view_file_action_camera_picture">撮影して保存</string>
+
+    <!-- GitCloneActivity -->
+    <string name="tv_clone_git_repository">ノート複製(リモートGIT)</string>
+    <string name="tv_remote_name">ブランチ名</string>
+    <string name="tv_remote_url">リモートGIT URL</string>
+    <string name="tv_user_account">アカウント</string>
+    <string name="tv_git_nick_name">ノート名</string>
+    <string name="tv_password">パスワード</string>
+    <string name="tv_please_wait">少々お待ちください</string>
+    <string name="tv_all_parametes_must_be_set">すべての項目を入力してください</string>
+    <string name="tv_title_remote_git_clone">ノート複製(リモートGIT)</string>
+    <string name="tv_local_git_already_exists">ローカルノートが既に存在します!</string>
+    <string name="tv_clone_success">クローンに成功しました!</string>
+    <string name="tv_clone_fail">クローンに失敗しました!</string>
+    <string name="tv_git_already_cloned">既にクローン済みです!</string>
+
+    <!-- CreateLocalGitActivity -->
+    <string name="tv_create_local_git_repository">ローカルノート作成</string>
+    <string name="tv_local_git_name">ノート名</string>
+    <string name="tv_title_create_local_git">ローカルノート作成</string>
+    <string name="tv_create_local_git_success">作成に成功しました</string>
+    <string name="tv_create_local_git_fail">作成に失敗しました</string>
+    <string name="dialog_title_add">ファイル追加</string>
+    <string name="toast_pulling">同期中、少々お待ちください</string>
+    <string name="toast_cloning">クローン中、少々お待ちください</string>
+    <string name="title_search_text">検索</string>
+    <string name="message_search_text">" "</string>
+    <string name="search_mode">テキスト検索</string>
+    <string name="dialog_ok">確定</string>
+    <string name="dialog_reset">リセット</string>
+    <string name="dialog_cancel">キャンセル</string>
+    <string name="attachment">添付ファイル</string>
+    <string name="refres_files">更新</string>
+    <string name="GitShowAttachDir">添付フォルダを表示</string>
+    <string name="textViewSearch">検索</string>
+    <string name="pulling_success">同期に成功しました</string>
+    <string name="pulling_failed">同期に失敗しました。再試行してください</string>
+    <string name="pushing_success">同期に成功しました</string>
+    <string name="pushing_failed">同期に失敗しました。再試行してください</string>
+    <string name="Sort">ソート</string>
+    <string name="Sort11">日付(昇順)</string>
+    <string name="download">ダウンロード</string>
+    <string name="Backup">バックアップ</string>
+    <string name="backup_success">Downloadフォルダへのバックアップ成功</string>
+    <string name="backup_failed">バックアップ失敗</string>
+    <string name="GitCloneSkipLocal">ローカルにデータが存在する場合はスキップ</string>
+
+    <!-- Permission strings -->
+    <string name="permission_camera_title">「カメラ」の権限が必要です</string>
+    <string name="permission_camera_rationale">写真を撮影してノートの添付ファイルとして保存するために、カメラへのアクセスを必要とします。\n\n撮影ボタンを押した時のみカメラを使用し、バックグラウンドでのアクセスは行いません。</string>
+    <string name="permission_media_title">「メディアとファイルへのアクセス」権限が必要です</string>
+    <string name="permission_media_rationale">写真、動画、音声ファイルを選択してノートに添付するために、メディアへのアクセスを必要とします。\n\n選択されたファイルのみを読み取り、無関係な個人データにはアクセスしません。</string>
+    <string name="permission_camera_denied_msg">カメラの権限が許可されていないため、撮影機能を使用できません。使用するには「再許可」をタップしてください。</string>
+    <string name="permission_media_denied_msg">メディア権限が許可されていないため、ファイルを添付できません。使用するには「再許可」をタップしてください。</string>
+    <string name="permission_camera_settings_msg">カメラ権限が無効化されています。\n\n撮影機能を使用するには、「設定を開く」をタップし、アプリ設定でカメラ権限を有効にしてください。</string>
+    <string name="permission_media_settings_msg">メディアアクセス権限が無効化されています。\n\nファイルを添付するには、「設定を開く」をタップし、アプリ設定でメディア権限を有効にしてください。</string>
+    <string name="permission_btn_agree">同意して許可</string>
+    <string name="permission_btn_disagree">今は許可しない</string>
+    <string name="permission_btn_reauth">再許可</string>
+    <string name="permission_btn_settings">設定を開く</string>
+</resources>
