@@ -63,7 +63,13 @@ public class ModifyRemoteGitActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                if (editUserAccount.getText().toString().equals("") || editUserPassword.getText().toString().equals("") || editNickName.getText().toString().equals("")) {
+                final String sUid = editUserAccount.getText().toString().trim();
+                final String sPwd = editUserPassword.getText().toString().trim();
+                final String sNick = editNickName.getText().toString().trim();
+                final String sAuthorName = editAuthorName.getText().toString().trim();
+                final String sAuthorEmail = editAuthorEmail.getText().toString().trim();
+
+                if (sUid.isEmpty() || sPwd.isEmpty() || sNick.isEmpty()) {
                     AlertDialog.Builder MyAlertDialog = new AlertDialog.Builder(activity);
                     MyAlertDialog.setTitle(getResources().getString(R.string.main_notes_title_modify));
                     MyAlertDialog.setMessage(getResources().getString(R.string.tv_all_parametes_must_be_set));
@@ -81,11 +87,11 @@ public class ModifyRemoteGitActivity extends AppCompatActivity {
 
                     if (aValue != null) {
                         try {
-                            aValue.setUid(editUserAccount.getText().toString());
-                            aValue.setPwd(editUserPassword.getText().toString());
-                            aValue.setNickname(editNickName.getText().toString());
-                            aValue.setAuthor_name(editAuthorName.getText().toString());
-                            aValue.setAuthor_email(editAuthorEmail.getText().toString());
+                            aValue.setUid(sUid);
+                            aValue.setPwd(sPwd);
+                            aValue.setNickname(sNick);
+                            aValue.setAuthor_name(sAuthorName);
+                            aValue.setAuthor_email(sAuthorEmail);
                             aValue.setBranch(spinnerRemoteBranch.getSelectedItem().toString());
                             aValue.setRemoteName(spinnerRemoteBranch.getSelectedItem().toString());
                             aRemoteGitDAO.update(aValue);

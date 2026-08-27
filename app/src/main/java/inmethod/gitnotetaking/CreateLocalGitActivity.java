@@ -41,7 +41,8 @@ public class CreateLocalGitActivity extends AppCompatActivity {
                 sRemoteName = PreferenceManager.getDefaultSharedPreferences(activity).getString("GitRemoteName", "origin");
                 sRemoteURL = "localhost://local";
                 editLocalGitName = (EditText) findViewById(R.id.editLocalGitName);
-                if (editLocalGitName.getText().toString().equals("")) {
+                final String sLocalName = editLocalGitName.getText().toString().trim();
+                if (sLocalName.isEmpty()) {
                     AlertDialog.Builder MyAlertDialog = new AlertDialog.Builder(activity);
                     MyAlertDialog.setTitle(getResources().getString(R.string.tv_title_create_local_git));
                     MyAlertDialog.setMessage(getResources().getString (R.string.tv_all_parametes_must_be_set));
@@ -62,7 +63,7 @@ public class CreateLocalGitActivity extends AppCompatActivity {
                 }
 
                 final RemoteGitDAO aRemoteGitDAO = new RemoteGitDAO(activity);
-                sRemoteURL =  sRemoteURL+ File.separator+ editLocalGitName.getText().toString()+".git";
+                sRemoteURL =  sRemoteURL+ File.separator+ sLocalName+".git";
                 RemoteGit aValue = aRemoteGitDAO.getByURL( sRemoteURL);
 
                 if (aValue == null) {
@@ -74,7 +75,7 @@ public class CreateLocalGitActivity extends AppCompatActivity {
                             aValue.setUrl(sRemoteURL);
                             aValue.setUid("UID");
                             aValue.setPwd("PWD");
-                            aValue.setNickname(editLocalGitName.getText().toString());
+                            aValue.setNickname(sLocalName);
                             aValue.setStatus(MyGitUtility.GIT_STATUS_SUCCESS);
                             aValue.setAuthor_name(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorName", "root"));
                             aValue.setAuthor_email(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorEmail", "root@your.email.com"));
@@ -87,14 +88,14 @@ public class CreateLocalGitActivity extends AppCompatActivity {
                                 new Thread(new Runnable(){
                                     @Override
                                     public void run() {
-                                        if (MyGitUtility.createLocalGitRepository(activity,editLocalGitName.getText().toString() )) {
+                                        if (MyGitUtility.createLocalGitRepository(activity,sLocalName )) {
                                             RemoteGit aValue = new RemoteGit();
                                             aValue.setId(0);
                                             aValue.setRemoteName(sRemoteName);
                                             aValue.setUrl(sRemoteURL);
                                             aValue.setUid("UID");
                                             aValue.setPwd("PWD");
-                                            aValue.setNickname(editLocalGitName.getText().toString());
+                                            aValue.setNickname(sLocalName);
                                             aValue.setStatus(MyGitUtility.GIT_STATUS_SUCCESS);
                                             aValue.setAuthor_name(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorName", "root"));
                                             aValue.setAuthor_email(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorEmail", "root@your.email.com"));

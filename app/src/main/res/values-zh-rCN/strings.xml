@@ -125,4 +125,8 @@
     <string name="permission_btn_disagree">暂不同意</string>
     <string name="permission_btn_reauth">重新授权</string>
     <string name="permission_btn_settings">前往设置</string>
+
+    <!-- Language & Input strings -->
+    <string name="pref_app_language">语言设置</string>
+    <string name="input_cannot_be_empty">名称不可为空</string>
 </resources>

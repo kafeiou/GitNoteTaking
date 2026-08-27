@@ -366,5 +366,44 @@ public class FileUtility {
         return "com.google.android.apps.docs.storage".equals(uri.getAuthority()) || "com.google.android.apps.docs.storage.legacy".equals(uri.getAuthority());
     }
 
+    public static String getFileName(Context context, Uri uri) {
+        String result = null;
+        if (uri != null && uri.getScheme() != null && uri.getScheme().equals("content")) {
+            try (Cursor cursor = context.getContentResolver().query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (index >= 0) {
+                        result = cursor.getString(index);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to get file name from URI", e);
+            }
+        }
+        if (result == null && uri != null) {
+            result = uri.getLastPathSegment();
+            if (result != null && result.contains("/")) {
+                result = result.substring(result.lastIndexOf("/") + 1);
+            }
+        }
+        return (result != null && !result.trim().isEmpty()) ? result.trim() : "attachment_file";
+    }
 
+    public static boolean copyUriToFile(Context context, Uri sourceUri, File destFile) {
+        if (context == null || sourceUri == null || destFile == null) return false;
+        try (InputStream is = context.getContentResolver().openInputStream(sourceUri);
+             FileOutputStream fos = new FileOutputStream(destFile)) {
+            if (is == null) return false;
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = is.read(buffer)) != -1) {
+                fos.write(buffer, 0, read);
+            }
+            fos.flush();
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to copy URI to File", e);
+            return false;
+        }
+    }
 }

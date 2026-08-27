@@ -73,7 +73,12 @@ public class CloneGitActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                if (sRemoteName.equals("") || editRemoteURL.getText().toString().equals("") || editUserAccount.getText().toString().equals("") || editUserPassword.getText().toString().equals("") || editNickName.getText().toString().equals("")) {
+                final String sUrl = editRemoteURL.getText().toString().trim();
+                final String sUid = editUserAccount.getText().toString().trim();
+                final String sPwd = editUserPassword.getText().toString().trim();
+                final String sNick = editNickName.getText().toString().trim();
+
+                if (sRemoteName.isEmpty() || sUrl.isEmpty() || sUid.isEmpty() || sPwd.isEmpty() || sNick.isEmpty()) {
                     AlertDialog.Builder MyAlertDialog = new AlertDialog.Builder(activity);
                     MyAlertDialog.setTitle(getResources().getString(R.string.tv_title_remote_git_clone));
                     MyAlertDialog.setMessage(getResources().getString(R.string.tv_all_parametes_must_be_set));
@@ -86,12 +91,12 @@ public class CloneGitActivity extends AppCompatActivity {
                     return;
                 }
 
-                RemoteGit aValue = MyGitUtility.getRemoteGit(activity,editRemoteURL.getText().toString());
+                RemoteGit aValue = MyGitUtility.getRemoteGit(activity, sUrl);
 
                 if (aValue == null) {
                     try {
-                        if (MyGitUtility.checkLocalGitRepository(activity, editRemoteURL.getText().toString())) {
-                            String sLocalDirectory = MyGitUtility.getLocalGitDirectory(activity,editRemoteURL.getText().toString());
+                        if (MyGitUtility.checkLocalGitRepository(activity, sUrl)) {
+                            String sLocalDirectory = MyGitUtility.getLocalGitDirectory(activity, sUrl);
                             FileUtils.delete(new File(sLocalDirectory),FileUtils.RECURSIVE);
                         }
 
@@ -105,10 +110,10 @@ public class CloneGitActivity extends AppCompatActivity {
                             aValue.setId(0);
                             aValue.setRemoteName(sRemoteName);
                             aValue.setBranch(sRemoteName);
-                            aValue.setUrl(editRemoteURL.getText().toString());
-                            aValue.setUid(editUserAccount.getText().toString());
-                            aValue.setPwd(editUserPassword.getText().toString());
-                            aValue.setNickname(editNickName.getText().toString());
+                            aValue.setUrl(sUrl);
+                            aValue.setUid(sUid);
+                            aValue.setPwd(sPwd);
+                            aValue.setNickname(sNick);
                             aValue.setStatus(MyGitUtility.GIT_STATUS_CLONING);
                             aValue.setAuthor_name(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorName", "root"));
                             aValue.setAuthor_email(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorEmail", "root@your.email.com"));
@@ -124,14 +129,14 @@ public class CloneGitActivity extends AppCompatActivity {
                                         RemoteGit aValue = new RemoteGit();
                                         aValue.setId(0);
                                         aValue.setRemoteName(sRemoteName);
-                                        aValue.setUrl(editRemoteURL.getText().toString());
-                                        aValue.setUid(editUserAccount.getText().toString());
-                                        aValue.setPwd(editUserPassword.getText().toString());
-                                        aValue.setNickname(editNickName.getText().toString());
+                                        aValue.setUrl(sUrl);
+                                        aValue.setUid(sUid);
+                                        aValue.setPwd(sPwd);
+                                        aValue.setNickname(sNick);
                                         aValue.setAuthor_name(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorName", "root"));
                                         aValue.setAuthor_email(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorEmail", "root@your.email.com"));
                                         RemoteGitDAO aRemoteGitDAO = new RemoteGitDAO(MyApplication.getAppContext());
-                                        if (MyGitUtility.cloneGit(MyApplication.getAppContext(), editRemoteURL.getText().toString(),sRemoteName, editUserAccount.getText().toString(), editUserPassword.getText().toString())) {
+                                        if (MyGitUtility.cloneGit(MyApplication.getAppContext(), sUrl, sRemoteName, sUid, sPwd)) {
                                             aValue.setStatus(MyGitUtility.GIT_STATUS_SUCCESS);
                                             if( aRemoteGitDAO.updateByRemoteUrl(aValue) )
                                                 Log.d(TAG,aValue.getNickname() +"cloning success");

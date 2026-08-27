@@ -125,4 +125,8 @@
     <string name="permission_btn_disagree">Not Now</string>
     <string name="permission_btn_reauth">Re-authorize</string>
     <string name="permission_btn_settings">Settings</string>
+
+    <!-- Language & Input strings -->
+    <string name="pref_app_language">Language</string>
+    <string name="input_cannot_be_empty">Name cannot be empty</string>
 </resources>

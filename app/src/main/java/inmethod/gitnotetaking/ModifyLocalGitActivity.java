@@ -39,7 +39,8 @@ public class ModifyLocalGitActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                if (editNickName.getText().toString().isEmpty()) {
+                final String sNick = editNickName.getText().toString().trim();
+                if (sNick.isEmpty()) {
                     AlertDialog.Builder MyAlertDialog = new AlertDialog.Builder(activity);
                     MyAlertDialog.setTitle(getResources().getString(R.string.main_notes_title_modify));
                     MyAlertDialog.setMessage(getResources().getString(R.string.tv_all_parametes_must_be_set));
@@ -57,7 +58,7 @@ public class ModifyLocalGitActivity extends AppCompatActivity {
 
                     if (aValue != null) {
                         try {
-                            aValue.setNickname(editNickName.getText().toString());
+                            aValue.setNickname(sNick);
                             aRemoteGitDAO.update(aValue);
                         } catch (Exception ex) {
 

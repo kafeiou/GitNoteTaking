@@ -43,6 +43,7 @@ import androidx.core.content.FileProvider;
 import androidx.preference.PreferenceManager;
 import android.Manifest;
 import android.content.pm.PackageManager;
+import inmethod.gitnotetaking.utility.FileUtility;
 import inmethod.gitnotetaking.utility.PermissionHelper;
 
 import com.hbisoft.pickit.PickiT;
@@ -481,11 +482,12 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                                     @Override
                                     public void run() {
                                         try {
-                                            if (txtUrl.getText().toString().trim().equals(""))
-                                                txtUrl.setText("");
+                                            String commitMsg = txtUrl.getText().toString().trim();
+                                            if (commitMsg.isEmpty())
+                                                commitMsg = "<" + file.getName() + ">";
                                             else
-                                                txtUrl.setText(txtUrl.getText() + "\n<" + file.getName() + ">");
-                                            boolean bCommitStatus = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, txtUrl.getText().toString());
+                                                commitMsg = commitMsg + "\n<" + file.getName() + ">";
+                                            boolean bCommitStatus = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, commitMsg);
                                             Thread.sleep(100);
                                             if (bCommitStatus) {
                                                 if (sGitRemoteUrl.indexOf("local") == -1) {
@@ -625,18 +627,12 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                                 new Thread(new Runnable() {
                                     @Override
                                     public void run() {
-
-                                                runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        if (txtUrl.getText().toString().trim().equals(""))
-                                                            txtUrl.setText("");
-                                                        else
-                                                            txtUrl.setText(txtUrl.getText() + "\n<" + file.getName() + ">");
-
-                                                    }
-                                                });
-                                        boolean bCommitStatus = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, txtUrl.getText().toString());
+                                        String commitMsg = txtUrl.getText().toString().trim();
+                                        if (commitMsg.isEmpty())
+                                            commitMsg = "<" + file.getName() + ">";
+                                        else
+                                            commitMsg = commitMsg + "\n<" + file.getName() + ">";
+                                        boolean bCommitStatus = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, commitMsg);
                                         if (bCommitStatus) {
                                             if (sGitRemoteUrl.indexOf("local") == -1) {
                                                 MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl);
@@ -755,11 +751,8 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
         super.onActivityResult(requestCode, resultCode, resultData);
 
         if (requestCode == READ_REQUEST_CODE) {
-            Uri uri = null;
-            if (resultData != null) {
-                uri = resultData.getData();
-                pickiT.getPath(uri, Build.VERSION.SDK_INT);
-
+            if (resultData != null && resultData.getData() != null) {
+                showAddAttachmentDialog(resultData.getData());
             }
         } else if (requestCode == REQUEST_TAKE_PHOTO) {
             try {
@@ -786,9 +779,14 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                                 new Thread(new Runnable() {
                                     @Override
                                     public void run() {
+                                        final String sPhotoName = txtUrl.getText().toString().trim();
+                                        if (sPhotoName.isEmpty()) {
+                                            runOnUiThread(() -> Toast.makeText(MyApplication.getAppContext(), R.string.input_cannot_be_empty, Toast.LENGTH_SHORT).show());
+                                            return;
+                                        }
                                         final File aDestFile;
                                         try {
-                                            aDestFile = new File(aDestFileDirectory.getCanonicalPath() + File.separator + txtUrl.getText().toString().trim());
+                                            aDestFile = new File(aDestFileDirectory.getCanonicalPath() + File.separator + sPhotoName);
                                             //     Log.d(TAG,"dest file = "+aDestFile.getCanonicalPath());
                                             final String sDestFileNameString;
                                             sDestFileNameString = aDestFile.getCanonicalPath().toString().substring(MyGitUtility.getLocalGitDirectory(activity, sGitRemoteUrl).length());
@@ -887,20 +885,15 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
     //boolean wasUnknownProvider - check if it was from an unknown file provider
     //boolean wasSuccessful - check if it was successful
     //String reason - the get the reason why wasSuccessful returned false
-    @Override
-    public void PickiTonCompleteListener(String path, boolean wasDriveFile, boolean wasUnknownProvider, boolean wasSuccessful, String reason) {
-        //Dismiss dialog and return the path
-        Log.d(TAG, "pickiT real path =" + path + ", was successful = " + wasSuccessful + ", reason = " + reason);
-
-        final File aSelectedFile = new File(path);
+    private void showAddAttachmentDialog(final Uri uri) {
+        final String originalFileName = FileUtility.getFileName(this, uri);
         try {
             final File aDestFileDirectory = new File(file.getCanonicalPath().toString() + "_attach".trim());
-            //  Log.d(TAG,"aDestFileDirectory file = "+aDestFileDirectory.getCanonicalPath());
             if (!aDestFileDirectory.isDirectory())
                 aDestFileDirectory.mkdir();
 
             final EditText txtUrl = new EditText(this);
-            txtUrl.setText(aSelectedFile.getName());
+            txtUrl.setText(originalFileName);
             txtUrl.setMaxLines(3);
             txtUrl.setLines(3);
             txtUrl.setTextSize(Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitEditTextSize", "18")));
@@ -911,65 +904,56 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                     .setView(txtUrl)
                     .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int whichButton) {
+                            final String sFileName = txtUrl.getText().toString().trim();
+                            if (sFileName.isEmpty()) {
+                                Toast.makeText(MyApplication.getAppContext(), R.string.input_cannot_be_empty, Toast.LENGTH_SHORT).show();
+                                return;
+                            }
                             isModify = false;
                             disable();
 
                             new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    final File aDestFile;
+                                    final File aDestFile = new File(aDestFileDirectory, sFileName);
+                                    boolean copied = FileUtility.copyUriToFile(activity, uri, aDestFile);
+                                    if (!copied) {
+                                        runOnUiThread(() -> Toast.makeText(MyApplication.getAppContext(), "Add Failed!", Toast.LENGTH_SHORT).show());
+                                        return;
+                                    }
                                     try {
-                                        aDestFile = new File(aDestFileDirectory.getCanonicalPath() + File.separator + txtUrl.getText().toString().trim());
-                                        //     Log.d(TAG,"dest file = "+aDestFile.getCanonicalPath());
                                         final String sDestFileNameString;
-                                        sDestFileNameString = aDestFile.getCanonicalPath().toString().substring(MyGitUtility.getLocalGitDirectory(activity, sGitRemoteUrl).length());
-                                        Files.copy(aSelectedFile.toPath(), aDestFile.toPath());
-                                        new Thread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                try {
-                                                    Thread.sleep(100);
-                                                } catch (InterruptedException e) {
-                                                    e.printStackTrace();
-                                                }
-                                                boolean bCommit = false;
-                                                Log.d(TAG,"commit when file added");
+                                        String localGitDir = MyGitUtility.getLocalGitDirectory(activity, sGitRemoteUrl);
+                                        if (aDestFile.getCanonicalPath().startsWith(localGitDir)) {
+                                            String rel = aDestFile.getCanonicalPath().substring(localGitDir.length());
+                                            sDestFileNameString = (rel.startsWith(File.separator) || rel.startsWith("/")) ? rel.substring(1) : rel;
+                                        } else {
+                                            sDestFileNameString = aDestFile.getName();
+                                        }
 
-                                                bCommit = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, MyApplication.getAppContext().getString(R.string.view_file_add_attachment_file_commit) + "\n" + sDestFileNameString);
-                                                if (sGitRemoteUrl.indexOf("local") == -1 && bCommit)
-                                                    MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl);
+                                        boolean bCommit = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, MyApplication.getAppContext().getString(R.string.view_file_add_attachment_file_commit) + "\n" + sDestFileNameString);
+                                        if (sGitRemoteUrl.indexOf("local") == -1 && bCommit)
+                                            MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl);
 
-                                            }
-                                        }).start();
-
-                                    } catch (IOException e) {
+                                    } catch (Exception e) {
                                         e.printStackTrace();
                                     }
-
+                                    runOnUiThread(() -> {
+                                        finish();
+                                        startActivity(getIntent());
+                                    });
                                 }
                             }).start();
-                            finish();
-                            startActivity(getIntent());
-
                         }
-                    }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int whichButton) {
-                        }
-                    }).show();
-
-
+                    }).setNegativeButton("Cancel", null)
+                    .show();
         } catch (Exception e) {
             e.printStackTrace();
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(MyApplication.getAppContext(), "Add Failed!", Toast.LENGTH_SHORT).show();
-                }
-            });
-
         }
+    }
 
-
+    @Override
+    public void PickiTonCompleteListener(String path, boolean wasDriveFile, boolean wasUnknownProvider, boolean wasSuccessful, String reason) {
     }
 
     @Override

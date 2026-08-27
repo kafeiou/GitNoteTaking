@@ -125,4 +125,8 @@
     <string name="permission_btn_disagree">今は許可しない</string>
     <string name="permission_btn_reauth">再許可</string>
     <string name="permission_btn_settings">設定を開く</string>
+
+    <!-- Language & Input strings -->
+    <string name="pref_app_language">言語設定</string>
+    <string name="input_cannot_be_empty">名前を空にすることはできません</string>
 </resources>
