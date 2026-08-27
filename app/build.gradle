@@ -4,6 +4,10 @@ apply plugin: 'kotlin-android'
 android {
     compileSdkVersion 36
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     packaging {
         resources.excludes.add('OSGI-INF/l10n/*')
         resources.pickFirsts.add('OSGI-INF/l10n/*')
@@ -12,7 +16,7 @@ android {
     defaultConfig {
         applicationId "inmethod.gitnotetaking"
         minSdkVersion 33
-        targetSdkVersion 35
+        targetSdkVersion 36
         versionCode 235
         versionName "3.201"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
