@@ -129,4 +129,30 @@
     <!-- Language & Input strings -->
     <string name="pref_app_language">語言設定</string>
     <string name="input_cannot_be_empty">名稱不可為空</string>
+
+    <!-- GitHub Integration strings -->
+    <string name="action_create_github_git">建立 GitHub 筆記</string>
+    <string name="github_auth_loading">正在連接 GitHub 授權中...</string>
+    <string name="github_fetching_repos">正在查詢筆記儲存庫...</string>
+    <string name="github_select_repo_title">請選擇 GitHub 筆記儲存庫</string>
+    <string name="github_no_note_repos_title">未找到筆記儲存庫</string>
+    <string name="github_no_note_repos_msg">在您的 GitHub 帳號中未找到名稱以「note」開頭的儲存庫。\n\n請先在 GitHub 上建立名稱以「note」開頭的儲存庫（例如 note-work, NoteTaking 等）後再進行連線。</string>
+    <string name="github_create_repo_online">前往 GitHub 建立</string>
+    <string name="github_auth_failed">GitHub 授權或連線失敗：</string>
+    <string name="github_connect_dialog_msg">請輸入具有 repo 讀寫權限的 GitHub Token (PAT)：\n\n💡 若尚未產生，點擊下方【前往產生 Token】，系統會直接開啟 GitHub 網頁並自動勾選好權限：\n1. 可在網頁上方將「Expiration」選為【No expiration (永不過期)】\n2. 滑至最下方點擊綠色【Generate token】並複製\n3. 切回此處將自動為您填入！</string>
+    <string name="github_btn_connect">確定連線</string>
+    <string name="github_btn_generate_token">前往產生 Token</string>
+    <string name="github_clone_success">下載複製成功！</string>
+    <string name="github_clone_failed">下載複製失敗！</string>
+    <string name="github_private_badge"> [私有]</string>
+    <string name="github_public_badge"> [公開]</string>
+
+    <!-- Purge History strings -->
+    <string name="pref_purge_title">歷史紀錄瘦身 (保留單一版本) (實驗中)</string>
+    <string name="pref_purge_summary">清除本機 Git 歷史紀錄，只保留最新的一版 (depth = 1) 以釋放手機空間</string>
+    <string name="pref_purge_dialog_title">歷史紀錄瘦身</string>
+    <string name="pref_purge_dialog_msg">此操作將會在手機本地清除所有筆記儲存庫的舊歷史紀錄，重置為最新單一版本（depth = 1）以徹底釋放儲存空間。\n\n確定要開始執行嗎？</string>
+    <string name="pref_purge_btn_confirm">開始瘦身</string>
+    <string name="pref_purge_loading">正在執行瘦身清除中...</string>
+    <string name="pref_purge_success">瘦身完成！所有儲存庫已重置為單一版本 (depth = 1)。</string>
 </resources>

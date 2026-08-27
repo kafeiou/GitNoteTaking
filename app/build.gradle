@@ -17,8 +17,8 @@ android {
         applicationId "inmethod.gitnotetaking"
         minSdkVersion 33
         targetSdkVersion 36
-        versionCode 235
-        versionName "3.201"
+        versionCode 236
+        versionName "4.001"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -68,5 +68,6 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     implementation 'androidx.mediarouter:mediarouter:1.8.1'
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0"
+    implementation "androidx.browser:browser:1.8.0"
 
 }

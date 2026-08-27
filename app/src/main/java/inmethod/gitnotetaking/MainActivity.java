@@ -40,6 +40,12 @@ import android.widget.Toast;
 
 import org.eclipse.jgit.revwalk.RevCommit;
 
+import android.net.Uri;
+import android.widget.EditText;
+
+import org.eclipse.jgit.util.FileUtils;
+
+import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Date;
@@ -47,6 +53,8 @@ import java.util.List;
 
 import inmethod.gitnotetaking.db.RemoteGit;
 import inmethod.gitnotetaking.db.RemoteGitDAO;
+import inmethod.gitnotetaking.utility.GitHubAuthManager;
+import inmethod.gitnotetaking.utility.GitHubAuthManager.GitHubRepo;
 import inmethod.gitnotetaking.utility.MyGitUtility;
 import inmethod.gitnotetaking.view.GitList;
 import inmethod.gitnotetaking.view.RecyclerAdapterForDevice;
@@ -155,6 +163,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (waitDialog != null && waitDialog.isShowing()) {
+            waitDialog.dismiss();
+        }
+        GitHubAuthManager.getInstance().cancelPolling();
+    }
 
     @Override
     public void onStart() {
@@ -698,6 +714,9 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(MainActivity.this, PreferencesSettings.class);
             startActivity(intent);
             return true;
+        } else if (id == R.id.action_create_github_git) {
+            startCreateGitHubNoteFlow();
+            return true;
         } else if (id == R.id.action_clone_git_remote) {
             Intent intent = new Intent(MainActivity.this, CloneGitActivity.class);
             startActivity(intent);
@@ -706,6 +725,203 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void startCreateGitHubNoteFlow() {
+        final EditText editText = new EditText(activity);
+        editText.setHint("ghp_xxxx or github_pat_xxxx");
+        editText.setMaxLines(2);
+
+        // Auto paste from clipboard if starts with ghp_ or github_pat_
+        try {
+            android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+            if (clipboard != null && clipboard.hasPrimaryClip()) {
+                android.content.ClipData clip = clipboard.getPrimaryClip();
+                if (clip != null && clip.getItemCount() > 0) {
+                    CharSequence text = clip.getItemAt(0).getText();
+                    if (text != null) {
+                        String str = text.toString().trim();
+                        if (str.startsWith("ghp_") || str.startsWith("github_pat_")) {
+                            editText.setText(str);
+                            editText.setSelection(str.length());
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.action_create_github_git)
+                .setMessage(R.string.github_connect_dialog_msg)
+                .setView(editText)
+                .setPositiveButton(R.string.github_btn_connect, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String token = editText.getText().toString().trim();
+                        if (token.isEmpty()) {
+                            Toast.makeText(activity, R.string.input_cannot_be_empty, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        if (waitDialog != null && !waitDialog.isShowing()) {
+                            waitDialog.show();
+                        }
+                        GitHubAuthManager.getInstance().loadUserDataAndRepos(token, new GitHubAuthManager.GitHubAuthCallback() {
+                            @Override
+                            public void onSuccess(String username, String accessToken, List<GitHubRepo> noteRepos, int totalReposCount) {
+                                if (waitDialog != null && waitDialog.isShowing()) {
+                                    waitDialog.dismiss();
+                                }
+                                showGitHubRepoSelectionDialog(username, accessToken, noteRepos, totalReposCount);
+                            }
+
+                            @Override
+                            public void onError(String errorMessage) {
+                                if (waitDialog != null && waitDialog.isShowing()) {
+                                    waitDialog.dismiss();
+                                }
+                                Toast.makeText(activity, getString(R.string.github_auth_failed) + errorMessage, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                })
+                .setNeutralButton(R.string.github_btn_generate_token, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String url = "https://github.com/settings/tokens/new?scopes=repo,read:user&description=InMethodGitNoteTaking";
+                        try {
+                            androidx.browser.customtabs.CustomTabsIntent customTabsIntent = new androidx.browser.customtabs.CustomTabsIntent.Builder().build();
+                            customTabsIntent.launchUrl(activity, Uri.parse(url));
+                        } catch (Exception e) {
+                            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                            startActivity(browserIntent);
+                        }
+                    }
+                })
+                .setNegativeButton(R.string.dialog_cancel, null)
+                .show();
+    }
+
+    private void showGitHubRepoSelectionDialog(final String username, final String token, final List<GitHubRepo> noteRepos, int totalReposCount) {
+        if (noteRepos == null || noteRepos.isEmpty()) {
+            new AlertDialog.Builder(activity)
+                    .setTitle(R.string.github_no_note_repos_title)
+                    .setMessage(R.string.github_no_note_repos_msg)
+                    .setPositiveButton(R.string.github_create_repo_online, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/new?name=note-"));
+                            startActivity(browserIntent);
+                        }
+                    })
+                    .setNegativeButton(R.string.dialog_cancel, null)
+                    .show();
+            return;
+        }
+
+        String[] repoNames = new String[noteRepos.size()];
+        for (int i = 0; i < noteRepos.size(); i++) {
+            GitHubRepo r = noteRepos.get(i);
+            String desc = r.getDescription();
+            boolean hasDesc = desc != null && !desc.trim().isEmpty() && !desc.equalsIgnoreCase("null");
+            String badge = r.isPrivate() ? getString(R.string.github_private_badge) : getString(R.string.github_public_badge);
+            repoNames[i] = r.getFullName() + badge +
+                    (hasDesc ? "\n" + desc.trim() : "");
+        }
+
+        new AlertDialog.Builder(activity)
+                .setTitle(getString(R.string.github_select_repo_title) + " (" + username + ")")
+                .setItems(repoNames, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        GitHubRepo selectedRepo = noteRepos.get(which);
+                        cloneSelectedGitHubRepo(username, token, selectedRepo);
+                    }
+                })
+                .setNegativeButton(R.string.dialog_cancel, null)
+                .show();
+    }
+
+    private void cloneSelectedGitHubRepo(final String username, final String token, final GitHubRepo repo) {
+        if (waitDialog != null && !waitDialog.isShowing()) {
+            waitDialog.show();
+        }
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final String sUrl = repo.getCloneUrl();
+                final String sRemoteName = repo.getDefaultBranch();
+                final String sNick = repo.getName();
+
+                try {
+                    if (MyGitUtility.checkLocalGitRepository(activity, sUrl)) {
+                        String sLocalDirectory = MyGitUtility.getLocalGitDirectory(activity, sUrl);
+                        FileUtils.delete(new File(sLocalDirectory), FileUtils.RECURSIVE);
+                    }
+
+                    RemoteGit aValue = new RemoteGit();
+                    aValue.setId(0);
+                    aValue.setRemoteName(sRemoteName);
+                    aValue.setBranch(sRemoteName);
+                    aValue.setUrl(sUrl);
+                    aValue.setUid(username);
+                    aValue.setPwd(token);
+                    aValue.setNickname(sNick);
+                    aValue.setStatus(MyGitUtility.GIT_STATUS_CLONING);
+                    aValue.setAuthor_name(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorName", username));
+                    aValue.setAuthor_email(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorEmail", username + "@users.noreply.github.com"));
+
+                    RemoteGitDAO aRemoteGitDAO = new RemoteGitDAO(MyApplication.getAppContext());
+                    RemoteGit existing = aRemoteGitDAO.getByURL(sUrl);
+                    if (existing != null) {
+                        aRemoteGitDAO.delete(sUrl);
+                    }
+                    aRemoteGitDAO.insert(aValue);
+                    aRemoteGitDAO.close();
+
+                    boolean bSuccess = MyGitUtility.cloneGit(MyApplication.getAppContext(), sUrl, sRemoteName, username, token);
+
+                    RemoteGitDAO updateDao = new RemoteGitDAO(MyApplication.getAppContext());
+                    RemoteGit g = updateDao.getByURL(sUrl);
+                    if (g != null) {
+                        g.setStatus(bSuccess ? MyGitUtility.GIT_STATUS_SUCCESS : MyGitUtility.GIT_STATUS_PUSH_FAIL);
+                        updateDao.update(g);
+                    }
+                    updateDao.close();
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (waitDialog != null && waitDialog.isShowing()) {
+                                waitDialog.dismiss();
+                            }
+                            if (adapter != null) {
+                                adapter.clear();
+                                ArrayList<RemoteGit> aList = MyGitUtility.getRemoteGitList(MyApplication.getAppContext());
+                                for (final RemoteGit a : aList) {
+                                    adapter.addData(new GitList(a.getNickname(), a.getUrl(), (int) a.getStatus(), a.getBranch()));
+                                }
+                            }
+                            Toast.makeText(activity, bSuccess ? getString(R.string.github_clone_success) : getString(R.string.github_clone_failed), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (waitDialog != null && waitDialog.isShowing()) {
+                                waitDialog.dismiss();
+                            }
+                            Toast.makeText(activity, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
+        }).start();
     }
 
     private String getDate(long time) {

@@ -118,5 +118,62 @@ public class CustomPreferenceFragment extends PreferenceFragmentCompat {
                 return false;
             });
         }
+
+        Preference gitPurgeHistory = findPreference("GitPurgeHistory");
+        if (gitPurgeHistory != null) {
+            gitPurgeHistory.setOnPreferenceClickListener(preference -> {
+                if (getContext() == null || getActivity() == null) return true;
+
+                new androidx.appcompat.app.AlertDialog.Builder(requireActivity())
+                        .setTitle(R.string.pref_purge_dialog_title)
+                        .setMessage(R.string.pref_purge_dialog_msg)
+                        .setPositiveButton(R.string.pref_purge_btn_confirm, (dialog, which) -> {
+                            showWaitDialog();
+                            new Thread(() -> {
+                                inmethod.gitnotetaking.utility.MyGitUtility.purgeAllLocalRepositoriesHistory(MyApplication.getAppContext());
+                                if (getActivity() != null) {
+                                    getActivity().runOnUiThread(() -> {
+                                        dismissWaitDialog();
+                                        android.widget.Toast.makeText(MyApplication.getAppContext(), R.string.pref_purge_success, android.widget.Toast.LENGTH_LONG).show();
+                                    });
+                                }
+                            }).start();
+                        })
+                        .setNegativeButton(R.string.dialog_cancel, null)
+                        .show();
+                return true;
+            });
+        }
+    }
+
+    private androidx.appcompat.app.AlertDialog waitDialog;
+
+    private void showWaitDialog() {
+        if (getActivity() == null) return;
+        if (waitDialog == null) {
+            androidx.appcompat.app.AlertDialog.Builder waitBuilder = new androidx.appcompat.app.AlertDialog.Builder(requireActivity());
+            waitBuilder.setCancelable(false);
+            waitBuilder.setView(R.layout.loading_dialog);
+            waitDialog = waitBuilder.create();
+        }
+        if (!waitDialog.isShowing()) {
+            waitDialog.show();
+        }
+    }
+
+    private void dismissWaitDialog() {
+        if (waitDialog != null && waitDialog.isShowing()) {
+            try {
+                waitDialog.dismiss();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        dismissWaitDialog();
     }
 }

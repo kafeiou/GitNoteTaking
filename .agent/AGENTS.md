@@ -5,3 +5,4 @@
 - **防呆與錯誤處理 (Error Handling & Guardrails)**：在實作任何核心邏輯或 UI 互動時，必須主動考慮極端情況並加入適當的阻擋機制。
 - **流程圖文件化 (Flowchart Documentation)**：產生的系統架構或邏輯流程圖，必須使用 `mermaid` 語法記錄到 Spec 文件中。
 - **自動同步主文件 (Auto-Sync Master Docs)**：變更歸檔後，必須自動重新生成 `openspec/specs/README.md`。
+- **發布日誌標準 (Release & Distribution Standard)**：每次升級版本時，必須主動更新 `CHANGELOG.md`（完整歷史），並同步覆蓋更新 `distribution/whatsnew/` 下的 5 國語系 Google Play 商店當次發布日誌（`whatsnew-zh-TW`, `whatsnew-zh-HK`, `whatsnew-zh-CN`, `whatsnew-ja-JP`, `whatsnew-en-US`，每篇均嚴格限制在 500 字元內）。

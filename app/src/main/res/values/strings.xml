@@ -129,4 +129,30 @@
     <!-- Language & Input strings -->
     <string name="pref_app_language">Language</string>
     <string name="input_cannot_be_empty">Name cannot be empty</string>
+
+    <!-- GitHub Integration strings -->
+    <string name="action_create_github_git">Create GitHub Note</string>
+    <string name="github_auth_loading">Connecting to GitHub...</string>
+    <string name="github_fetching_repos">Fetching note repositories...</string>
+    <string name="github_select_repo_title">Select GitHub Note Repository</string>
+    <string name="github_no_note_repos_title">No Note Repositories Found</string>
+    <string name="github_no_note_repos_msg">No repositories starting with \"note\" were found in your GitHub account.\n\nPlease create a repository starting with \"note\" (e.g. note-work, NoteTaking) on GitHub first.</string>
+    <string name="github_create_repo_online">Create on GitHub</string>
+    <string name="github_auth_failed">GitHub authentication failed: </string>
+    <string name="github_connect_dialog_msg">Please enter a GitHub Personal Access Token (PAT) with repo permissions:\n\n💡 If you haven\'t created one yet, tap [Generate Token] below. The system will open GitHub with required permissions pre-selected:\n1. Set Expiration to [No expiration]\n2. Scroll to the bottom, tap [Generate token], and copy it\n3. Switch back here to auto-fill!</string>
+    <string name="github_btn_connect">Connect</string>
+    <string name="github_btn_generate_token">Generate Token</string>
+    <string name="github_clone_success">Clone Success!</string>
+    <string name="github_clone_failed">Clone Failed!</string>
+    <string name="github_private_badge"> [Private]</string>
+    <string name="github_public_badge"> [Public]</string>
+
+    <!-- Purge History strings -->
+    <string name="pref_purge_title">Purge History (Keep 1 Version) (Experimental)</string>
+    <string name="pref_purge_summary">Purge local Git history and keep only the latest version (depth = 1) to save phone storage</string>
+    <string name="pref_purge_dialog_title">Purge Git History</string>
+    <string name="pref_purge_dialog_msg">This will purge local Git history for all repositories and re-shallow them to depth = 1 to free up storage space. Please ensure all local changes have been pushed.\n\nDo you want to proceed?</string>
+    <string name="pref_purge_btn_confirm">Start Purge</string>
+    <string name="pref_purge_loading">Purging history...</string>
+    <string name="pref_purge_success">Purge completed! All repositories are now depth = 1.</string>
 </resources>

@@ -75,4 +75,11 @@
         app:title="@string/GitRemoteName">
     </androidx.preference.EditTextPreference>
 
+    <androidx.preference.Preference
+        app:key="GitPurgeHistory"
+        app:allowDividerAbove="true"
+        app:allowDividerBelow="true"
+        app:title="@string/pref_purge_title"
+        app:summary="@string/pref_purge_summary" />
+
 </androidx.preference.PreferenceScreen>

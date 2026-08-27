@@ -46,27 +46,6 @@ public class CloneGitActivity extends AppCompatActivity {
         editUserAccount = (EditText) findViewById(R.id.editUserAccount);
         editUserPassword = (EditText) findViewById(R.id.editUserPassword);
         editNickName = (EditText) findViewById(R.id.editLocalGitName);
-        ImageButton aSearchButton = (ImageButton)findViewById(R.id.searchButton);
-        TextView tvRegistration = (TextView)findViewById(R.id.tvRegistration);
-        tvRegistration.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String url = "https://github.com/join?source=header-home";
-                Intent i = new Intent(Intent.ACTION_VIEW);
-                i.setData(Uri.parse(url));
-                startActivity(i);
-
-            }
-        });
-        aSearchButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String url = "https://github.com/join?source=header-home";
-                Intent i = new Intent(Intent.ACTION_VIEW);
-                i.setData(Uri.parse(url));
-                startActivity(i);
-            }
-        });
         Button buttonOK = (Button) findViewById(R.id.buttonOK);
 
         buttonOK.setOnClickListener(new View.OnClickListener() {

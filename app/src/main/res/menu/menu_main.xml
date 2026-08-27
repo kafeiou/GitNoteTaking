@@ -18,8 +18,15 @@
 
             <item
                 android:id="@+id/action_clone_git_remote"
-                android:orderInCategory="100"
+                android:orderInCategory="101"
                 android:title="@string/action_clone"
+                app:showAsAction="never" />
+
+            <item
+                android:id="@+id/action_create_github_git"
+                android:icon="@drawable/ic_github"
+                android:orderInCategory="102"
+                android:title="@string/action_create_github_git"
                 app:showAsAction="never" />
         </menu>
     </item>

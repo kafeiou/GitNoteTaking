@@ -10,11 +10,36 @@ import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.errors.LockFailedException;
+import org.eclipse.jgit.lib.CommitBuilder;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectInserter;
+import org.eclipse.jgit.lib.RefUpdate;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.treewalk.filter.TreeFilter;
+import org.eclipse.jgit.util.FileUtils;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import inmethod.gitnotetaking.MyApplication;
 import inmethod.gitnotetaking.db.RemoteGit;
@@ -336,6 +361,8 @@ public class MyGitUtility {
                 try{
                   if (aGitUtil.pull(aRemoteGit.getRemoteName(), sUserName, sUserPassword)) {
                     Log.d(TAG, "pull finished!");
+                    syncFileTimestampsWithGit(sLocalDirectory);
+                    syncFileTimestampsFromGitHubApi(sLocalDirectory, sRemoteUrl, sUserPassword);
                     aRemoteGit.setStatus(GIT_STATUS_SUCCESS);
                     aRemoteGitDAO.update(aRemoteGit);
                     setGitLock(false);
@@ -423,6 +450,8 @@ public class MyGitUtility {
                 Log.d(TAG, "try to clone remote repository if local repository is not exists \n");
                 if (aGitUtil.clone(sUserName, sUserPassword,1)) {
                     Log.d(TAG, "clone finished!");
+                    syncFileTimestampsWithGit(sLocalDirectory);
+                    syncFileTimestampsFromGitHubApi(sLocalDirectory, sRemoteUrl, sUserPassword);
                     setGitLock(false);
                     if (aGitUtil != null) aGitUtil.close();
                     return true;
@@ -433,11 +462,15 @@ public class MyGitUtility {
                     return false;
                 }
             } else if (bIsRemoteRepositoryExist && aGitUtil.checkLocalRepository()) {
-                Log.d(TAG, "pull branch = " + aGitUtil.getRemoteDefaultBranch() + " , status : "
-                        + aGitUtil.pull(sRemoteName, sUserName, sUserPassword));
+                boolean bPull = aGitUtil.pull(sRemoteName, sUserName, sUserPassword);
+                Log.d(TAG, "pull branch = " + aGitUtil.getRemoteDefaultBranch() + " , status : " + bPull);
+                if (bPull) {
+                    syncFileTimestampsWithGit(sLocalDirectory);
+                    syncFileTimestampsFromGitHubApi(sLocalDirectory, sRemoteUrl, sUserPassword);
+                }
                 setGitLock(false);
                 if (aGitUtil != null) aGitUtil.close();
-                return true;
+                return bPull;
             }
             return false;
         } catch (Exception e) {
@@ -445,6 +478,202 @@ public class MyGitUtility {
         }
         setGitLock(false);
         return false;
+    }
+
+    public static void syncFileTimestampsWithGit(String sLocalDirectory) {
+        if (sLocalDirectory == null || sLocalDirectory.isEmpty()) return;
+        File gitDir = new File(sLocalDirectory, ".git");
+        if (!gitDir.exists()) return;
+
+        try (Repository repository = new FileRepositoryBuilder().setGitDir(gitDir).build();
+             RevWalk revWalk = new RevWalk(repository);
+             TreeWalk treeWalk = new TreeWalk(repository)) {
+
+            ObjectId head = repository.resolve(Constants.HEAD);
+            if (head == null) return;
+            RevCommit headCommit = revWalk.parseCommit(head);
+            revWalk.markStart(headCommit);
+
+            // Collect all files in working tree from HEAD commit
+            treeWalk.addTree(headCommit.getTree());
+            treeWalk.setRecursive(true);
+            Map<String, File> filesToUpdate = new HashMap<>();
+            File workingDir = new File(sLocalDirectory);
+            while (treeWalk.next()) {
+                String path = treeWalk.getPathString();
+                File file = new File(workingDir, path);
+                if (file.exists()) {
+                    filesToUpdate.put(path, file);
+                }
+            }
+
+            if (filesToUpdate.isEmpty()) return;
+
+            // Iterate through commits from newest to oldest
+            RevCommit commit;
+            while ((commit = revWalk.next()) != null && !filesToUpdate.isEmpty()) {
+                long commitTimeMs = ((long) commit.getCommitTime()) * 1000L;
+                if (commit.getParentCount() == 0) {
+                    // Initial commit
+                    try (TreeWalk initWalk = new TreeWalk(repository)) {
+                        initWalk.addTree(commit.getTree());
+                        initWalk.setRecursive(true);
+                        while (initWalk.next()) {
+                            String path = initWalk.getPathString();
+                            File f = filesToUpdate.remove(path);
+                            if (f != null) {
+                                f.setLastModified(commitTimeMs);
+                            }
+                        }
+                    }
+                    break;
+                }
+
+                RevCommit parent = revWalk.parseCommit(commit.getParent(0).getId());
+                try (TreeWalk diffWalk = new TreeWalk(repository)) {
+                    diffWalk.addTree(parent.getTree());
+                    diffWalk.addTree(commit.getTree());
+                    diffWalk.setRecursive(true);
+                    diffWalk.setFilter(TreeFilter.ANY_DIFF);
+                    while (diffWalk.next()) {
+                        String path = diffWalk.getPathString();
+                        File f = filesToUpdate.remove(path);
+                        if (f != null) {
+                            f.setLastModified(commitTimeMs);
+                        }
+                    }
+                }
+            }
+            Log.d(TAG, "File timestamps synced with Git commit history for " + sLocalDirectory);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to sync file timestamps with git", e);
+        }
+    }
+
+    public static void syncFileTimestampsFromGitHubApi(String sLocalDirectory, String sRemoteUrl, String token) {
+        if (sRemoteUrl == null || !sRemoteUrl.contains("github.com") || sLocalDirectory == null || token == null || token.isEmpty()) return;
+        try {
+            String cleanUrl = sRemoteUrl;
+            if (cleanUrl.endsWith(".git")) {
+                cleanUrl = cleanUrl.substring(0, cleanUrl.length() - 4);
+            }
+            int idx = cleanUrl.indexOf("github.com/");
+            if (idx == -1) return;
+            String repoPath = cleanUrl.substring(idx + "github.com/".length());
+            String[] parts = repoPath.split("/");
+            if (parts.length != 2) return;
+            String owner = parts[0];
+            String repoName = parts[1];
+
+            File workingDir = new File(sLocalDirectory);
+            if (!workingDir.exists() || !workingDir.isDirectory()) return;
+
+            List<File> allFiles = new ArrayList<>();
+            collectFiles(workingDir, allFiles);
+            if (allFiles.isEmpty()) return;
+
+            // Batch files in chunks of 40 to avoid overly large GraphQL query payloads
+            int chunkSize = 40;
+            for (int i = 0; i < allFiles.size(); i += chunkSize) {
+                List<File> chunk = allFiles.subList(i, Math.min(i + chunkSize, allFiles.size()));
+                syncChunkViaGraphQL(owner, repoName, workingDir, chunk, token);
+            }
+            Log.d(TAG, "File timestamps synced from GitHub GraphQL API for " + sLocalDirectory);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to sync timestamps from GitHub API", e);
+        }
+    }
+
+    private static void collectFiles(File dir, List<File> result) {
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        for (File f : files) {
+            if (f.getName().equals(".git")) continue;
+            if (f.isDirectory()) {
+                collectFiles(f, result);
+            } else {
+                result.add(f);
+            }
+        }
+    }
+
+    private static void syncChunkViaGraphQL(String owner, String repoName, File rootDir, List<File> chunk, String token) {
+        try {
+            StringBuilder queryBuilder = new StringBuilder();
+            queryBuilder.append("query { repository(owner: \"").append(owner).append("\", name: \"").append(repoName).append("\") { ");
+
+            String rootPath = rootDir.getAbsolutePath();
+            for (int j = 0; j < chunk.size(); j++) {
+                File file = chunk.get(j);
+                String relPath = file.getAbsolutePath().substring(rootPath.length());
+                if (relPath.startsWith(File.separator)) {
+                    relPath = relPath.substring(1);
+                }
+                relPath = relPath.replace('\\', '/');
+
+                queryBuilder.append("f").append(j).append(": defaultBranchRef { target { ... on Commit { history(path: \"")
+                        .append(relPath.replace("\"", "\\\""))
+                        .append("\", first: 1) { nodes { committedDate } } } } } ");
+            }
+            queryBuilder.append("} }");
+
+            JSONObject payload = new JSONObject();
+            payload.put("query", queryBuilder.toString());
+
+            URL url = new URL("https://api.github.com/graphql");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Authorization", "Bearer " + token);
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("Accept", "application/vnd.github+json");
+            conn.setRequestProperty("User-Agent", "InMethodGitNoteTaking-Android");
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(8000);
+            conn.setDoOutput(true);
+
+            byte[] out = payload.toString().getBytes(StandardCharsets.UTF_8);
+            conn.getOutputStream().write(out);
+
+            int code = conn.getResponseCode();
+            if (code == 200) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line);
+                    }
+                    JSONObject resJson = new JSONObject(sb.toString());
+                    JSONObject data = resJson.optJSONObject("data");
+                    if (data != null) {
+                        JSONObject repoObj = data.optJSONObject("repository");
+                        if (repoObj != null) {
+                            for (int j = 0; j < chunk.size(); j++) {
+                                JSONObject fObj = repoObj.optJSONObject("f" + j);
+                                if (fObj != null) {
+                                    JSONObject target = fObj.optJSONObject("target");
+                                    if (target != null) {
+                                        JSONObject history = target.optJSONObject("history");
+                                        if (history != null) {
+                                            JSONArray nodes = history.optJSONArray("nodes");
+                                            if (nodes != null && nodes.length() > 0) {
+                                                String dateStr = nodes.getJSONObject(0).optString("committedDate", "");
+                                                if (!dateStr.isEmpty()) {
+                                                    Instant instant = Instant.parse(dateStr);
+                                                    chunk.get(j).setLastModified(instant.toEpochMilli());
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            conn.disconnect();
+        } catch (Exception e) {
+            Log.e(TAG, "Error in GraphQL chunk sync", e);
+        }
     }
 
     public static boolean createLocalGitRepository(Activity activity, String sLocalGitName) {
@@ -491,5 +720,75 @@ public class MyGitUtility {
             ee.printStackTrace();
         }
         return false;
+    }
+
+    public static boolean purgeLocalGitRepositoryHistory(String sLocalDirectory) {
+        if (sLocalDirectory == null || sLocalDirectory.isEmpty()) return false;
+        File gitDir = new File(sLocalDirectory, ".git");
+        if (!gitDir.exists()) return false;
+
+        try (Repository repository = new FileRepositoryBuilder().setGitDir(gitDir).build();
+             RevWalk revWalk = new RevWalk(repository)) {
+
+            ObjectId headId = repository.resolve(Constants.HEAD);
+            if (headId == null) return false;
+
+            RevCommit currentCommit = revWalk.parseCommit(headId);
+
+            // 1. Create a new root commit with the same tree snapshot and NO parent commits (depth = 1)
+            CommitBuilder commitBuilder = new CommitBuilder();
+            commitBuilder.setTreeId(currentCommit.getTree().getId());
+            commitBuilder.setAuthor(currentCommit.getAuthorIdent());
+            commitBuilder.setCommitter(currentCommit.getCommitterIdent());
+            commitBuilder.setMessage(currentCommit.getFullMessage());
+
+            ObjectInserter inserter = repository.newObjectInserter();
+            ObjectId newRootCommitId = inserter.insert(commitBuilder);
+            inserter.flush();
+
+            // 2. Update current branch Ref to point to the new root commit
+            String fullBranch = repository.getFullBranch();
+            if (fullBranch != null) {
+                RefUpdate refUpdate = repository.updateRef(fullBranch);
+                refUpdate.setNewObjectId(newRootCommitId);
+                refUpdate.setForceUpdate(true);
+                refUpdate.update();
+            }
+
+            // 3. Mark as shallow by writing the commit ID to .git/shallow
+            File shallowFile = new File(gitDir, "shallow");
+            try (FileWriter writer = new FileWriter(shallowFile)) {
+                writer.write(newRootCommitId.name() + "\n");
+            }
+
+            // 4. Clean up reflogs so old objects can be pruned
+            File logsDir = new File(gitDir, "logs");
+            if (logsDir.exists()) {
+                FileUtils.delete(logsDir, FileUtils.RECURSIVE);
+            }
+
+            // 5. Run GC to prune old loose objects and packfiles
+            try {
+                org.eclipse.jgit.internal.storage.file.GC gc = new org.eclipse.jgit.internal.storage.file.GC((org.eclipse.jgit.internal.storage.file.FileRepository) repository);
+                gc.setExpire(new Date(System.currentTimeMillis() + 1000L));
+                gc.gc();
+            } catch (Exception gcEx) {
+                // Best effort GC
+            }
+
+            Log.d(TAG, "Successfully purged local git history to depth=1 for " + sLocalDirectory);
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to purge local git repository history for " + sLocalDirectory, e);
+            return false;
+        }
+    }
+
+    public static void purgeAllLocalRepositoriesHistory(Context context) {
+        ArrayList<RemoteGit> list = getRemoteGitList(context);
+        for (RemoteGit g : list) {
+            String localDir = getLocalGitDirectory(context, g.getUrl());
+            purgeLocalGitRepositoryHistory(localDir);
+        }
     }
 }

@@ -1,0 +1,6 @@
+【What's New in v4.001】
+• New GitHub Integration: Quickly create and import GitHub notes with one-tap Token generation and clipboard auto-fill.
+• Smart Commit Timestamp Sync: Automatically syncs the accurate last commit dates for all note files.
+• Local History Purge (Experimental): Clean up local Git history to free up phone storage in Settings.
+• Full multilingual support with in-app language switching.
+• Performance optimizations and stability improvements.
