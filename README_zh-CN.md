@@ -44,7 +44,7 @@
 请帮我发布新版本 [版本号，例如 4.002]：
 1. 更新 app/build.gradle 的 versionName 与 versionCode。
 2. 在 CHANGELOG.md 最上方追加新版本的完整更新记录。
-3. 覆盖更新 distribution/whatsnew/ 目录下的 5 国语言 Play 商店发布日志（每篇字数小于 500 字符）。
+3. 覆盖更新 distribution/whatsnew/ 目录下的 4 种语言 Play 商店发布日志（每篇字数小于 500 字符）。
 4. 执行 ./gradlew assembleDebug 进行构建与验证。
 ```
 

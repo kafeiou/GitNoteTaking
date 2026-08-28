@@ -44,7 +44,7 @@ To publish a new version, give the following prompt to AI:
 Please help me release a new version [version number, e.g. 4.002]:
 1. Update versionName and versionCode in app/build.gradle.
 2. Prepend the full release notes for the new version in CHANGELOG.md.
-3. Overwrite the 5 locale release notes in distribution/whatsnew/ (< 500 chars each).
+3. Overwrite the 4 language release notes in distribution/whatsnew/ (< 500 chars each).
 4. Run ./gradlew assembleDebug to build and verify.
 ```
 

@@ -44,7 +44,7 @@ GitHub クラウドサービスを通じて日々のドキュメントを同期�
 新バージョン [バージョン番号、例: 4.002] のリリースをお願いします：
 1. app/build.gradle の versionName と versionCode を更新。
 2. CHANGELOG.md の最上部に新バージョンの更新履歴を追加。
-3. distribution/whatsnew/ ディレクトリ内の 5 言語のリリースノートを上書き更新（各言語 500 文字以内）。
+3. distribution/whatsnew/ ディレクトリ内の 4 種の言語のリリースノートを上書き更新（各言語 500 文字以内）。
 4. ./gradlew assembleDebug を実行してビルドと検証を行う。
 ```
 
