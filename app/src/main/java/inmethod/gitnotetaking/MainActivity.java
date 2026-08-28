@@ -41,6 +41,7 @@ import android.widget.Toast;
 import org.eclipse.jgit.revwalk.RevCommit;
 
 import android.net.Uri;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 
 import org.eclipse.jgit.util.FileUtils;
@@ -48,6 +49,8 @@ import org.eclipse.jgit.util.FileUtils;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Date;
 import java.util.List;
 
@@ -691,6 +694,28 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        if (menu != null) {
+            try {
+                Method m = menu.getClass().getDeclaredMethod("setOptionalIconsVisible", Boolean.TYPE);
+                m.setAccessible(true);
+                m.invoke(menu, true);
+            } catch (Exception e) {
+                // Ignore if not supported
+            }
+            MenuItem areaItem = menu.findItem(R.id.m_area);
+            if (areaItem != null && areaItem.hasSubMenu()) {
+                Menu subMenu = areaItem.getSubMenu();
+                if (subMenu != null) {
+                    try {
+                        Method m = subMenu.getClass().getDeclaredMethod("setOptionalIconsVisible", Boolean.TYPE);
+                        m.setAccessible(true);
+                        m.invoke(subMenu, true);
+                    } catch (Exception e) {
+                        // Ignore if not supported
+                    }
+                }
+            }
+        }
         return true;
     }
     @Override
@@ -820,23 +845,65 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        String[] repoNames = new String[noteRepos.size()];
+        Set<String> downloadedUrls = new HashSet<>();
+        RemoteGitDAO dao = new RemoteGitDAO(MyApplication.getAppContext());
+        ArrayList<RemoteGit> localGits = dao.getAll();
+        dao.close();
+        for (RemoteGit g : localGits) {
+            if (g.getUrl() != null) {
+                String trimmed = g.getUrl().toLowerCase().trim();
+                downloadedUrls.add(trimmed);
+                if (trimmed.endsWith(".git")) {
+                    downloadedUrls.add(trimmed.substring(0, trimmed.length() - 4));
+                } else {
+                    downloadedUrls.add(trimmed + ".git");
+                }
+            }
+        }
+
+        final boolean[] isDownloaded = new boolean[noteRepos.size()];
+        final String[] repoNames = new String[noteRepos.size()];
         for (int i = 0; i < noteRepos.size(); i++) {
             GitHubRepo r = noteRepos.get(i);
+            String cloneUrl = r.getCloneUrl() != null ? r.getCloneUrl().toLowerCase().trim() : "";
+            boolean downloaded = downloadedUrls.contains(cloneUrl) || (cloneUrl.endsWith(".git") && downloadedUrls.contains(cloneUrl.substring(0, cloneUrl.length() - 4)));
+            isDownloaded[i] = downloaded;
+
             String desc = r.getDescription();
             boolean hasDesc = desc != null && !desc.trim().isEmpty() && !desc.equalsIgnoreCase("null");
             String badge = r.isPrivate() ? getString(R.string.github_private_badge) : getString(R.string.github_public_badge);
-            repoNames[i] = r.getFullName() + badge +
+            String downloadedBadge = downloaded ? getString(R.string.github_downloaded_badge) : "";
+            repoNames[i] = r.getFullName() + badge + downloadedBadge +
                     (hasDesc ? "\n" + desc.trim() : "");
         }
 
+        ArrayAdapter<String> repoAdapter = new ArrayAdapter<String>(activity, android.R.layout.select_dialog_item, repoNames) {
+            @Override
+            public boolean isEnabled(int position) {
+                return !isDownloaded[position];
+            }
+
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                TextView view = (TextView) super.getView(position, convertView, parent);
+                if (isDownloaded[position]) {
+                    view.setTextColor(0xFF888888);
+                } else {
+                    view.setTextColor(0xFF212121);
+                }
+                return view;
+            }
+        };
+
         new AlertDialog.Builder(activity)
                 .setTitle(getString(R.string.github_select_repo_title) + " (" + username + ")")
-                .setItems(repoNames, new DialogInterface.OnClickListener() {
+                .setAdapter(repoAdapter, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        GitHubRepo selectedRepo = noteRepos.get(which);
-                        cloneSelectedGitHubRepo(username, token, selectedRepo);
+                        if (!isDownloaded[which]) {
+                            GitHubRepo selectedRepo = noteRepos.get(which);
+                            cloneSelectedGitHubRepo(username, token, selectedRepo);
+                        }
                     }
                 })
                 .setNegativeButton(R.string.dialog_cancel, null)

@@ -139,13 +139,14 @@
     <string name="github_no_note_repos_msg">GitHub アカウント内に「note」で始まるリポジトリが見つかりませんでした。\n\n先に GitHub 上で「note」で始まるリポジトリ（例: note-work, NoteTaking など）を作成してください。</string>
     <string name="github_create_repo_online">GitHub で作成</string>
     <string name="github_auth_failed">GitHub 認証または接続に失敗しました：</string>
-    <string name="github_connect_dialog_msg">repo の読み書き権限を持つ GitHub Token (PAT) を入力してください:\n\n💡 まだ生成していない場合は、下の【Token を生成】をタップしてください。必要な権限が事前選択された状態で GitHub ページが開きます:\n1. ページ上部の「Expiration」で【No expiration (無期限)】を選択\n2. 最下部までスクロールして緑色の【Generate token】をタップしてコピー\n3. ここに戻ると自動的に入力されます！</string>
+    <string name="github_connect_dialog_msg">[repo] の全権限を持つ Token (PAT) を入力してください:\n\n💡 まだ生成していない場合は、下の【Token を生成】をタップすると、必要な権限が自動選択された状態で GitHub ページが開きます:\n--\n1. ブラウザで GitHub にログイン\n2. 「No expiration (無期限)」を選択\n3. 最下部までスクロールして【Generate token】をタップしてコピー\n4. ここに戻ると自動的に入力されます！\n--</string>
     <string name="github_btn_connect">接続する</string>
     <string name="github_btn_generate_token">Token を生成</string>
     <string name="github_clone_success">クローンに成功しました！</string>
     <string name="github_clone_failed">クローンに失敗しました！</string>
     <string name="github_private_badge"> [非公開]</string>
     <string name="github_public_badge"> [公開]</string>
+    <string name="github_downloaded_badge"> [ダウンロード済]</string>
 
     <!-- Purge History strings -->
     <string name="pref_purge_title">履歴をパージ (単一バージョンのみ保持) (実験中)</string>

@@ -52,8 +52,9 @@
 ## 🌐 开源信息 Open Source
 - GitHub 项目：https://github.com/WilliamFromTW/GitNoteTaking
 
-## 📚 第三方库与系统要求
+## 📚 第三方库与资源授权
 - [Eclipse JGit](https://www.eclipse.org/jgit) (version 7.4.0)
+- Git Logo by Jason Long is licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
 - 系统要求：仅支持 Android 13 (API 33) 或更高版本
 
 ## 🤖 开发工具致谢

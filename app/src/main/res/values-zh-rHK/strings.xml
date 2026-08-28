@@ -139,13 +139,14 @@
     <string name="github_no_note_repos_msg">在您的 GitHub 帳號中未找到名稱以「note」開頭的儲存庫。\n\n請先在 GitHub 上建立名稱以「note」開頭的儲存庫（例如 note-work, NoteTaking 等）後再進行連線。</string>
     <string name="github_create_repo_online">前往 GitHub 建立</string>
     <string name="github_auth_failed">GitHub 授權或連線失敗：</string>
-    <string name="github_connect_dialog_msg">請輸入具有 repo 讀寫權限的 GitHub Token (PAT)：\n\n💡 若尚未產生，點擊下方【前往產生 Token】，系統會直接開啟 GitHub 網頁並自動勾選好權限：\n1. 可在網頁上方將「Expiration」選為【No expiration (永不過期)】\n2. 滑至最下方點擊綠色【Generate token】並複製\n3. 切回此處將自動為您填入！</string>
+    <string name="github_connect_dialog_msg">請輸入具有[repo]全部權限的Token (PAT)：\n\n💡 若尚未產生，點擊下方【前往產生 Token】，系統會自動開啟 GitHub 網頁並預選好權限：\n--\n1. 瀏覽器登入 github\n2. 選「永不過期」\n3. 滑至最下方【Generate token】並複製\n4. 切回此處將自動為您填入！\n--</string>
     <string name="github_btn_connect">確定連線</string>
     <string name="github_btn_generate_token">前往產生 Token</string>
     <string name="github_clone_success">下載複製成功！</string>
     <string name="github_clone_failed">下載複製失敗！</string>
     <string name="github_private_badge"> [私有]</string>
     <string name="github_public_badge"> [公開]</string>
+    <string name="github_downloaded_badge"> [已下載]</string>
 
     <!-- Purge History strings -->
     <string name="pref_purge_title">歷史紀錄瘦身 (保留單一版本) (實驗中)</string>

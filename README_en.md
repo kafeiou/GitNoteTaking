@@ -52,8 +52,9 @@ Please help me release a new version [version number, e.g. 4.002]:
 ## 🌐 Open Source
 - GitHub Repository: https://github.com/WilliamFromTW/GitNoteTaking
 
-## 📚 3rd-Party Libraries & Requirements
+## 📚 3rd-Party Libraries & Asset Licensing
 - [Eclipse JGit](https://www.eclipse.org/jgit) (version 7.4.0)
+- Git Logo by Jason Long is licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
 - System Requirement: Android 13 (API 33) or above
 
 ## 🤖 Development Tools

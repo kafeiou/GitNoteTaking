@@ -652,6 +652,22 @@ Log.d(TAG,"m_item name = "+m_item.get(position)+",position number = "+ position+
                         FileOutputStream m_Output = new FileOutputStream((m_curDir + File.separator + m_text), false);
                         m_Output.close();
 
+                        final String newFileName = m_text;
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    String commitMsg = "<" + newFileName + ">";
+                                    boolean bCommit = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, commitMsg);
+                                    if (sGitRemoteUrl.indexOf("local") == -1 && bCommit) {
+                                        MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl);
+                                    }
+                                } catch (Exception ee) {
+                                    ee.printStackTrace();
+                                }
+                            }
+                        }).start();
+
                     } catch (FileNotFoundException e) {
                         runOnUiThread(new Runnable() {
                             @Override

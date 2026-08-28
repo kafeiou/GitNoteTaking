@@ -52,8 +52,9 @@ GitHub クラウドサービスを通じて日々のドキュメントを同期�
 ## 🌐 オープンソース情報
 - GitHub リポジトリ：https://github.com/WilliamFromTW/GitNoteTaking
 
-## 📚 サードパーティライブラリ＆動作要件
+## 📚 サードパーティライブラリ＆アセットライセンス
 - [Eclipse JGit](https://www.eclipse.org/jgit) (version 7.4.0)
+- Git Logo by Jason Long is licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
 - 動作環境：Android 13 (API 33) 以降
 
 ## 🤖 開発ツールのクレジット
