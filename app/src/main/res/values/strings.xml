@@ -134,7 +134,7 @@
     <string name="action_create_github_git">Create GitHub Note</string>
     <string name="github_auth_loading">Connecting to GitHub...</string>
     <string name="github_fetching_repos">Fetching note repositories...</string>
-    <string name="github_select_repo_title">Select GitHub Note Repository</string>
+    <string name="github_select_repo_title">Select Note (note* only)</string>
     <string name="github_no_note_repos_title">No Note Repositories Found</string>
     <string name="github_no_note_repos_msg">No repositories starting with \"note\" were found in your GitHub account.\n\nPlease create a repository starting with \"note\" (e.g. note-work, NoteTaking) on GitHub first.</string>
     <string name="github_create_repo_online">Create on GitHub</string>

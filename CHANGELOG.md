@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.004] - 2026-08-28
+
+### 🎨 UI & UX Enhancements
+
+#### 1. GitHub 筆記儲存庫挑選提示優化 (Repository Selection Hint)
+- **明確過濾標題**：將儲存庫挑選對話框頂部標題調整為「選擇 note 開頭筆記 ({帳號})」，明確告知使用者系統僅過濾並抓取 `note*` 相關筆記儲存庫。
+- **多語系極簡文案**：同步更新 5 國語系字串，英文採用 `Select Note (note* only)`、日文採用 `ノート選択 (note* のみ)`，簡潔清晰。
+
 ## [4.003] - 2026-08-28
 
 ### 🚀 New Features & Enhancements

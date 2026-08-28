@@ -134,7 +134,7 @@
     <string name="action_create_github_git">GitHub ノートを作成</string>
     <string name="github_auth_loading">GitHub 認証に接続中...</string>
     <string name="github_fetching_repos">ノートリポジトリを検索中...</string>
-    <string name="github_select_repo_title">GitHub ノートリポジトリを選択</string>
+    <string name="github_select_repo_title">ノート選択 (note* のみ)</string>
     <string name="github_no_note_repos_title">ノートリポジトリが見つかりません</string>
     <string name="github_no_note_repos_msg">GitHub アカウント内に「note」で始まるリポジトリが見つかりませんでした。\n\n先に GitHub 上で「note」で始まるリポジトリ（例: note-work, NoteTaking など）を作成してください。</string>
     <string name="github_create_repo_online">GitHub で作成</string>

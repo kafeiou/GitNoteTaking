@@ -134,7 +134,7 @@
     <string name="action_create_github_git">创建 GitHub 笔记</string>
     <string name="github_auth_loading">正在连接 GitHub 授权中...</string>
     <string name="github_fetching_repos">正在查询笔记仓库...</string>
-    <string name="github_select_repo_title">请选择 GitHub 笔记仓库</string>
+    <string name="github_select_repo_title">选择 note 开头笔记</string>
     <string name="github_no_note_repos_title">未找到笔记仓库</string>
     <string name="github_no_note_repos_msg">在您的 GitHub 账号中未找到名称以「note」开头的仓库。\n\n请先在 GitHub 上创建名称以「note」开头的仓库（例如 note-work, NoteTaking 等）后再进行连接。</string>
     <string name="github_create_repo_online">前往 GitHub 创建</string>
