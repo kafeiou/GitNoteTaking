@@ -25,6 +25,10 @@ public class CustomPreferenceFragment extends PreferenceFragmentCompat {
         ListPreference appLanguage = (ListPreference) findPreference("AppLanguage");
         if (appLanguage != null) {
             String currentLang = sharedPreferences.getString("AppLanguage", "system");
+            if ("ja".equalsIgnoreCase(currentLang)) {
+                currentLang = "ja-JP";
+                sharedPreferences.edit().putString("AppLanguage", currentLang).apply();
+            }
             appLanguage.setValue(currentLang);
             int langIndex = appLanguage.findIndexOfValue(currentLang);
             if (langIndex >= 0) {
@@ -32,6 +36,9 @@ public class CustomPreferenceFragment extends PreferenceFragmentCompat {
             }
             appLanguage.setOnPreferenceChangeListener((preference, o) -> {
                 String selectedLang = (o != null) ? o.toString().trim() : "system";
+                if ("ja".equalsIgnoreCase(selectedLang)) {
+                    selectedLang = "ja-JP";
+                }
                 sharedPreferences.edit().putString("AppLanguage", selectedLang).apply();
                 int idx = ((ListPreference) preference).findIndexOfValue(selectedLang);
                 if (idx >= 0) {
@@ -41,6 +48,13 @@ public class CustomPreferenceFragment extends PreferenceFragmentCompat {
                     AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList());
                 } else {
                     AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(selectedLang));
+                }
+                if (getActivity() != null) {
+                    getActivity().getWindow().getDecorView().post(() -> {
+                        if (getActivity() != null && !getActivity().isFinishing()) {
+                            getActivity().recreate();
+                        }
+                    });
                 }
                 return true;
             });

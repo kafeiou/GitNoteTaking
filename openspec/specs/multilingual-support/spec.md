@@ -2,7 +2,7 @@
 
 ## Purpose
 
-定義 InMethodGitNoteTaking 應用程式之多語系國際化架構規範，支援繁體中文（台灣/香港）、簡體中文、日語與英文，並確保介面排版相容性。
+定義 InMethodGitNoteTaking 應用程式之多語系國際化架構規範，支援繁體中文、簡體中文、日語與英文，並確保介面排版相容性。
 
 ## Requirements
 
@@ -12,7 +12,7 @@
 ```mermaid
 flowchart TD
     A[使用者裝置語言] --> B{語言判斷}
-    B -->|zh-TW / zh-HK| C[values-zh-rTW / values-zh-rHK 繁體中文]
+    B -->|zh-TW| C[values-zh-rTW 繁體中文]
     B -->|zh-CN / zh-SG| D[values-zh-rCN 簡體中文]
     B -->|ja-JP| E[values-ja 日文精簡漢字]
     B -->|其他語言| F[values 預設英文]

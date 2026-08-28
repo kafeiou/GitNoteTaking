@@ -1,6 +1,6 @@
 # Git Note Taking (Git テキストノート)
 
-[繁體中文 (台灣)](README.md) | [English](README_en.md) | [日本語](README_ja.md) | [简体中文](README_zh-CN.md) | [繁體中文 (香港)](README_zh-HK.md)
+[繁體中文](README.md) | [English](README_en.md) | [日本語](README_ja.md) | [简体中文](README_zh-CN.md)
 
 > **ソフトウェアエンジニア専用・一般の方はお控えください**
 
@@ -32,8 +32,7 @@ GitHub クラウドサービスを通じて日々のドキュメントを同期�
 ## 📦 Google Play リリース＆配布管理 (Release & Distribution)
 
 - **`distribution/whatsnew/`**：Google Play ストア向けの **現行リリースノート** を各言語ごとに格納（Google Play の規約に基づき 500 文字以内に制限）：
-  - `whatsnew-zh-TW`（繁体字中国語 台湾）
-  - `whatsnew-zh-HK`（繁体字中国語 香港）
+  - `whatsnew-zh-TW`（繁体字中国語）
   - `whatsnew-zh-CN`（簡体字中国語）
   - `whatsnew-ja-JP`（日本語）
   - `whatsnew-en-US`（英語 / デフォルト）

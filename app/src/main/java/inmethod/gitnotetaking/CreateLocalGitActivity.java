@@ -88,7 +88,7 @@ public class CreateLocalGitActivity extends AppCompatActivity {
                                 new Thread(new Runnable(){
                                     @Override
                                     public void run() {
-                                        if (MyGitUtility.createLocalGitRepository(activity,sLocalName )) {
+                                        if (MyGitUtility.createLocalGitRepository(activity, sLocalName)) {
                                             RemoteGit aValue = new RemoteGit();
                                             aValue.setId(0);
                                             aValue.setRemoteName(sRemoteName);
@@ -101,53 +101,23 @@ public class CreateLocalGitActivity extends AppCompatActivity {
                                             aValue.setAuthor_email(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorEmail", "root@your.email.com"));
                                             aRemoteGitDAO.insert(aValue);
                                             aRemoteGitDAO.close();
-                                            Looper.prepare();
-                                            final AlertDialog.Builder MyAlertDialog = new AlertDialog.Builder(activity);
-                                            MyAlertDialog.setTitle(getResources().getString(R.string.tv_create_local_git_repository));
-                                            MyAlertDialog.setMessage(getResources().getString(R.string.tv_create_local_git_success));
-                                            DialogInterface.OnClickListener OkClick = new DialogInterface.OnClickListener() {
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                    runOnUiThread(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            onBackPressed();
-                                                        }
-                                                    });
-                                                }
-                                            };
-                                            MyAlertDialog.setNeutralButton("OK", OkClick);
-
                                             runOnUiThread(new Runnable() {
-                                                              @Override
-                                                              public void run() {
-                                                                  MyAlertDialog.show();
-                                                              }
-
-                                                          }
-                                            );
-
-                                            Looper.loop();
+                                                @Override
+                                                public void run() {
+                                                    finish();
+                                                }
+                                            });
                                         } else {
-
-                                            Looper.prepare();
-                                            final AlertDialog.Builder MyAlertDialog = new AlertDialog.Builder(activity);
-                                            MyAlertDialog.setTitle(getResources().getString(R.string.tv_create_local_git_repository));
-                                            MyAlertDialog.setMessage(getResources().getString(R.string.tv_clone_fail));
-                                            DialogInterface.OnClickListener OkClick = new DialogInterface.OnClickListener() {
-                                                public void onClick(DialogInterface dialog, int which) {
-                                                }
-                                            };
-                                            MyAlertDialog.setNeutralButton("OK", OkClick);
-
                                             runOnUiThread(new Runnable() {
-                                                              @Override
-                                                              public void run() {
-                                                                  MyAlertDialog.show();
-                                                              }
-
-                                                          }
-                                            );
-                                            Looper.loop();
+                                                @Override
+                                                public void run() {
+                                                    AlertDialog.Builder MyAlertDialog = new AlertDialog.Builder(activity);
+                                                    MyAlertDialog.setTitle(getResources().getString(R.string.tv_create_local_git_repository));
+                                                    MyAlertDialog.setMessage(getResources().getString(R.string.tv_clone_fail));
+                                                    MyAlertDialog.setNeutralButton("OK", null);
+                                                    MyAlertDialog.show();
+                                                }
+                                            });
                                         }
                                     }
                                 }).start();

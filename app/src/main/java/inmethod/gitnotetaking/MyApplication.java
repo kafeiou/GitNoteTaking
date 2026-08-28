@@ -14,6 +14,11 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.os.LocaleListCompat;
+import androidx.preference.PreferenceManager;
+import android.content.SharedPreferences;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +36,14 @@ public class MyApplication extends Application {
     public void onCreate() {
         super.onCreate();
         MyApplication.context = getApplicationContext();
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        String lang = sp.getString("AppLanguage", "system");
+        if ("ja".equalsIgnoreCase(lang)) {
+            lang = "ja-JP";
+        }
+        if (!"system".equalsIgnoreCase(lang) && !lang.isEmpty()) {
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(lang));
+        }
     }
 
     public static boolean isNetworkConnected(){

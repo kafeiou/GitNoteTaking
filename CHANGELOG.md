@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.005] - 2026-08-29
+
+### 🚀 Enhancements & Architecture
+
+#### 1. 多語系即時切換與 Android 13+ 標準適配 (Instant Multilingual Switching)
+- **標準地區碼補全**：將日文語系標籤補全為標準 `ja-JP`（繁中 `zh-TW`、簡中 `zh-CN`、英文 `en`），杜絕 CJK 漢字碼位渲染延遲。
+- **Android 13+ 標準設定檔**：建立 `res/xml/locales_config.xml` 並於 `AndroidManifest.xml` 配置 `AppLocalesMetadataHolderService` 自動持久化。
+- **即時刷新與生命週期連動**：在 `CustomPreferenceFragment` 與 `MainActivity.onResume()` 自動偵測語言切換並執行 `recreate()`，達成零延遲即時秒切。
+
+#### 2. 香港 (HK) 冗餘語系清理 (HK Redundancy Cleanup)
+- 徹底移除 `values-zh-rHK` 冗餘資源檔與相關發布日誌，全面統整為 4 大標準語系（繁中、簡中、日文、英文）。
+
+#### 3. 本地筆記建立流程優化 (Streamlined Local Note Creation)
+- 本地端筆記建立成功後直接秒速關閉畫面返回主清單，徹底移除多餘的「建立成功」確認對話框。
+
+#### 4. 自動化測試套件與專案規範 (Automated Testing Suite)
+- 新增 `LocaleAndResourceConsistencyTest`（資源與語系標籤 100% 完整性檢驗）與 `LanguageSwitchingInstrumentedTest` 儀器測試。
+- 產出 `TESTING.md` 測試指南，並將一鍵單元測試規範寫入專案鐵律。
+
 ## [4.004] - 2026-08-28
 
 ### 🎨 UI & UX Enhancements

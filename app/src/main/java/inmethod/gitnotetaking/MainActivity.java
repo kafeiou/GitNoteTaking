@@ -75,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
     RecyclerAdapterForDevice adapter = null;
     AlertDialog.Builder waitBuilder = null;
     AlertDialog waitDialog;
+    private String currentLanguageSetting = null;
 
 
     public void showError(Exception ex)
@@ -108,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        currentLanguageSetting = PreferenceManager.getDefaultSharedPreferences(this).getString("AppLanguage", "system");
     }
 
     private final Handler loadingMsgHandler = new Handler(Looper.getMainLooper());
@@ -668,6 +670,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
+        String savedLang = PreferenceManager.getDefaultSharedPreferences(this).getString("AppLanguage", "system");
+        if ("ja".equalsIgnoreCase(savedLang)) {
+            savedLang = "ja-JP";
+        }
+        if (currentLanguageSetting != null && !currentLanguageSetting.equals(savedLang)) {
+            currentLanguageSetting = savedLang;
+            recreate();
+            return;
+        }
+        currentLanguageSetting = savedLang;
         adapter.clear();
         MyApplication.resetFiles();
         ArrayList<RemoteGit> aList = MyGitUtility.getRemoteGitList(MyApplication.getAppContext());

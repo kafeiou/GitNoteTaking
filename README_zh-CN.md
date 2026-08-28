@@ -1,6 +1,6 @@
 # GIT文本笔记 Git Note Taking
 
-[繁體中文 (台灣)](README.md) | [English](README_en.md) | [日本語](README_ja.md) | [简体中文](README_zh-CN.md) | [繁體中文 (香港)](README_zh-HK.md)
+[繁體中文](README.md) | [English](README_en.md) | [日本語](README_ja.md) | [简体中文](README_zh-CN.md)
 
 > **软件工程师专用、麻瓜勿扰**
 
@@ -32,8 +32,7 @@
 ## 📦 Google Play 商店发布与版本更新机制 (Release & Distribution)
 
 - **`distribution/whatsnew/`**：存放**当次发布**至 Google Play 商店的多语言发布日志（What's New / Release Notes）。每次发布新版本时覆盖此目录下的文件（字数严格限制在 500 字符内以符合 Google Play 规范）：
-  - `whatsnew-zh-TW`（繁体中文 台湾）
-  - `whatsnew-zh-HK`（繁体中文 香港）
+  - `whatsnew-zh-TW`（繁体中文）
   - `whatsnew-zh-CN`（简体中文）
   - `whatsnew-ja-JP`（日语）
   - `whatsnew-en-US`（English / 默认）

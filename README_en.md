@@ -1,6 +1,6 @@
 # Git Note Taking
 
-[繁體中文 (台灣)](README.md) | [English](README_en.md) | [日本語](README_ja.md) | [简体中文](README_zh-CN.md) | [繁體中文 (香港)](README_zh-HK.md)
+[繁體中文](README.md) | [English](README_en.md) | [日本語](README_ja.md) | [简体中文](README_zh-CN.md)
 
 > **For software engineers only. Muggles stay away.**
 
@@ -32,8 +32,7 @@ Sync your daily markdown notes and documentation via GitHub. Read or edit offlin
 ## 📦 Google Play Release & Distribution Mechanism
 
 - **`distribution/whatsnew/`**: Contains the **current release notes** for Google Play Store across supported locales (strictly under 500 characters per Google Play policy):
-  - `whatsnew-zh-TW` (Traditional Chinese - Taiwan)
-  - `whatsnew-zh-HK` (Traditional Chinese - Hong Kong)
+  - `whatsnew-zh-TW` (Traditional Chinese)
   - `whatsnew-zh-CN` (Simplified Chinese)
   - `whatsnew-ja-JP` (Japanese)
   - `whatsnew-en-US` (English / Default)
