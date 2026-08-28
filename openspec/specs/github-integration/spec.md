@@ -14,18 +14,26 @@
 - **THEN** 系統開啟 GitHub 連線引導對話框
 
 ### Requirement: GitHub Token 獲取與剪貼簿自動辨識
-系統 MUST 提供【前往產生 Token】按鈕，自動開啟 GitHub 官方 PAT 建立頁面，並預先勾選所需之權限（`repo` 與 `read:user`）與填妥描述。當使用者產生 Token 複製並切回 App 時，系統 MUST 自動偵測剪貼簿內容並填入 Token 輸入框。
+系統 MUST 在 GitHub 連線對話框中提供「一鍵 OAuth 授權」與「PAT 手動輸入」雙軌並存機制。
+1. **OAuth 一鍵授權**：提供顯著的【一鍵登入 GitHub 授權】按鈕，點擊後透過 Chrome Custom Tabs 開啟授權頁面，使用者同意授權後，系統 MUST 透過 Deep Link（`gitnotetaking://oauth/github`）自動接收回調並換取 Access Token，直接進入儲存庫挑選流程。
+2. **PAT 手動輸入**：提供【前往產生 Token】按鈕自動開啟預選權限頁面，並在使用者複製切回時自動辨識剪貼簿內容填入輸入框，點擊【確定連線】後進入儲存庫挑選流程。
 
 ```mermaid
 flowchart TD
-    A[點擊「建立 GitHub 筆記」] --> B[彈出 GitHub 連線對話框]
-    B --> C[點擊「前往產生 Token」]
-    C --> D[瀏覽器開啟 GitHub 網頁並預選 repo 權限]
-    D --> E[使用者複製產生之 Token]
-    E --> F[切回 App: 自動辨識並帶入剪貼簿 Token]
-    F --> G[點擊「確定連線」]
-    G --> H[呼叫 GitHub API 驗證 Token 並取得 note* 儲存庫]
+    A[點擊「建立 GitHub 筆記」] --> B[彈出雙軌並存 GitHub 連線對話框]
+    B -->|途徑 1: OAuth 一鍵授權| C[點擊「一鍵登入 GitHub 授權」]
+    C --> D[瀏覽器開啟 GitHub 授權頁面]
+    D --> E[使用者點擊 Authorize]
+    E --> F[Deep Link 回跳 App: 自動換取 Access Token]
+    F --> I[呼叫 GitHub API 取得 note* 儲存庫]
+    B -->|途徑 2: PAT 手動模式| G[點擊「前往產生 Token」或手動輸入]
+    G --> H[切回 App 自動帶入剪貼簿 Token 並點擊確定連線]
+    H --> I
 ```
+
+#### Scenario: 成功透過 OAuth 一鍵授權取得儲存庫
+- **WHEN** 使用者在對話框點擊「一鍵登入 GitHub 授權」並在瀏覽器完成授權
+- **THEN** 系統透過 Deep Link 接收授權碼、換取 Token 並自動取得儲存庫清單
 
 #### Scenario: 成功透過 Token 取得儲存庫
 - **WHEN** 使用者輸入或由剪貼簿帶入有效之 GitHub Token 並點擊「確定連線」
@@ -78,3 +86,7 @@ flowchart TD
 
 ### Requirement: 多語系支援與 Google Play 發布標準
 所有介面字串 MUST 支援繁體中文（台灣）、繁體中文（香港）、簡體中文、日文、英文 5 國語言。每次版本升級時 MUST 維護 `CHANGELOG.md` 並同步覆蓋 `distribution/whatsnew/` 下之 5 國語系 Play 商店發布檔案（字數均限制在 500 字元內）。
+
+#### Scenario: 多語系與發布日誌同步
+- **WHEN** 升級應用程式版本
+- **THEN** 系統提供 5 國語系字串支援並產出合規之發布日誌

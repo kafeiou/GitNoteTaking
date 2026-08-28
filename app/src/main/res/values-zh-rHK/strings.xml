@@ -138,7 +138,11 @@
     <string name="github_no_note_repos_title">未找到筆記儲存庫</string>
     <string name="github_no_note_repos_msg">在您的 GitHub 帳號中未找到名稱以「note」開頭的儲存庫。\n\n請先在 GitHub 上建立名稱以「note」開頭的儲存庫（例如 note-work, NoteTaking 等）後再進行連線。</string>
     <string name="github_create_repo_online">前往 GitHub 建立</string>
-    <string name="github_auth_failed">GitHub 授權或連線失敗：</string>
+    <string name="github_auth_failed">GitHub 驗證失敗：</string>
+    <string name="github_oauth_login_btn">一鍵登入 GitHub 授權 (推薦)</string>
+    <string name="github_oauth_divider">────────  或手動輸入 Token (PAT)  ────────</string>
+    <string name="github_oauth_cancelled">已取消 GitHub 授權</string>
+    <string name="github_oauth_exchanging">正在驗證授權權杖...</string>
     <string name="github_connect_dialog_msg">請輸入具有[repo]全部權限的Token (PAT)：\n\n💡 若尚未產生，點擊下方【前往產生 Token】，系統會自動開啟 GitHub 網頁並預選好權限：\n--\n1. 瀏覽器登入 github\n2. 選「永不過期」\n3. 滑至最下方【Generate token】並複製\n4. 切回此處將自動為您填入！\n--</string>
     <string name="github_btn_connect">確定連線</string>
     <string name="github_btn_generate_token">前往產生 Token</string>
@@ -154,6 +158,8 @@
     <string name="pref_purge_dialog_title">歷史紀錄瘦身</string>
     <string name="pref_purge_dialog_msg">此操作將會在手機本地清除所有筆記儲存庫的舊歷史紀錄，重置為最新單一版本（depth = 1）以徹底釋放儲存空間。\n\n確定要開始執行嗎？</string>
     <string name="pref_purge_btn_confirm">開始瘦身</string>
-    <string name="pref_purge_loading">正在執行瘦身清除中...</string>
-    <string name="pref_purge_success">瘦身完成！所有儲存庫已重置為單一版本 (depth = 1)。</string>
+    <string name="pref_purge_loading">正在瘦身歷史紀錄...</string>
+    <string name="pref_purge_success">歷史紀錄瘦身完成！所有儲存庫已轉換為單一版本。</string>
+    <string name="tv_syncing_timestamps">正在更新檔案真實日期...</string>
+    <string name="tv_fetching_github_dates">向 GitHub 取得檔案最近更新日...</string>
 </resources>

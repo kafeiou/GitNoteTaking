@@ -139,6 +139,10 @@
     <string name="github_no_note_repos_msg">No repositories starting with \"note\" were found in your GitHub account.\n\nPlease create a repository starting with \"note\" (e.g. note-work, NoteTaking) on GitHub first.</string>
     <string name="github_create_repo_online">Create on GitHub</string>
     <string name="github_auth_failed">GitHub authentication failed: </string>
+    <string name="github_oauth_login_btn">One-Tap GitHub Authorization (Recommended)</string>
+    <string name="github_oauth_divider">────────  OR Manual Token (PAT)  ────────</string>
+    <string name="github_oauth_cancelled">GitHub authorization cancelled</string>
+    <string name="github_oauth_exchanging">Exchanging authorization token...</string>
     <string name="github_connect_dialog_msg">Please enter a Token (PAT) with full [repo] permissions:\n\n💡 If you haven\'t created one yet, tap [Generate Token] below. The system will open GitHub with required permissions pre-selected:\n--\n1. Log in to GitHub in your browser\n2. Select [No expiration]\n3. Scroll to the bottom, tap [Generate token] and copy it\n4. Switch back here to auto-fill!\n--</string>
     <string name="github_btn_connect">Connect</string>
     <string name="github_btn_generate_token">Generate Token</string>
@@ -156,4 +160,6 @@
     <string name="pref_purge_btn_confirm">Start Purge</string>
     <string name="pref_purge_loading">Purging history...</string>
     <string name="pref_purge_success">Purge completed! All repositories are now depth = 1.</string>
+    <string name="tv_syncing_timestamps">Updating file dates...</string>
+    <string name="tv_fetching_github_dates">Getting file dates from GitHub...</string>
 </resources>

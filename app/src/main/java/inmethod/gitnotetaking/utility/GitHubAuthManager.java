@@ -29,6 +29,9 @@ import java.util.List;
 public class GitHubAuthManager {
     public static final String TAG = "GitHubAuthManager";
     public static final String GITHUB_CLI_CLIENT_ID = "178c6fc778cca21e8f48";
+    public static final String GITHUB_CLIENT_ID = "Ov23licBa82hfK5H5sos";
+    public static final String GITHUB_CLIENT_SECRET = "21385fe595345f415e04e715b06ec77b7812f344";
+    public static final String GITHUB_REDIRECT_URI = "gitnotetaking://oauth/github";
 
     private static GitHubAuthManager instance;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -93,6 +96,62 @@ public class GitHubAuthManager {
             instance = new GitHubAuthManager();
         }
         return instance;
+    }
+
+    public void startOAuthWebFlow(Activity activity) {
+        String authUrl = "https://github.com/login/oauth/authorize" +
+                "?client_id=" + GITHUB_CLIENT_ID +
+                "&scope=" + Uri.encode("repo read:user") +
+                "&redirect_uri=" + Uri.encode(GITHUB_REDIRECT_URI);
+        try {
+            CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder().build();
+            customTabsIntent.launchUrl(activity, Uri.parse(authUrl));
+        } catch (Exception e) {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl));
+            activity.startActivity(browserIntent);
+        }
+    }
+
+    public void exchangeCodeForToken(String code, GitHubAuthCallback callback) {
+        new Thread(() -> {
+            try {
+                URL url = new URL("https://github.com/login/oauth/access_token");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Accept", "application/json");
+                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                conn.setDoOutput(true);
+                conn.setConnectTimeout(15000);
+                conn.setReadTimeout(15000);
+
+                String postData = "client_id=" + URLEncoder.encode(GITHUB_CLIENT_ID, "UTF-8") +
+                        "&client_secret=" + URLEncoder.encode(GITHUB_CLIENT_SECRET, "UTF-8") +
+                        "&code=" + URLEncoder.encode(code, "UTF-8") +
+                        "&redirect_uri=" + URLEncoder.encode(GITHUB_REDIRECT_URI, "UTF-8");
+
+                try (OutputStream os = conn.getOutputStream()) {
+                    os.write(postData.getBytes(StandardCharsets.UTF_8));
+                    os.flush();
+                }
+
+                int responseCode = conn.getResponseCode();
+                InputStream is = (responseCode >= 200 && responseCode < 300) ? conn.getInputStream() : conn.getErrorStream();
+                String response = readStream(is);
+                conn.disconnect();
+
+                JSONObject json = new JSONObject(response);
+                if (json.has("access_token")) {
+                    String accessToken = json.getString("access_token");
+                    loadUserDataAndRepos(accessToken, callback);
+                } else {
+                    String error = json.optString("error_description", json.optString("error", "Failed to obtain access token"));
+                    mainHandler.post(() -> callback.onError(error));
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to exchange OAuth code", e);
+                mainHandler.post(() -> callback.onError(e.getMessage()));
+            }
+        }).start();
     }
 
     public void cancelPolling() {

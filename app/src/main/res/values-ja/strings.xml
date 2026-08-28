@@ -138,7 +138,11 @@
     <string name="github_no_note_repos_title">ノートリポジトリが見つかりません</string>
     <string name="github_no_note_repos_msg">GitHub アカウント内に「note」で始まるリポジトリが見つかりませんでした。\n\n先に GitHub 上で「note」で始まるリポジトリ（例: note-work, NoteTaking など）を作成してください。</string>
     <string name="github_create_repo_online">GitHub で作成</string>
-    <string name="github_auth_failed">GitHub 認証または接続に失敗しました：</string>
+    <string name="github_auth_failed">GitHub 認証に失敗しました: </string>
+    <string name="github_oauth_login_btn">ワンタップで GitHub 認証 (推奨)</string>
+    <string name="github_oauth_divider">────────  または手動で Token (PAT) を入力  ────────</string>
+    <string name="github_oauth_cancelled">GitHub 認証がキャンセルされました</string>
+    <string name="github_oauth_exchanging">認証トークンを検証中...</string>
     <string name="github_connect_dialog_msg">[repo] の全権限を持つ Token (PAT) を入力してください:\n\n💡 まだ生成していない場合は、下の【Token を生成】をタップすると、必要な権限が自動選択された状態で GitHub ページが開きます:\n--\n1. ブラウザで GitHub にログイン\n2. 「No expiration (無期限)」を選択\n3. 最下部までスクロールして【Generate token】をタップしてコピー\n4. ここに戻ると自動的に入力されます！\n--</string>
     <string name="github_btn_connect">接続する</string>
     <string name="github_btn_generate_token">Token を生成</string>
@@ -155,5 +159,7 @@
     <string name="pref_purge_dialog_msg">すべてのリポジトリのローカル Git 履歴をパージし、depth = 1 にスリム化してストレージを解放します。すべての変更が Push されていることを確認してください。\n\n実行しますか？</string>
     <string name="pref_purge_btn_confirm">パージ実行</string>
     <string name="pref_purge_loading">履歴をパージ中...</string>
-    <string name="pref_purge_success">パージが完了しました！すべてのリポジトリが depth = 1 になりました。</string>
+    <string name="pref_purge_success">パージが完了しました！すべてのノートが最新バージョンのみに整理されました。</string>
+    <string name="tv_syncing_timestamps">ファイル更新日時を同期中...</string>
+    <string name="tv_fetching_github_dates">GitHub から更新日時を取得中...</string>
 </resources>

@@ -42,7 +42,10 @@ import org.eclipse.jgit.revwalk.RevCommit;
 
 import android.net.Uri;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 
 import org.eclipse.jgit.util.FileUtils;
 
@@ -107,9 +110,79 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private final Handler loadingMsgHandler = new Handler(Looper.getMainLooper());
+    private Runnable loadingMsgRunnable;
+    private int loadingMsgIndex = 0;
+
+    private void showWaitDialog() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (waitDialog == null) {
+                    waitBuilder = new AlertDialog.Builder(activity);
+                    waitBuilder.setCancelable(false);
+                    waitBuilder.setView(R.layout.loading_dialog);
+                    waitDialog = waitBuilder.create();
+                }
+                if (!waitDialog.isShowing()) {
+                    waitDialog.show();
+                    startLoadingMessageCycle();
+                }
+            }
+        });
+    }
+
+    private void dismissWaitDialog() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                stopLoadingMessageCycle();
+                if (waitDialog != null && waitDialog.isShowing()) {
+                    waitDialog.dismiss();
+                }
+            }
+        });
+    }
+
+    private void startLoadingMessageCycle() {
+        stopLoadingMessageCycle();
+        loadingMsgIndex = 0;
+        final int[] msgResIds = new int[]{
+                R.string.tv_please_wait,
+                R.string.tv_fetching_github_dates,
+                R.string.tv_syncing_timestamps
+        };
+        TextView tv = waitDialog != null ? waitDialog.findViewById(R.id.tv_loading_msg) : null;
+        if (tv != null) {
+            tv.setText(msgResIds[0]);
+        }
+        loadingMsgRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (waitDialog != null && waitDialog.isShowing()) {
+                    TextView tvMsg = waitDialog.findViewById(R.id.tv_loading_msg);
+                    if (tvMsg != null) {
+                        loadingMsgIndex = (loadingMsgIndex + 1) % msgResIds.length;
+                        tvMsg.setText(msgResIds[loadingMsgIndex]);
+                    }
+                    loadingMsgHandler.postDelayed(this, 10000);
+                }
+            }
+        };
+        loadingMsgHandler.postDelayed(loadingMsgRunnable, 10000);
+    }
+
+    private void stopLoadingMessageCycle() {
+        if (loadingMsgRunnable != null) {
+            loadingMsgHandler.removeCallbacks(loadingMsgRunnable);
+            loadingMsgRunnable = null;
+        }
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        stopLoadingMessageCycle();
         if (waitDialog != null && waitDialog.isShowing()) {
             waitDialog.dismiss();
         }
@@ -203,7 +276,7 @@ public class MainActivity extends AppCompatActivity {
                                             runOnUiThread(new Runnable() {
                                                 @Override
                                                 public void run() {
-                                                    waitDialog.show();
+                                                    showWaitDialog();
 
                                                     new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                                                         @Override
@@ -222,7 +295,7 @@ public class MainActivity extends AppCompatActivity {
                                                                         @Override
                                                                         public void run() {
                                                                             Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pushing_success), Toast.LENGTH_SHORT).show();
-                                                                            waitDialog.dismiss();
+                                                                            dismissWaitDialog();
                                                                         }
                                                                     });
 
@@ -231,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
                                                                     @Override
                                                                     public void run() {
                                                                         Toast.makeText(activity,MyApplication.getAppContext().getText(R.string.pushing_failed) , Toast.LENGTH_SHORT).show();
-                                                                        waitDialog.dismiss();
+                                                                        dismissWaitDialog();
                                                                     }
                                                                 });
                                                                 throw new RuntimeException(e);
@@ -268,7 +341,7 @@ public class MainActivity extends AppCompatActivity {
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        waitDialog.show();
+                                        showWaitDialog();
 
                                         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                                             @Override
@@ -279,7 +352,7 @@ public class MainActivity extends AppCompatActivity {
                                                             @Override
                                                             public void run() {
                                                                 Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pushing_success), Toast.LENGTH_SHORT).show();
-                                                                waitDialog.dismiss();
+                                                                dismissWaitDialog();
                                                             }
                                                         });
                                                     }else{
@@ -287,7 +360,7 @@ public class MainActivity extends AppCompatActivity {
                                                             @Override
                                                             public void run() {
                                                                 Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pushing_failed), Toast.LENGTH_SHORT).show();
-                                                                waitDialog.dismiss();
+                                                                dismissWaitDialog();
                                                             }
                                                         });
 
@@ -297,7 +370,7 @@ public class MainActivity extends AppCompatActivity {
                                                         @Override
                                                         public void run() {
                                                             Toast.makeText(activity,MyApplication.getAppContext().getText(R.string.pushing_failed) , Toast.LENGTH_SHORT).show();
-                                                            waitDialog.dismiss();
+                                                            dismissWaitDialog();
                                                         }
                                                     });
                                                     throw new RuntimeException(e);
@@ -342,7 +415,7 @@ public class MainActivity extends AppCompatActivity {
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        waitDialog.show();
+                                        showWaitDialog();
 
                                         new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                                             @Override
@@ -353,7 +426,7 @@ public class MainActivity extends AppCompatActivity {
                                                             @Override
                                                             public void run() {
                                                                 Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pulling_success), Toast.LENGTH_SHORT).show();
-                                                                waitDialog.dismiss();
+                                                                dismissWaitDialog();
                                                             }
                                                         });
                                                     }else{
@@ -361,7 +434,7 @@ public class MainActivity extends AppCompatActivity {
                                                             @Override
                                                             public void run() {
                                                                 Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pulling_failed), Toast.LENGTH_SHORT).show();
-                                                                waitDialog.dismiss();
+                                                                dismissWaitDialog();
                                                             }
                                                         });
 
@@ -371,7 +444,7 @@ public class MainActivity extends AppCompatActivity {
                                                         @Override
                                                         public void run() {
                                                             Toast.makeText(activity,MyApplication.getAppContext().getText(R.string.pulling_failed) , Toast.LENGTH_SHORT).show();
-                                                            waitDialog.dismiss();
+                                                            dismissWaitDialog();
                                                         }
                                                     });
                                                     throw new RuntimeException(e);
@@ -495,7 +568,7 @@ public class MainActivity extends AppCompatActivity {
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    waitDialog.show();
+                                    showWaitDialog();
 
                                     new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                                         @Override
@@ -506,7 +579,7 @@ public class MainActivity extends AppCompatActivity {
                                                     @Override
                                                     public void run() {
                                                         Toast.makeText(MyApplication.getAppContext(), MyApplication.getAppContext().getText(R.string.backup_success) + "\n" + sBackupZip, Toast.LENGTH_SHORT).show();
-                                                        waitDialog.dismiss();
+                                                        dismissWaitDialog();
                                                     }
                                                 });
                                             } catch (Exception e) {
@@ -514,7 +587,7 @@ public class MainActivity extends AppCompatActivity {
                                                     @Override
                                                     public void run() {
                                                         Toast.makeText(MyApplication.getAppContext(), MyApplication.getAppContext().getText(R.string.backup_failed)+"\n"+sBackupZip, Toast.LENGTH_SHORT).show();
-                                                        waitDialog.dismiss();
+                                                        dismissWaitDialog();
                                                     }
                                                 });
                                                 throw new RuntimeException(e);
@@ -549,6 +622,47 @@ public class MainActivity extends AppCompatActivity {
             MyAlertDialog.show();
         }
 
+        handleGitHubOAuthCallback(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleGitHubOAuthCallback(intent);
+    }
+
+    private void handleGitHubOAuthCallback(Intent intent) {
+        if (intent == null) return;
+        Uri uri = intent.getData();
+        if (uri != null && "gitnotetaking".equals(uri.getScheme()) && "oauth".equals(uri.getHost()) && "/github".equals(uri.getPath())) {
+            // Immediately consume and clear intent data so returning to MainActivity won't re-execute with expired code
+            intent.setData(null);
+            setIntent(new Intent(this, MainActivity.class));
+
+            String error = uri.getQueryParameter("error");
+            if (error != null) {
+                Toast.makeText(activity, R.string.github_oauth_cancelled, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String code = uri.getQueryParameter("code");
+            if (code != null && !code.isEmpty()) {
+                showWaitDialog();
+                GitHubAuthManager.getInstance().exchangeCodeForToken(code, new GitHubAuthManager.GitHubAuthCallback() {
+                    @Override
+                    public void onSuccess(String username, String accessToken, List<GitHubRepo> noteRepos, int totalReposCount) {
+                        dismissWaitDialog();
+                        showGitHubRepoSelectionDialog(username, accessToken, noteRepos, totalReposCount);
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        dismissWaitDialog();
+                        Toast.makeText(activity, getString(R.string.github_auth_failed) + errorMessage, Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        }
     }
 
     @Override
@@ -694,6 +808,36 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startCreateGitHubNoteFlow() {
+        ScrollView scrollView = new ScrollView(activity);
+        LinearLayout container = new LinearLayout(activity);
+        container.setOrientation(LinearLayout.VERTICAL);
+        int padding = (int) (16 * getResources().getDisplayMetrics().density);
+        int paddingSmall = (int) (8 * getResources().getDisplayMetrics().density);
+        container.setPadding(padding, paddingSmall, padding, paddingSmall);
+
+        // 1. One-Tap OAuth Button (Top Recommendation)
+        Button btnOAuth = new Button(activity);
+        btnOAuth.setText(R.string.github_oauth_login_btn);
+        btnOAuth.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_github, 0, 0, 0);
+        btnOAuth.setCompoundDrawablePadding(paddingSmall);
+        btnOAuth.setTextSize(15);
+        btnOAuth.setAllCaps(false);
+
+        // 2. Divider / Subtitle
+        TextView tvDivider = new TextView(activity);
+        tvDivider.setText(R.string.github_oauth_divider);
+        tvDivider.setTextSize(12);
+        tvDivider.setTextColor(0xFF888888);
+        tvDivider.setGravity(android.view.Gravity.CENTER);
+        tvDivider.setPadding(0, paddingSmall * 2, 0, paddingSmall);
+
+        // 3. Instruction Message (4-step guide)
+        TextView tvMsg = new TextView(activity);
+        tvMsg.setText(R.string.github_connect_dialog_msg);
+        tvMsg.setTextSize(14);
+        tvMsg.setPadding(0, paddingSmall, 0, paddingSmall);
+
+        // 4. Token EditText
         final EditText editText = new EditText(activity);
         editText.setHint("ghp_xxxx or github_pat_xxxx");
         editText.setMaxLines(2);
@@ -718,43 +862,64 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        new AlertDialog.Builder(activity)
+        container.addView(btnOAuth);
+        container.addView(tvDivider);
+        container.addView(tvMsg);
+        container.addView(editText);
+        scrollView.addView(container);
+
+        final AlertDialog dialog = new AlertDialog.Builder(activity)
                 .setTitle(R.string.action_create_github_git)
-                .setMessage(R.string.github_connect_dialog_msg)
-                .setView(editText)
-                .setPositiveButton(R.string.github_btn_connect, new DialogInterface.OnClickListener() {
+                .setView(scrollView)
+                .setPositiveButton(R.string.github_btn_connect, null)
+                .setNeutralButton(R.string.github_btn_generate_token, null)
+                .setNegativeButton(R.string.dialog_cancel, null)
+                .create();
+
+        btnOAuth.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (dialog != null && dialog.isShowing()) {
+                    dialog.dismiss();
+                }
+                GitHubAuthManager.getInstance().startOAuthWebFlow(activity);
+            }
+        });
+
+        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialogInterface) {
+                Button btnConnect = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+                btnConnect.setOnClickListener(new View.OnClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                    public void onClick(View v) {
                         String token = editText.getText().toString().trim();
                         if (token.isEmpty()) {
                             Toast.makeText(activity, R.string.input_cannot_be_empty, Toast.LENGTH_SHORT).show();
                             return;
                         }
-                        if (waitDialog != null && !waitDialog.isShowing()) {
-                            waitDialog.show();
-                        }
+                        dialog.dismiss();
+                        showWaitDialog();
                         GitHubAuthManager.getInstance().loadUserDataAndRepos(token, new GitHubAuthManager.GitHubAuthCallback() {
                             @Override
                             public void onSuccess(String username, String accessToken, List<GitHubRepo> noteRepos, int totalReposCount) {
-                                if (waitDialog != null && waitDialog.isShowing()) {
-                                    waitDialog.dismiss();
-                                }
+                                dismissWaitDialog();
                                 showGitHubRepoSelectionDialog(username, accessToken, noteRepos, totalReposCount);
                             }
 
                             @Override
                             public void onError(String errorMessage) {
-                                if (waitDialog != null && waitDialog.isShowing()) {
-                                    waitDialog.dismiss();
-                                }
+                                dismissWaitDialog();
                                 Toast.makeText(activity, getString(R.string.github_auth_failed) + errorMessage, Toast.LENGTH_LONG).show();
                             }
                         });
                     }
-                })
-                .setNeutralButton(R.string.github_btn_generate_token, new DialogInterface.OnClickListener() {
+                });
+
+                Button btnGenToken = dialog.getButton(AlertDialog.BUTTON_NEUTRAL);
+                btnGenToken.setOnClickListener(new View.OnClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
+                    public void onClick(View v) {
                         String url = "https://github.com/settings/tokens/new?scopes=repo,read:user&description=InMethodGitNoteTaking";
                         try {
                             androidx.browser.customtabs.CustomTabsIntent customTabsIntent = new androidx.browser.customtabs.CustomTabsIntent.Builder().build();
@@ -764,9 +929,11 @@ public class MainActivity extends AppCompatActivity {
                             startActivity(browserIntent);
                         }
                     }
-                })
-                .setNegativeButton(R.string.dialog_cancel, null)
-                .show();
+                });
+            }
+        });
+
+        dialog.show();
     }
 
     private void showGitHubRepoSelectionDialog(final String username, final String token, final List<GitHubRepo> noteRepos, int totalReposCount) {
@@ -852,9 +1019,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void cloneSelectedGitHubRepo(final String username, final String token, final GitHubRepo repo) {
-        if (waitDialog != null && !waitDialog.isShowing()) {
-            waitDialog.show();
-        }
+        showWaitDialog();
 
         new Thread(new Runnable() {
             @Override
@@ -902,9 +1067,7 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if (waitDialog != null && waitDialog.isShowing()) {
-                                waitDialog.dismiss();
-                            }
+                            dismissWaitDialog();
                             if (adapter != null) {
                                 adapter.clear();
                                 ArrayList<RemoteGit> aList = MyGitUtility.getRemoteGitList(MyApplication.getAppContext());
@@ -921,9 +1084,7 @@ public class MainActivity extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if (waitDialog != null && waitDialog.isShowing()) {
-                                waitDialog.dismiss();
-                            }
+                            dismissWaitDialog();
                             Toast.makeText(activity, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });

@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.003] - 2026-08-28
+
+### 🚀 New Features & Enhancements
+
+#### 1. GitHub OAuth 2.0 官方一鍵授權登入 (GitHub OAuth Dual-Track Integration)
+- **官方 OAuth 2.0 Web Flow**：整合 Chrome Custom Tabs 呼叫 GitHub 官方授權流程，使用者同意授權後透過專屬 Deep Link（`gitnotetaking://oauth/github`）秒速自動返回 App 並完成 Token 交換。
+- **雙軌並存 UI 架構**：於建立 GitHub 筆記對話框頂部配置顯眼的「🐙 一鍵登入 GitHub 授權 (推薦)」按鈕，同時完整保留既有 PAT 4 步驟手動指引與剪貼簿自動帶入功能，兼具極致便利與靈活性。
+- **OAuth 生命週期防呆**：授權碼採即收即銷機制（Consume-on-receive），避免 Activity 重建或返回主畫面時因重複提交過期授權碼而導致驗證失敗。
+
+#### 2. 智慧進度輪播提示 (Dynamic Progress Indicator)
+- **多階段動態輪播**：在儲存庫同步（Pull）、下載（Clone）與備份時，每 10 秒平滑輪播切換「請稍候...」、「向 GitHub 取得檔案最近更新日...」、「正在更新檔案真實日期...」，消除使用者對長時間網路作業的疑慮。
+- **多語系支援**：同步更新 5 國語系提示字串（繁中台/港、簡中、日文、英文），日文與英文均經精簡最佳化。
+
 ## [4.002] - 2026-08-28
 
 ### 🔒 Policy Compliance & Modern Architecture
