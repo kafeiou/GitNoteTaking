@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.002] - 2026-08-28
+
+### 🔒 Policy Compliance & Modern Architecture
+
+#### 1. Google Play 相片和影片權限政策合規 (Photo & Video Permissions Policy)
+- **全面移除廣泛媒體權限**：從 `AndroidManifest.xml` 與啟動流程中徹底移除 `READ_MEDIA_IMAGES`、`READ_MEDIA_VIDEO`、`READ_MEDIA_AUDIO` 與 `READ_MEDIA_VISUAL_USER_SELECTED` 權限宣告。
+- **標準系統選擇器 (System File Picker)**：夾帶檔案與相片時直接呼叫 Android 原生 `Intent.ACTION_OPEN_DOCUMENT` 系統選擇器，零權限彈窗安全讀取並串流匯入附件，100% 符合 Google Play 最新發布規範。
+
+#### 2. 無邊框 API 現代化升級 (Edge-to-Edge Modernization)
+- **消除淘汰 API 警示**：全面升級至 Google 官方 Jetpack `androidx.activity.EdgeToEdge.enable()` 標準架構，移除過時的 `setDecorFitsSystemWindows(false)` 與實驗性無邊框 API。
+- **跨版本無縫相容**：智慧適配 Android 13、14、15、16 狀態列、導航列與螢幕瀏海安全區（Window Insets），徹底解決 Google Play Console 之「應用程式使用已淘汰的無邊框 API 或參數」警示。
+
+### 🎨 UI & UX Enhancements
+
+#### 3. 自適應桌面圖示滿版升級 (Adaptive Launcher Icons)
+- **消除白邊與滿版顯示**：建立標準 `mipmap-anydpi-v26/` 自適應圖示結構，底色填滿手機圖示外框。
+- **16% 安全區內縮 (Safe Zone Inset)**：透過 Inset 16% 機制將前景筆記與「GIT」紅字完美容納於 72dp 安全視區內，徹底解決圖案被外框裁切或縮小問題。
+
+#### 4. 選單圖示與視覺對稱性
+- **建立選單 3 大圖示配置**：
+  - 📱 建立本地筆記（`ic_local_note` 手機本機新增圖示）
+  - 🔶 下載遠端筆記（`ic_git_logo` 官方 Git 菱形標誌）
+  - 🐙 建立 GitHub 筆記（`ic_github` 官方 Octocat 標誌）
+- **選單圖示強制顯示**：於 `onCreateOptionsMenu` 啟用子選單圖示顯示相容支援。
+- **Git 官方授權宣告**：依 CC BY 3.0 規範於 5 國語系 `README.md` 中補齊 Git Logo 創作者（Jason Long）版權致謝。
+
+#### 5. GitHub 連線指引與防重複機制
+- **儲存庫防重複下載**：已下載的 GitHub 筆記於挑選清單中自動標記 `[已下載]` / `[Downloaded]` 並反灰禁用點選，避免重複下載覆蓋。
+- **4 步驟清晰指引**：連線對話框加入「1. 瀏覽器登入 github」等 4 項步驟，並採用簡潔的 `--` 區隔線。
+
+### 🐛 Bug Fixes
+
+#### 6. 文字檔案 Commit History 記錄修復
+- **新建檔案自動 Commit**：修復於檔案瀏覽器新建 `.txt` 檔案時未觸發 Git Commit 的問題。
+- **編輯自動儲存非空 Commit 訊息**：修復未勾選手動輸入 Commit 訊息時送出空訊息而被 Log 清單略過的問題，預設自動帶入 `<檔名>`。
+
+---
+
 ## [4.001] - 2026-08-27
 
 ### 🚀 New Features & Enhancements

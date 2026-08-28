@@ -680,17 +680,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
             }
             return true;
         } else if (id == R.id.view_file_action_select_file) {
-            PermissionHelper.requestMedia(this, new PermissionHelper.PermissionCallback() {
-                @Override
-                public void onGranted() {
-                    openDocumentPicker();
-                }
-
-                @Override
-                public void onDenied() {
-                    // Silent cancel per user requirements
-                }
-            });
+            openDocumentPicker();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -735,14 +725,6 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                 launchCamera();
             } else {
                 PermissionHelper.incrementDenialCount(this, Manifest.permission.CAMERA);
-            }
-        } else if (requestCode == PermissionHelper.REQUEST_CODE_MEDIA) {
-            String primary = PermissionHelper.getMediaPrimaryPermission();
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                PermissionHelper.resetDenialCount(this, primary);
-                openDocumentPicker();
-            } else {
-                PermissionHelper.incrementDenialCount(this, primary);
             }
         }
     }

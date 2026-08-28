@@ -72,66 +72,7 @@ public class MainActivity extends AppCompatActivity {
     RecyclerAdapterForDevice adapter = null;
     AlertDialog.Builder waitBuilder = null;
     AlertDialog waitDialog;
-    int REQUEST_CODE_PERMISSIONS = 123;
 
-    String [] _app_permissions = {
-            Manifest.permission.READ_MEDIA_VIDEO,
-            Manifest.permission.READ_MEDIA_IMAGES,
-            Manifest.permission.READ_MEDIA_AUDIO,
-            Manifest.permission.CAMERA,
-            Manifest.permission.INTERNET,
-    };
-
-
-
-
-    private void requestPermission()
-    {
-        List<String> listPermissionNeed = new ArrayList<String>();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-            listPermissionNeed.add( Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED);
-
-        for(String per : _app_permissions)
-        {
-
-            if (ContextCompat.checkSelfPermission(this, per) != PackageManager.PERMISSION_GRANTED)
-            {
-                listPermissionNeed.add(per);
-            }
-        }
-
-        if (listPermissionNeed.size()>0)
-        {
-            String [] pers = listPermissionNeed.toArray(new String[0]);
-            // Permission request logic
-
-            ActivityCompat.requestPermissions(this, pers, REQUEST_CODE_PERMISSIONS);
-        }
-
-    }
-
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String [] permissions, int [] grantResults)
-    {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CODE_PERMISSIONS) {
-            StringBuffer sb = new StringBuffer();
-            for (int i = 0; i < grantResults.length; i++) {
-                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
-                    Log.i(TAG, "PERMISSION_GRANTED=" + permissions[i]);
-                } else {
-                    Log.i(TAG, "PERMISSION_DENY=" + permissions[i]);
-                    sb.append(permissions[i]).append("\r\n");
-                }
-            }
-
-            if (sb.length() > 0) {
-                showError(new Exception("PERMISSION_DENY\r\n" + sb.toString()));
-            }
-        }
-    }
 
     public void showError(Exception ex)
     {
