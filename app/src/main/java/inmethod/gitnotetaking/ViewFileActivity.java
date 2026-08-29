@@ -180,7 +180,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
 
             int iTextSize = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitEditTextSize", "18"));
             editText.setTextSize(iTextSize);
-            editText.setTextColor(Color.BLACK);
+            editText.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary));
 
             if (file.exists()) {
                 if (isModify) {

@@ -76,6 +76,13 @@ public class CustomPreferenceFragment extends PreferenceFragmentCompat {
                     appTheme.setSummary(((ListPreference) preference).getEntries()[idx]);
                 }
                 applyThemeMode(selectedTheme);
+                if (getActivity() != null) {
+                    getActivity().getWindow().getDecorView().post(() -> {
+                        if (getActivity() != null && !getActivity().isFinishing()) {
+                            getActivity().recreate();
+                        }
+                    });
+                }
                 return true;
             });
         }

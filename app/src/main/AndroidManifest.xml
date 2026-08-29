@@ -16,15 +16,19 @@
         android:localeConfig="@xml/locales_config"
         android:theme="@style/AppTheme">
 
-        <activity android:name=".CloneGitActivity" />
+        <activity
+            android:name=".CloneGitActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
 
-        <activity android:name=".CreateLocalGitActivity" />
+        <activity
+            android:name=".CreateLocalGitActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
 
         <activity
             android:name=".PreferencesSettings"
             android:configChanges="orientation|keyboardHidden"
             android:label="@string/action_settings"
-            android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+            android:theme="@style/AppTheme"
            />
         <activity
             android:name=".MainActivity"

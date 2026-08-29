@@ -141,4 +141,63 @@ public class PdfPreviewUnitTest {
         cache.clear();
         assertNull("App 銷毀後快取被清空", cache.get(samplePath));
     }
+
+    /**
+     * 7. 驗證 AndroidManifest.xml 內所有 Activity 均配置 DayNight 主題，絕無寫死之靜態 Light 主題
+     */
+    @Test
+    public void testAllActivitiesInManifestUseDayNightTheme() throws Exception {
+        File manifestFile = new File("src/main/AndroidManifest.xml");
+        if (!manifestFile.exists()) {
+            manifestFile = new File("app/src/main/AndroidManifest.xml");
+        }
+        assertTrue("AndroidManifest.xml 必須存在", manifestFile.exists());
+
+        javax.xml.parsers.DocumentBuilderFactory factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        javax.xml.parsers.DocumentBuilder builder = factory.newDocumentBuilder();
+        org.w3c.dom.Document doc = builder.parse(manifestFile);
+
+        org.w3c.dom.NodeList activityNodes = doc.getElementsByTagName("activity");
+        assertTrue("Manifest 必須包含 Activity 宣告", activityNodes.getLength() > 0);
+
+        for (int i = 0; i < activityNodes.getLength(); i++) {
+            org.w3c.dom.Element activityEl = (org.w3c.dom.Element) activityNodes.item(i);
+            String activityName = activityEl.getAttribute("android:name");
+            String themeAttr = activityEl.getAttribute("android:theme");
+
+            // 確保沒有任何 Activity 被寫死為 Theme.AppCompat.Light
+            assertFalse("Activity [" + activityName + "] 不得被寫死為靜態 Light 主題",
+                    themeAttr.contains("Theme.AppCompat.Light") && !themeAttr.contains("DayNight"));
+
+            if (!themeAttr.isEmpty()) {
+                assertTrue("Activity [" + activityName + "] 的主題必須支援 AppTheme 或 DayNight",
+                        themeAttr.contains("AppTheme") || themeAttr.contains("DayNight"));
+            }
+        }
+    }
+
+    /**
+     * 8. 驗證 values/colors.xml 與 values-night/colors.xml 均包含語意化色彩資源
+     */
+    @Test
+    public void testThemeColorsSupportDarkAndLight() throws Exception {
+        File resDir = new File("src/main/res");
+        if (!resDir.exists()) {
+            resDir = new File("app/src/main/res");
+        }
+        File lightColors = new File(resDir, "values/colors.xml");
+        File darkColors = new File(resDir, "values-night/colors.xml");
+
+        assertTrue("values/colors.xml 必須存在", lightColors.exists());
+        assertTrue("values-night/colors.xml 必須存在", darkColors.exists());
+
+        String lightStr = new String(Files.readAllBytes(lightColors.toPath()), StandardCharsets.UTF_8);
+        String darkStr = new String(Files.readAllBytes(darkColors.toPath()), StandardCharsets.UTF_8);
+
+        assertTrue("淺色模式必須定義 text_primary", lightStr.contains("name=\"text_primary\""));
+        assertTrue("深色模式必須定義 text_primary", darkStr.contains("name=\"text_primary\""));
+        assertTrue("淺色模式必須定義 card_bg", lightStr.contains("name=\"card_bg\""));
+        assertTrue("深色模式必須定義 card_bg", darkStr.contains("name=\"card_bg\""));
+    }
 }
+
