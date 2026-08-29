@@ -28,12 +28,9 @@ public  class PreferencesSettings extends AppCompatActivity {
 
         View view =  findViewById(android.R.id.content);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
-        Fragment fragment = getSupportFragmentManager().findFragmentByTag(CustomPreferenceFragment.FRAGMENT_TAG);
-        if (fragment == null) {
-            fragment = new CustomPreferenceFragment();
-        }
-        getSupportFragmentManager() .beginTransaction().replace(android.R.id.content,  fragment ,CustomPreferenceFragment.FRAGMENT_TAG).commit();
-        MyApplication.setView(this,view);
+        Fragment fragment = new CustomPreferenceFragment();
+        getSupportFragmentManager().beginTransaction().replace(android.R.id.content, fragment, CustomPreferenceFragment.FRAGMENT_TAG).commit();
+        MyApplication.setView(this, view);
     }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

@@ -79,7 +79,8 @@ public class CustomPreferenceFragment extends PreferenceFragmentCompat {
                 if (getActivity() != null) {
                     getActivity().getWindow().getDecorView().post(() -> {
                         if (getActivity() != null && !getActivity().isFinishing()) {
-                            getActivity().recreate();
+                            getActivity().finish();
+                            getActivity().startActivity(getActivity().getIntent());
                         }
                     });
                 }
