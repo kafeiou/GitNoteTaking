@@ -488,22 +488,22 @@ public class MainActivity extends AppCompatActivity {
                         } else if (id == R.id.show_commit_short_log) {
                             String sNoteName = ((TextView) aTextView[0]).getText().toString();
                             String sRemoteUrl = ((TextView) aTextView[1]).getText().toString();
-                            AlertDialog.Builder dialogbuilder = new AlertDialog.Builder(activity, android.R.style.Theme_Material_Light_Dialog_NoActionBar_MinWidth);
+                            AlertDialog.Builder dialogbuilder = new AlertDialog.Builder(activity);
+                            dialogbuilder.setTitle(sNoteName);
                             TextView txtUrl = new TextView(activity);
                             String sListMessages = "";
-                            txtUrl.setMaxLines(10);
+                            txtUrl.setMaxLines(15);
                             txtUrl.setMovementMethod(new ScrollingMovementMethod());
-                            //    txtUrl.setCompoundDrawablesWithIntrinsicBounds(R.drawable.list24, 0, 0, 0);
                             int i = 0;
-
 
                             FrameLayout container = new FrameLayout(activity);
                             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                            params.leftMargin = 20;
-                            params.rightMargin = 20;
+                            params.leftMargin = 40;
+                            params.rightMargin = 40;
+                            params.topMargin = 20;
+                            params.bottomMargin = 20;
                             txtUrl.setLayoutParams(params);
                             container.addView(txtUrl);
-
 
                             for (RevCommit aRev : MyGitUtility.getLocalCommitLogList(activity, sRemoteUrl)) {
                                 if( aRev.getFullMessage()==null || aRev.getFullMessage().trim().isEmpty())
@@ -513,34 +513,26 @@ public class MainActivity extends AppCompatActivity {
                                 if (i == 50) break;
 
                             }
-                            txtUrl.setText(sListMessages);
-                            dialogbuilder.setView(container).setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int whichButton) {
-                                    new Thread(new Runnable() {
-                                        @Override
-                                        public void run() {
-
-                                        }
-                                    }).start();
-                                }
-                            });
+                            txtUrl.setText(sListMessages.trim());
+                            dialogbuilder.setView(container).setPositiveButton(getString(R.string.dialog_ok), null);
                             dialogbuilder.create().show();
                         } else if (id == R.id.show_all_remote_branches) {
                             String sNoteName = ((TextView) aTextView[0]).getText().toString();
                             String sRemoteUrl = ((TextView) aTextView[1]).getText().toString();
-                            AlertDialog.Builder dialogbuilder = new AlertDialog.Builder(activity, android.R.style.Theme_Material_Light_Dialog_NoActionBar_MinWidth);
+                            AlertDialog.Builder dialogbuilder = new AlertDialog.Builder(activity);
+                            dialogbuilder.setTitle(sNoteName);
                             TextView txtUrl = new TextView(activity);
                             String sListMessages = "";
-                            txtUrl.setMaxLines(10);
+                            txtUrl.setMaxLines(15);
                             txtUrl.setMovementMethod(new ScrollingMovementMethod());
-                            //    txtUrl.setCompoundDrawablesWithIntrinsicBounds(R.drawable.list24, 0, 0, 0);
                             int i = 0;
-
 
                             FrameLayout container = new FrameLayout(activity);
                             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                            params.leftMargin = 20;
-                            params.rightMargin = 20;
+                            params.leftMargin = 40;
+                            params.rightMargin = 40;
+                            params.topMargin = 20;
+                            params.bottomMargin = 20;
                             txtUrl.setLayoutParams(params);
                             container.addView(txtUrl);
 
@@ -552,53 +544,116 @@ public class MainActivity extends AppCompatActivity {
                                 if (i == 50) break;
 
                             }
-                            txtUrl.setText(sListMessages);
-                            dialogbuilder.setView(container).setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int whichButton) {
-                                    new Thread(new Runnable() {
-                                        @Override
-                                        public void run() {
-
-                                        }
-                                    }).start();
-                                }
-                            });
+                            txtUrl.setText(sListMessages.trim());
+                            dialogbuilder.setView(container).setPositiveButton(getString(R.string.dialog_ok), null);
                             dialogbuilder.create().show();
-                        }else if (id == R.id.Backup) {
-                            String sBackupLocation = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString();
-                            String sBackupZip = ((TextView) aTextView[0]).getText().toString()+"_"+inmethod.commons.util.DateUtil.getDateStringWithFormat("yyyyMMdd")+".zip";
-                            runOnUiThread(new Runnable() {
+                        } else if (id == R.id.Backup) {
+                            String sBackupZip = ((TextView) aTextView[0]).getText().toString() + "_" + inmethod.commons.util.DateUtil.getDateStringWithFormat("yyyyMMdd") + ".zip";
+                            showWaitDialog();
+                            new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    showWaitDialog();
-
-                                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                                    boolean success = MyGitUtility.backupToDownloads(activity, sRemoteUrl, sBackupZip);
+                                    runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
-                                            try {
-                                                MyGitUtility.backup(activity, sRemoteUrl, sBackupLocation + "/" + sBackupZip);
-                                                runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        Toast.makeText(MyApplication.getAppContext(), MyApplication.getAppContext().getText(R.string.backup_success) + "\n" + sBackupZip, Toast.LENGTH_SHORT).show();
-                                                        dismissWaitDialog();
-                                                    }
-                                                });
-                                            } catch (Exception e) {
-                                                runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        Toast.makeText(MyApplication.getAppContext(), MyApplication.getAppContext().getText(R.string.backup_failed)+"\n"+sBackupZip, Toast.LENGTH_SHORT).show();
-                                                        dismissWaitDialog();
-                                                    }
-                                                });
-                                                throw new RuntimeException(e);
+                                            dismissWaitDialog();
+                                            if (success) {
+                                                Toast.makeText(activity, getString(R.string.backup_success) + "\n" + sBackupZip, Toast.LENGTH_LONG).show();
+                                            } else {
+                                                Toast.makeText(activity, getString(R.string.backup_failed) + "\n" + sBackupZip, Toast.LENGTH_LONG).show();
                                             }
-                                        }                                                // Your Code
-
-                                    }, 300);
+                                        }
+                                    });
                                 }
-                            });
+                            }).start();
+                        }else if (id == R.id.AutoCommit) {
+                            showWaitDialog();
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    boolean isDirty = MyGitUtility.isWorkingTreeDirty(activity, sRemoteUrl);
+                                    if (!isDirty) {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                dismissWaitDialog();
+                                                Toast.makeText(activity, getString(R.string.toast_auto_commit_not_needed), Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                        return;
+                                    }
+                                    String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(new java.util.Date());
+                                    boolean committed = MyGitUtility.autoCommitIfDirtyWithMessage(activity, sRemoteUrl, "Auto-commit: " + timestamp);
+                                    if (committed) {
+                                        boolean isLocal = sRemoteUrl.contains("local");
+                                        if (isLocal) {
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    dismissWaitDialog();
+                                                    Toast.makeText(activity, getString(R.string.toast_auto_commit_success), Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                        } else {
+                                            boolean pushSuccess = false;
+                                            if (MyApplication.isNetworkConnected()) {
+                                                pushSuccess = MyGitUtility.push(activity, sRemoteUrl);
+                                            }
+                                            final boolean finalPushSuccess = pushSuccess;
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    dismissWaitDialog();
+                                                    if (finalPushSuccess) {
+                                                        Toast.makeText(activity, getString(R.string.toast_auto_commit_push_success), Toast.LENGTH_LONG).show();
+                                                    } else {
+                                                        Toast.makeText(activity, getString(R.string.toast_auto_commit_success) + " (" + getString(R.string.pushing_failed) + ")", Toast.LENGTH_LONG).show();
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    } else {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                dismissWaitDialog();
+                                                Toast.makeText(activity, getString(R.string.toast_auto_commit_not_needed), Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                    }
+                                }
+                            }).start();
+                        } else if (id == R.id.CalculateStorage) {
+                            showWaitDialog();
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    String localDir = MyGitUtility.getLocalGitDirectory(activity, sRemoteUrl);
+                                    File repoDir = new File(localDir);
+                                    MyGitUtility.StorageBreakdown storage = MyGitUtility.calculateRepositoryStorage(repoDir);
+                                    String workingSize = MyGitUtility.formatStorageSize(storage.workingTreeBytes);
+                                    String gitSize = MyGitUtility.formatStorageSize(storage.gitDirBytes);
+                                    String totalSize = MyGitUtility.formatStorageSize(storage.getTotalBytes());
+
+                                    StringBuilder message = new StringBuilder();
+                                    message.append(getString(R.string.dialog_storage_working_dir)).append(workingSize).append(" (").append(storage.fileCount).append(" files)\n");
+                                    message.append(getString(R.string.dialog_storage_git_dir)).append(gitSize).append("\n\n");
+                                    message.append(getString(R.string.dialog_storage_total)).append(totalSize);
+
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            dismissWaitDialog();
+                                            new AlertDialog.Builder(activity)
+                                                    .setTitle(getString(R.string.dialog_storage_title))
+                                                    .setMessage(message.toString())
+                                                    .setPositiveButton(getString(R.string.dialog_ok), null)
+                                                    .show();
+                                        }
+                                    });
+                                }
+                            }).start();
                         }
                         return true;
                     }

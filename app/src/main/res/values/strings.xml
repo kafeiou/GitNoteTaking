@@ -112,8 +112,17 @@
     <string name="Sort11">DateAsc</string>
     <string name="download">download</string>
     <string name="Backup">Backup</string>
-    <string name="backup_success">Backup to \"Download\" Success</string>
+    <string name="backup_success">Backup saved to \"Download\" folder</string>
     <string name="backup_failed">Backup Failed</string>
+    <string name="main_notes_auto_commit">Auto Commit</string>
+    <string name="main_notes_calculate_storage">Calculate Storage Size</string>
+    <string name="toast_auto_commit_success">Auto-commit succeeded</string>
+    <string name="toast_auto_commit_push_success">Auto-committed and pushed to remote successfully</string>
+    <string name="toast_auto_commit_not_needed">No changes to commit (Working tree clean)</string>
+    <string name="dialog_storage_title">Repository Storage Usage</string>
+    <string name="dialog_storage_working_dir">Notes &amp; Attachments: </string>
+    <string name="dialog_storage_git_dir">Git Repository (.git): </string>
+    <string name="dialog_storage_total">Total Storage Used: </string>
     <string name="GitCloneSkipLocal">Skip git clone if local exists</string>
 
     <!-- Permission strings -->

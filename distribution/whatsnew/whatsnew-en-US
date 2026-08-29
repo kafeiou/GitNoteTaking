@@ -1,7 +1,8 @@
-• Markdown Preview: GFM syntax, code highlighting, Mermaid diagrams & [[WikiLink]] navigation.
-• In-App Offline PDF Viewer: Pinch-to-zoom, password unlock & external sharing.
-• DayNight Theme: Dark/light switching following system default or in Settings.
-• GitHub OAuth 2.0: One-tap login & PAT dual-track support.
-• Smart Progress Status & Accurate Commit Timestamp Sync.
-• Local History Purge & Instant multilingual switching.
-• Upgraded to Eclipse JGit 7.7.1 & stability improvements.
+• Markdown Preview: GFM, syntax highlight, Mermaid & [[WikiLinks]].
+• PDF Viewer: Smooth zoom, password unlock & external app sharing.
+• DayNight Theme: Follow system or switch manually in Settings.
+• Long-Press Menu: On-demand Auto Commit & Storage Usage Analyzer.
+• Zero-Permission Backup: Full ZIP backup directly to Download.
+• Fixed commit history text visibility in Dark Mode.
+• GitHub OAuth 2.0 One-Tap Login & PAT Dual-Track.
+• Eclipse JGit 7.7.1 Upgrade.

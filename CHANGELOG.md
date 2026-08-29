@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.007] - 2026-08-29
+
+### 🚀 New Features & Enhancements
+
+#### 1. 長按選單新增「自動提交」與「專案容量計算」 (Auto Commit & Storage Calculation)
+- **智慧按需自動提交**：透過 `status.hasUncommittedChanges()` 精準檢測，有未存修改時自動產生時間戳 Commit 並同步 Push 回遠端；工作區乾淨時提示無需提交。
+- **專案空間佔用分析對話框**：背景非同步遞迴計算，結構化呈現「筆記與附件」、「.git 歷史版本庫」與「總佔用空間」大小及檔案總數。
+
+#### 2. `MediaStore.Downloads` 零權限標準備份 (Zero-Permission Backup)
+- **免權限合規匯出**：採用 Android 系統標準 `MediaStore.Downloads` API，徹底符合 Google Play 政策且不受 Android 11~16 Scoped Storage 限制。
+- **原生串流 ZIP 打包**：改用原生 Java `ZipOutputStream` 遞迴串流打包，徹底修復 JGit `Inflater` 崩潰問題，完整備份所有筆記、附件與歷史。
+- **儲存位置明確告知**：備份完成後提示存放於系統「下載 (Download)」資料夾。
+
+#### 3. 深色模式對話框與 Git 同步體驗修復 (Dark Theme & Sync Fixes)
+- **深色模式文字可見度修復**：移除寫死之 Light 主題，讓「查看修改紀錄」與「遠端分支」對話框在深色模式下完美呈現清晰白色文字。
+- **剛 Clone 完進入筆記誤判修復**：修正 `isWorkingTreeDirty` 判定邏輯，排除未追蹤輔助目錄誤判，點進筆記流暢無阻。
+
 ## [4.006] - 2026-08-29
 
 ### 🚀 New Features & Architecture

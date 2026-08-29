@@ -18,6 +18,12 @@
         android:id="@+id/Remove"
         android:title="@string/title_remove"/>
     <item
+        android:id="@+id/AutoCommit"
+        android:title="@string/main_notes_auto_commit"/>
+    <item
+        android:id="@+id/CalculateStorage"
+        android:title="@string/main_notes_calculate_storage"/>
+    <item
         android:id="@+id/Backup"
         android:title="@string/Backup"/>
 

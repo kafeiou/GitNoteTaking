@@ -137,4 +137,44 @@ public class GitSyncAndGuardrailUnitTest {
             assertFalse("有未提交修改時 isClean 為 false，觸發 Toast 警告並阻擋 Pull", git.status().call().isClean());
         }
     }
+
+    @Test
+    public void testStorageBreakdownCalculation() throws Exception {
+        File repoDir = tempFolder.newFolder("test_repo_storage");
+
+        try (Git git = Git.init().setDirectory(repoDir).call()) {
+            File note1 = new File(repoDir, "note1.md");
+            try (FileWriter writer = new FileWriter(note1)) {
+                writer.write("1234567890"); // 10 bytes
+            }
+            File attachDir = new File(repoDir, "note1.md_attach");
+            attachDir.mkdirs();
+            File attach1 = new File(attachDir, "photo.jpg");
+            try (FileWriter writer = new FileWriter(attach1)) {
+                writer.write("abcdefghij"); // 10 bytes
+            }
+
+            git.add().addFilepattern(".").call();
+            git.commit().setMessage("Commit 1").setAuthor("Test", "test@example.com").call();
+
+            inmethod.gitnotetaking.utility.MyGitUtility.StorageBreakdown breakdown =
+                    inmethod.gitnotetaking.utility.MyGitUtility.calculateRepositoryStorage(repoDir);
+
+            assertEquals("應有 2 個筆記與附件檔案", 2, breakdown.fileCount);
+            assertEquals("筆記與附件大小應為 20 bytes", 20L, breakdown.workingTreeBytes);
+            assertTrue("Git 歷史版本庫大小應大於 0 bytes", breakdown.gitDirBytes > 0);
+            assertEquals("總大小應等於 workingTreeBytes + gitDirBytes",
+                    breakdown.workingTreeBytes + breakdown.gitDirBytes, breakdown.getTotalBytes());
+        }
+    }
+
+    @Test
+    public void testFormatStorageSize() {
+        assertEquals("0 B", inmethod.gitnotetaking.utility.MyGitUtility.formatStorageSize(0));
+        assertEquals("500 B", inmethod.gitnotetaking.utility.MyGitUtility.formatStorageSize(500));
+        assertEquals("1 KB", inmethod.gitnotetaking.utility.MyGitUtility.formatStorageSize(1024));
+        assertEquals("1.5 KB", inmethod.gitnotetaking.utility.MyGitUtility.formatStorageSize(1536));
+        assertEquals("10 MB", inmethod.gitnotetaking.utility.MyGitUtility.formatStorageSize(10 * 1024 * 1024));
+        assertEquals("1.2 GB", inmethod.gitnotetaking.utility.MyGitUtility.formatStorageSize((long) (1.2 * 1024 * 1024 * 1024)));
+    }
 }

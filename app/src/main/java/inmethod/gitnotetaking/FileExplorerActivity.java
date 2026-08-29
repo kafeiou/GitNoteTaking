@@ -182,11 +182,13 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
             }
             new Thread(() -> {
                 if (MyGitUtility.isWorkingTreeDirty(activity, sGitRemoteUrl)) {
-                    runOnUiThread(() -> {
-                        if (!isFinishing()) {
-                            Toast.makeText(activity, getString(R.string.toast_uncommitted_changes), Toast.LENGTH_LONG).show();
-                        }
-                    });
+                    if (isManual) {
+                        runOnUiThread(() -> {
+                            if (!isFinishing()) {
+                                Toast.makeText(activity, getString(R.string.toast_uncommitted_changes), Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
                     return;
                 }
                 int pullResult = MyGitUtility.pullWithResult(activity, sGitRemoteUrl);
@@ -431,25 +433,23 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
                     public boolean onMenuItemClick(MenuItem item) {
                         int id = item.getItemId();
                         if (id == R.id.show_commit_short_log) {
-
-                            AlertDialog.Builder dialogbuilder = new AlertDialog.Builder(activity, android.R.style.Theme_Material_Light_Dialog_NoActionBar_MinWidth);
+                            String sFilePath = m_path.get(pos).substring(sGitRootDir.length()+1);
+                            AlertDialog.Builder dialogbuilder = new AlertDialog.Builder(activity);
+                            dialogbuilder.setTitle(sFilePath);
                             TextView txtUrl = new TextView(activity);
                             String sListMessages = "";
-                            txtUrl.setMaxLines(10);
+                            txtUrl.setMaxLines(15);
                             txtUrl.setMovementMethod(new ScrollingMovementMethod());
-                            //    txtUrl.setCompoundDrawablesWithIntrinsicBounds(R.drawable.list24, 0, 0, 0);
                             int i = 0;
-
 
                             FrameLayout container = new FrameLayout(activity);
                             FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                            params.leftMargin = 20;
-                            params.rightMargin = 20;
+                            params.leftMargin = 40;
+                            params.rightMargin = 40;
+                            params.topMargin = 20;
+                            params.bottomMargin = 20;
                             txtUrl.setLayoutParams(params);
                             container.addView(txtUrl);
-//                            Log.d(TAG,"indexof = "+m_path.get(pos).indexOf(sGitRootDir));
-                            String sFilePath = m_path.get(pos).substring(sGitRootDir.length()+1);
-                           // Log.d(TAG,"sFilePath="+sFilePath+",sGitRootDir="+sGitRootDir+",m_path.get(pos)="+m_path.get(pos)+",sGitRemoteUrl="+sGitRemoteUrl);
 
                             for (RevCommit aRev : MyGitUtility.getLocalCommitIdListByFilePath (activity, sGitRemoteUrl,sFilePath)) {
                                 if( aRev.getFullMessage()==null || aRev.getFullMessage().trim().isEmpty())
@@ -459,17 +459,8 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
                                 if (i == 50) break;
 
                             }
-                            txtUrl.setText(sListMessages);
-                            dialogbuilder.setView(container).setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int whichButton) {
-                                    new Thread(new Runnable() {
-                                        @Override
-                                        public void run() {
-
-                                        }
-                                    }).start();
-                                }
-                            });
+                            txtUrl.setText(sListMessages.trim());
+                            dialogbuilder.setView(container).setPositiveButton(getString(R.string.dialog_ok), null);
                             dialogbuilder.create().show();
                         }
                         else if (id == R.id.Download) {

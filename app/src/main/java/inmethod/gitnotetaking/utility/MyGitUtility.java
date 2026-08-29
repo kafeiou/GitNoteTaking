@@ -29,10 +29,22 @@ import org.eclipse.jgit.util.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import android.content.ContentValues;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.provider.MediaStore;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -43,6 +55,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import inmethod.gitnotetaking.MyApplication;
 import inmethod.gitnotetaking.db.RemoteGit;
@@ -268,11 +282,89 @@ public class MyGitUtility {
         return sReturn;
     }
 
-    public static void backup(Context context,String sRemoteUrl,String sBackupDestLocation) throws Exception {
+    public static boolean backupToDownloads(Context context, String sRemoteUrl, String zipFileName) {
         String sLocalDirectory = getLocalGitDirectory(context, sRemoteUrl);
-        GitUtil  aGitUtil = new GitUtil(sRemoteUrl, sLocalDirectory);
-        aGitUtil.backup(sBackupDestLocation);
-        aGitUtil.close();
+        if (sLocalDirectory == null) return false;
+        File sourceDir = new File(sLocalDirectory);
+        if (!sourceDir.exists()) return false;
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, zipFileName);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "application/zip");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+                Uri uri = context.getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) return false;
+                try (OutputStream os = context.getContentResolver().openOutputStream(uri);
+                     BufferedOutputStream bos = new BufferedOutputStream(os);
+                     ZipOutputStream zos = new ZipOutputStream(bos)) {
+                    zipDirectoryRecursive(sourceDir, sourceDir, zos);
+                    zos.flush();
+                }
+                Log.d(TAG, "Backup successfully written to MediaStore Downloads: " + zipFileName);
+                return true;
+            } else {
+                File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                if (!downloadDir.exists()) downloadDir.mkdirs();
+                File destZip = new File(downloadDir, zipFileName);
+                try (FileOutputStream fos = new FileOutputStream(destZip);
+                     BufferedOutputStream bos = new BufferedOutputStream(fos);
+                     ZipOutputStream zos = new ZipOutputStream(bos)) {
+                    zipDirectoryRecursive(sourceDir, sourceDir, zos);
+                    zos.flush();
+                }
+                Log.d(TAG, "Backup successfully written to public Downloads: " + destZip.getAbsolutePath());
+                return true;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to backup repository to Downloads: " + sRemoteUrl, e);
+            return false;
+        }
+    }
+
+    public static void backup(Context context, String sRemoteUrl, String sBackupDestLocation) throws Exception {
+        String sLocalDirectory = getLocalGitDirectory(context, sRemoteUrl);
+        File sourceDir = new File(sLocalDirectory);
+        if (!sourceDir.exists()) {
+            throw new java.io.FileNotFoundException("Local directory does not exist: " + sLocalDirectory);
+        }
+        File destZip = new File(sBackupDestLocation);
+        File parentDir = destZip.getParentFile();
+        if (parentDir != null && !parentDir.exists()) {
+            parentDir.mkdirs();
+        }
+        try (FileOutputStream fos = new FileOutputStream(destZip);
+             BufferedOutputStream bos = new BufferedOutputStream(fos);
+             ZipOutputStream zos = new ZipOutputStream(bos)) {
+            zipDirectoryRecursive(sourceDir, sourceDir, zos);
+            zos.flush();
+        }
+    }
+
+    public static void zipDirectoryRecursive(File rootDir, File sourceFile, ZipOutputStream zos) throws IOException {
+        if (sourceFile.isDirectory()) {
+            File[] files = sourceFile.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    zipDirectoryRecursive(rootDir, file, zos);
+                }
+            }
+        } else {
+            String relativePath = rootDir.toURI().relativize(sourceFile.toURI()).getPath();
+            ZipEntry zipEntry = new ZipEntry(relativePath);
+            zipEntry.setTime(sourceFile.lastModified());
+            zos.putNextEntry(zipEntry);
+            try (FileInputStream fis = new FileInputStream(sourceFile);
+                 BufferedInputStream bis = new BufferedInputStream(fis)) {
+                byte[] buffer = new byte[8192];
+                int length;
+                while ((length = bis.read(buffer)) >= 0) {
+                    zos.write(buffer, 0, length);
+                }
+            }
+            zos.closeEntry();
+        }
     }
 
     public static ArrayList<RemoteGit> getRemoteGitList(Context context) {
@@ -869,11 +961,81 @@ public class MyGitUtility {
         if (sLocalDirectory == null) return false;
         try (Git git = Git.open(new File(sLocalDirectory))) {
             Status status = git.status().call();
-            return !status.isClean();
+            return status.hasUncommittedChanges();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public static boolean autoCommitIfDirtyWithMessage(Context context, String sRemoteUrl, String commitMessage) {
+        String sLocalDirectory = getLocalGitDirectory(context, sRemoteUrl);
+        if (sLocalDirectory == null) return false;
+        try (Git git = Git.open(new File(sLocalDirectory))) {
+            Status status = git.status().call();
+            if (!status.hasUncommittedChanges()) {
+                return false; // Nothing to commit
+            }
+            git.add().addFilepattern(".").call();
+            String authorName = PreferenceManager.getDefaultSharedPreferences(context).getString("GitAuthorName", "root");
+            String authorEmail = PreferenceManager.getDefaultSharedPreferences(context).getString("GitAuthorEmail", "root@your.email.com");
+            git.commit()
+               .setMessage(commitMessage)
+               .setAuthor(authorName, authorEmail)
+               .setCommitter(authorName, authorEmail)
+               .call();
+            Log.d(TAG, "Auto-committed changes successfully for: " + sRemoteUrl);
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to auto-commit changes for: " + sRemoteUrl, e);
+            return false;
+        }
+    }
+
+    public static class StorageBreakdown {
+        public long workingTreeBytes = 0;
+        public long gitDirBytes = 0;
+        public int fileCount = 0;
+
+        public long getTotalBytes() {
+            return workingTreeBytes + gitDirBytes;
+        }
+    }
+
+    public static StorageBreakdown calculateRepositoryStorage(File rootDir) {
+        StorageBreakdown breakdown = new StorageBreakdown();
+        if (rootDir == null || !rootDir.exists()) return breakdown;
+        calculateStorageRecursive(rootDir, breakdown, false);
+        return breakdown;
+    }
+
+    private static void calculateStorageRecursive(File file, StorageBreakdown breakdown, boolean isInsideGitDir) {
+        if (file == null || !file.exists()) return;
+        if (file.isDirectory()) {
+            boolean isGit = isInsideGitDir || file.getName().equals(".git");
+            File[] children = file.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    calculateStorageRecursive(child, breakdown, isGit);
+                }
+            }
+        } else {
+            long length = file.length();
+            if (isInsideGitDir) {
+                breakdown.gitDirBytes += length;
+            } else {
+                breakdown.workingTreeBytes += length;
+                breakdown.fileCount++;
+            }
+        }
+    }
+
+    public static String formatStorageSize(long bytes) {
+        if (bytes <= 0) return "0 B";
+        final String[] units = new String[]{"B", "KB", "MB", "GB", "TB"};
+        int digitGroups = (int) (Math.log10(bytes) / Math.log10(1024));
+        digitGroups = Math.min(digitGroups, units.length - 1);
+        return new java.text.DecimalFormat("#,##0.#").format(bytes / Math.pow(1024, digitGroups)) + " " + units[digitGroups];
     }
 
     public static void purgeAllLocalRepositoriesHistory(Context context) {

@@ -112,9 +112,18 @@
     <string name="Sort11">日期(小到大)</string>
     <string name="download">下載</string>
     <string name="Backup">備份</string>
-    <string name="backup_success">備份到\"Download\"成功</string>
+    <string name="backup_success">已成功備份至「下載 (Download)」資料夾</string>
     <string name="backup_failed">備份失敗</string>
-    <string name="GitCloneSkipLocal">如果本機已有資料，不需要 git clone</string>
+    <string name="main_notes_auto_commit">自動提交</string>
+    <string name="main_notes_calculate_storage">計算專案空間大小</string>
+    <string name="toast_auto_commit_success">已成功自動提交</string>
+    <string name="toast_auto_commit_push_success">已成功自動提交並推送到遠端</string>
+    <string name="toast_auto_commit_not_needed">無需提交，目前工作區乾淨</string>
+    <string name="dialog_storage_title">專案空間佔用分析</string>
+    <string name="dialog_storage_working_dir">📝 筆記與附件：</string>
+    <string name="dialog_storage_git_dir">📦 Git 歷史版本庫：</string>
+    <string name="dialog_storage_total">💾 總佔用空間：</string>
+    <string name="GitCloneSkipLocal">如果本機已存在，則跳過 git 複製</string>
 
     <!-- Permission strings -->
     <string name="permission_camera_title">需要「相機」權限</string>

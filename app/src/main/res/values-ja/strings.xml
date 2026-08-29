@@ -112,9 +112,18 @@
     <string name="Sort11">日付(昇順)</string>
     <string name="download">ダウンロード</string>
     <string name="Backup">バックアップ</string>
-    <string name="backup_success">Downloadフォルダへのバックアップ成功</string>
-    <string name="backup_failed">バックアップ失敗</string>
-    <string name="GitCloneSkipLocal">ローカルにデータが存在する場合はスキップ</string>
+    <string name="backup_success">「ダウンロード (Download)」フォルダにバックアップしました</string>
+    <string name="backup_failed">バックアップに失敗しました</string>
+    <string name="main_notes_auto_commit">自動コミット</string>
+    <string name="main_notes_calculate_storage">プロジェクト容量の計算</string>
+    <string name="toast_auto_commit_success">自動コミットが成功しました</string>
+    <string name="toast_auto_commit_push_success">自動コミットとリモートへのプッシュが成功しました</string>
+    <string name="toast_auto_commit_not_needed">変更はありません（クリーン）</string>
+    <string name="dialog_storage_title">プロジェクト容量の詳細</string>
+    <string name="dialog_storage_working_dir">📝 ノートと添付ファイル：</string>
+    <string name="dialog_storage_git_dir">📦 Git 履歴リポジトリ：</string>
+    <string name="dialog_storage_total">💾 合計使用容量：</string>
+    <string name="GitCloneSkipLocal">ローカルに存在する場合は git クローンをスキップ</string>
 
     <!-- Permission strings -->
     <string name="permission_camera_title">「カメラ」の権限が必要です</string>
