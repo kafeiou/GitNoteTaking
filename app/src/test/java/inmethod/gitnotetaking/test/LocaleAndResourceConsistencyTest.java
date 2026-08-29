@@ -130,6 +130,23 @@ public class LocaleAndResourceConsistencyTest {
         assertFalse("values-zh-rHK 冗餘目錄必須已被刪除", hkDir.exists());
     }
 
+    /**
+     * 5. 驗證所有多語系目錄 (values-*) 絕不包含 colors.xml 或 styles.xml，避免破壞 DayNight 主題繼承
+     */
+    @Test
+    public void testLocaleDirectoriesDoNotContainThemeOrColorFiles() {
+        File resDir = getResDir();
+        File[] localeDirs = resDir.listFiles((dir, name) -> name.startsWith("values-") && !name.equals("values-night"));
+        assertNotNull("Resource directory must exist", localeDirs);
+
+        for (File localeDir : localeDirs) {
+            File colorsFile = new File(localeDir, "colors.xml");
+            File stylesFile = new File(localeDir, "styles.xml");
+            assertFalse("多語系目錄 [" + localeDir.getName() + "] 絕不可包含 colors.xml (會攔截 DayNight 主題)", colorsFile.exists());
+            assertFalse("多語系目錄 [" + localeDir.getName() + "] 絕不可包含 styles.xml (會攔截 DayNight 主題)", stylesFile.exists());
+        }
+    }
+
     private List<String> extractStringArrayItems(Document doc, String arrayName) {
         List<String> items = new ArrayList<>();
         NodeList arrayNodes = doc.getElementsByTagName("string-array");

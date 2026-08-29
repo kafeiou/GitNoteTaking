@@ -73,7 +73,7 @@ public class GitList {
                 layout0.setTextColor(Color.RED);
                 layout0.setText("「"+aGitList.getGitName() + "」" + MyApplication.getAppContext().getResources().getString(R.string.main_notes_cloning));
             } else {
-                layout0.setTextColor(androidx.core.content.ContextCompat.getColor(MyApplication.getAppContext(), R.color.text_primary));
+                layout0.setTextColor(androidx.core.content.ContextCompat.getColor(layout0.getContext(), R.color.text_primary));
 
                 if (!aGitList.getBranch().equalsIgnoreCase(BRANCH_MASTER))
                     layout0.setText("[" + aGitList.getBranch() + "] "+aGitList.getGitName());
@@ -82,7 +82,7 @@ public class GitList {
             }
 
         } else {
-            layout0.setTextColor(androidx.core.content.ContextCompat.getColor(MyApplication.getAppContext(), R.color.text_primary));
+            layout0.setTextColor(androidx.core.content.ContextCompat.getColor(layout0.getContext(), R.color.text_primary));
             layout0.setText(aGitList.getGitName());
         }
 

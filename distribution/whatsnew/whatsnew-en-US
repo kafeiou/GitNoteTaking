@@ -1,6 +1,4 @@
-• GitHub OAuth 2.0 One-Tap Authorization: Connect and manage GitHub notes instantly without manual token copying (PAT dual-track support retained).
-• Smart Progress Status Indicator: Clear step-by-step status messages during note sync and timestamp calibration.
-• Accurate Commit Timestamp Sync: Automatically aligns each note's remote commit date upon download.
-• Local History Purge (Experimental): Free up phone storage by shallowing Git history in Settings.
-• Full multilingual support with instant in-app switching.
-• Performance optimizations and stability improvements.
+• Markdown In-App Preview: Supports GFM syntax, code syntax highlighting, Mermaid diagrams, and [[WikiLink]] navigation.
+• In-App Offline PDF Viewer: Native rendering with pinch-to-zoom, paging, password-protected PDF unlocking, and external reader sharing.
+• DayNight Theme Adaptation: Seamless dark/light theme switching following system default, with manual override in Settings.
+• Performance & Architecture: Upgraded to Eclipse JGit 7.7.1 with enhanced unit test suite and stability improvements.

@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.006] - 2026-08-29
+
+### 🚀 New Features & Architecture
+
+#### 1. Markdown 離線視覺化預覽與圖表 (Markdown & Mermaid In-App Preview)
+- **100% 離線渲染**：整合 Marked.js，支援 GFM 表格、任務清單、代碼區塊高亮與自適應滿版排版。
+- **Mermaid 向量圖表**：支援流程圖（`flowchart`）、時序圖（`sequenceDiagram`）與甘特圖等向量即時渲染。
+- **雙向筆記跳轉 (WikiLinks)**：支援 `[[筆記名稱]]` 語法，點擊即時跳轉至關聯筆記，構建個人知識庫網絡。
+- **即時預覽與編輯無縫切換**：檢視模式自動載入視覺化預覽，點擊編輯按鈕即時切換至純文字編輯框。
+
+#### 2. App 內原生 PDF 離線閱讀器 (In-App Offline PDF Viewer)
+- **專屬離線檢視畫面 (`ViewPdfActivity`)**：支援點選獨立 `.pdf` 筆記或附件時於 App 內原生加載，提供流暢雙指縮放與滑動翻頁。
+- **密碼保護 PDF 互動解鎖**：自動偵測加密 PDF，提供安全密碼輸入對話框、錯誤防呆與 Session 記憶體暫存快取。
+- **外部開啟整合**：預覽工具列提供「外部開啟」選單，透過 `FileProvider` 安全跳轉至系統安裝之第三方 PDF Reader。
+
+#### 3. 全域 DayNight 深淺色主題適配 (DayNight Theme Adaptation)
+- **跟隨系統與手動覆蓋**：全 App 採用 `DayNight` 主題架構，於「設定」提供「跟隨系統 / 淺色模式 / 深色模式」三選一選項與無縫秒速切換。
+- **全方位介面與組件深色適配**：包含主畫面、檔案總管、純文字編輯器、Markdown / PDF 預覽 WebView、Toolbar 標題列與功能彈窗選單全面深淺色適配。
+- **語系樣式隔離**：清理多語系目錄中的覆蓋樣式，確保所有語系（繁中/簡中/日文/英文）100% 正確繼承 DayNight 主題。
+
+#### 4. 核心相依升級與單元測試強化 (Core Upgrades & Testing Standard)
+- **JGit 核心升級**：升級 Eclipse JGit 核心至 7.7.1，大幅提升 Clone / Pull 傳輸效能與大儲存庫相容性。
+- **單元測試目錄與 Package 統一**：全專案單元測試與儀器測試統一重構至 `inmethod.gitnotetaking.test`，新增 Manifest 主題合規性與語系樣式安全性自動化檢驗。
+
 ## [4.005] - 2026-08-29
 
 ### 🚀 Enhancements & Architecture
