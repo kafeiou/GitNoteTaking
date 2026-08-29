@@ -10,6 +10,14 @@
         android:entryValues="@array/language_values"
         android:defaultValue="system" />
 
+    <ListPreference
+        android:key="AppTheme"
+        android:title="@string/pref_app_theme"
+        android:summary="@string/pref_app_theme_summary"
+        android:entries="@array/theme_entries"
+        android:entryValues="@array/theme_values"
+        android:defaultValue="system" />
+
     <androidx.preference.EditTextPreference
         app:key="GitAuthorName"
         app:allowDividerAbove="true"

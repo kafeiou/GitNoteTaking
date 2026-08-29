@@ -45,6 +45,9 @@ public class MyApplication extends Application {
             AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(lang));
         }
 
+        String theme = sp.getString("AppTheme", "system");
+        CustomPreferenceFragment.applyThemeMode(theme);
+
         try {
             org.eclipse.jgit.storage.file.WindowCacheConfig config = new org.eclipse.jgit.storage.file.WindowCacheConfig();
             config.setPackedGitLimit(10 * 1024 * 1024); // 10MB limit for mobile RAM safety

@@ -26,4 +26,14 @@
         <item>ja-JP</item>
         <item>en</item>
     </string-array>
+    <string-array name="theme_entries">
+        <item>システム連動</item>
+        <item>ライトモード</item>
+        <item>ダークモード</item>
+    </string-array>
+    <string-array name="theme_values">
+        <item>system</item>
+        <item>light</item>
+        <item>dark</item>
+    </string-array>
 </resources>

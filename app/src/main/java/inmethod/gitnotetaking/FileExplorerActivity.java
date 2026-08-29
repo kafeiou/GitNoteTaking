@@ -492,9 +492,11 @@ Log.d(TAG,"m_item name = "+m_item.get(position)+",position number = "+ position+
                     getDirFromRoot(m_isFile.toString());
                 } else {
                     String sFileName = m_isFile.getName().toLowerCase();
-                    //Log.d(TAG,"file name = "+ sFileName);
-                    if (MyApplication.isText(sFileName)) {
-                        // Toast.makeText(FileExplorerActivity.this, "File Name = "+m_isFile.getAbsoluteFile()+",uri="+Uri.fromFile(m_isFile), Toast.LENGTH_LONG).show();
+                    if (sFileName.endsWith(".pdf")) {
+                        Intent intent = new Intent(FileExplorerActivity.this, ViewPdfActivity.class);
+                        intent.putExtra("FILE_PATH", m_isFile.getAbsoluteFile().toString());
+                        startActivity(intent);
+                    } else if (MyApplication.isText(sFileName)) {
                         Intent intent = new Intent(FileExplorerActivity.this, ViewFileActivity.class);
                         intent.putExtra("FILE_PATH", m_isFile.getAbsoluteFile().toString());
                         intent.putExtra("GIT_REMOTE_URL", sGitRemoteUrl);

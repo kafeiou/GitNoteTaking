@@ -55,6 +55,10 @@
             android:theme="@style/AppTheme.NoActionBar">
         </activity>
         <activity
+            android:name=".ViewPdfActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+        </activity>
+        <activity
             android:name=".ModifyRemoteGitActivity"
             android:theme="@style/AppTheme.NoActionBar">
         </activity>

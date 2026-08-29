@@ -163,4 +163,19 @@
     <string name="pref_purge_success">パージが完了しました！すべてのノートが最新バージョンのみに整理されました。</string>
     <string name="tv_syncing_timestamps">ファイル更新日時を同期中...</string>
     <string name="tv_fetching_github_dates">GitHub から更新日時を取得中...</string>
+
+    <!-- PDF Viewer & Password strings -->
+    <string name="view_pdf_action_open_external">外部アプリで開く</string>
+    <string name="pdf_password_dialog_title">パスワード保護された PDF</string>
+    <string name="pdf_password_dialog_message">この PDF ドキュメントは暗号化されています。ロック解除用パスワードを入力してください：</string>
+    <string name="pdf_password_dialog_hint">パスワードを入力</string>
+    <string name="pdf_password_incorrect">パスワードが正しくありません。再入力してください。</string>
+    <string name="pdf_pages_indicator">%1$d / %2$d ページ</string>
+
+    <!-- Theme Mode strings -->
+    <string name="pref_app_theme">アプリテーマ</string>
+    <string name="pref_app_theme_summary">システム連動、ライト、ダークモードを選択</string>
+    <string name="theme_system_default">システム連動 (デフォルト)</string>
+    <string name="theme_light">ライトモード</string>
+    <string name="theme_dark">ダークモード (夜間)</string>
 </resources>

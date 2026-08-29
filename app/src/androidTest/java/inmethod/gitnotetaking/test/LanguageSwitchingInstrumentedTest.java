@@ -1,4 +1,4 @@
-package inmethod.gitnotetaking;
+package inmethod.gitnotetaking.test;
 
 import android.content.Context;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -8,6 +8,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import inmethod.gitnotetaking.R;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

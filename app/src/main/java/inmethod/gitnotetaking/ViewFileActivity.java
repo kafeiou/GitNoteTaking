@@ -294,18 +294,24 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                             aTV.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-                                    Log.d(TAG, "filuri=" + filuri.toString());
-                                    Intent intent = new Intent();
-                                    intent.setAction(android.content.Intent.ACTION_VIEW);
-                                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                    intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                                    String authority = activity.getPackageName() + ".fileprovider";
-                                    Uri filuri = FileProvider.getUriForFile(activity, authority, file);
-                                    intent.setDataAndType(filuri, getMimeType(filuri, activity));
-                                    try {
+                                    if (file.getName().toLowerCase().endsWith(".pdf")) {
+                                        Intent intent = new Intent(ViewFileActivity.this, ViewPdfActivity.class);
+                                        intent.putExtra("FILE_PATH", file.getAbsolutePath());
                                         startActivity(intent);
-                                    } catch (ActivityNotFoundException e) {
+                                    } else {
+                                        Log.d(TAG, "filuri=" + filuri.toString());
+                                        Intent intent = new Intent();
+                                        intent.setAction(android.content.Intent.ACTION_VIEW);
+                                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                        intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                        intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                                        String authority = activity.getPackageName() + ".fileprovider";
+                                        Uri filuri = FileProvider.getUriForFile(activity, authority, file);
+                                        intent.setDataAndType(filuri, getMimeType(filuri, activity));
+                                        try {
+                                            startActivity(intent);
+                                        } catch (ActivityNotFoundException e) {
+                                        }
                                     }
                                 }
                             });

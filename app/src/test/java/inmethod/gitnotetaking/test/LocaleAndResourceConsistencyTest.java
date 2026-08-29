@@ -1,4 +1,4 @@
-package inmethod.gitnotetaking;
+package inmethod.gitnotetaking.test;
 
 import org.junit.Test;
 import org.w3c.dom.Document;

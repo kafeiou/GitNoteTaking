@@ -25,4 +25,14 @@
     <item>ja-JP</item>
     <item>en</item>
 </string-array>
+<string-array name="theme_entries">
+    <item>System Default</item>
+    <item>Light Mode</item>
+    <item>Dark Mode</item>
+</string-array>
+<string-array name="theme_values">
+    <item>system</item>
+    <item>light</item>
+    <item>dark</item>
+</string-array>
 </resources>

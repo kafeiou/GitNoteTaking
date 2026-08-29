@@ -1,4 +1,4 @@
-package inmethod.gitnotetaking;
+package inmethod.gitnotetaking.test;
 
 import org.json.JSONObject;
 import org.junit.Test;
@@ -199,4 +199,3 @@ public class MarkdownPreviewAndLayoutUnitTest {
         assertTrue("以 .md 結尾應識別為本地 Markdown 檔案", relativeMdUrl.endsWith(".md") || relativeMdUrl.endsWith(".markdown"));
     }
 }
-

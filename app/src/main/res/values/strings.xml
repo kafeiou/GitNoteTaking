@@ -163,4 +163,19 @@
     <string name="pref_purge_success">Purge completed! All repositories are now depth = 1.</string>
     <string name="tv_syncing_timestamps">Updating file dates...</string>
     <string name="tv_fetching_github_dates">Getting file dates from GitHub...</string>
+
+    <!-- PDF Viewer & Password strings -->
+    <string name="view_pdf_action_open_external">Open in External App</string>
+    <string name="pdf_password_dialog_title">Password Protected PDF</string>
+    <string name="pdf_password_dialog_message">This PDF document is encrypted. Please enter the password to unlock:</string>
+    <string name="pdf_password_dialog_hint">Password</string>
+    <string name="pdf_password_incorrect">Incorrect password. Please try again.</string>
+    <string name="pdf_pages_indicator">Page %1$d / %2$d</string>
+
+    <!-- Theme Mode strings -->
+    <string name="pref_app_theme">Theme Mode</string>
+    <string name="pref_app_theme_summary">Choose light, dark, or follow system default</string>
+    <string name="theme_system_default">Follow System (Default)</string>
+    <string name="theme_light">Light Mode</string>
+    <string name="theme_dark">Dark Mode</string>
 </resources>

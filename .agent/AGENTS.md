@@ -6,4 +6,5 @@
 - **流程圖文件化 (Flowchart Documentation)**：產生的系統架構或邏輯流程圖，必須使用 `mermaid` 語法記錄到 Spec 文件中。
 - **自動同步主文件 (Auto-Sync Master Docs)**：變更歸檔後，必須自動重新生成 `openspec/specs/README.md`。
 - **發布日誌標準 (Release & Distribution Standard)**：每次升級版本時，必須主動更新 `CHANGELOG.md`（完整歷史），並同步覆蓋更新 `distribution/whatsnew/` 下的 4 國語系 Google Play 商店當次發布日誌（`whatsnew-zh-TW`, `whatsnew-zh-CN`, `whatsnew-ja-JP`, `whatsnew-en-US`，每篇均嚴格限制在 500 字元內）。
-- **一鍵單元測試規範 (Unit Testing Standard)**：當使用者提及「單元測試」時，永遠必須主動執行 `./gradlew testDebugUnitTest` 執行全專案單元測試，確保所有測試案例 100% 通過並詳細回報結果。
+- **單元測試規範 (Unit Testing Standard)**：凡是實作或修改新功能，永遠必須主動撰寫對應的自動化單元測試，所有測試檔案一律必須統一放置於 `inmethod/gitnotetaking/test/` 目錄與 Package 下；當使用者提及「單元測試」或完成重大功能時，永遠必須主動執行 `./gradlew testDebugUnitTest` 執行全專案單元測試，確保所有測試案例 100% 通過並詳細回報結果。
+

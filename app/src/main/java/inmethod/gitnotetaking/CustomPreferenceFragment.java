@@ -60,6 +60,26 @@ public class CustomPreferenceFragment extends PreferenceFragmentCompat {
             });
         }
 
+        ListPreference appTheme = (ListPreference) findPreference("AppTheme");
+        if (appTheme != null) {
+            String currentTheme = sharedPreferences.getString("AppTheme", "system");
+            appTheme.setValue(currentTheme);
+            int themeIndex = appTheme.findIndexOfValue(currentTheme);
+            if (themeIndex >= 0) {
+                appTheme.setSummary(appTheme.getEntries()[themeIndex]);
+            }
+            appTheme.setOnPreferenceChangeListener((preference, o) -> {
+                String selectedTheme = (o != null) ? o.toString().trim() : "system";
+                sharedPreferences.edit().putString("AppTheme", selectedTheme).apply();
+                int idx = ((ListPreference) preference).findIndexOfValue(selectedTheme);
+                if (idx >= 0) {
+                    appTheme.setSummary(((ListPreference) preference).getEntries()[idx]);
+                }
+                applyThemeMode(selectedTheme);
+                return true;
+            });
+        }
+
         EditTextPreference GitAuthorName = (EditTextPreference) findPreference("GitAuthorName");
         if (GitAuthorName != null) {
             GitAuthorName.setSummary(sharedPreferences.getString("GitAuthorName", ""));
@@ -189,5 +209,15 @@ public class CustomPreferenceFragment extends PreferenceFragmentCompat {
     public void onDestroy() {
         super.onDestroy();
         dismissWaitDialog();
+    }
+
+    public static void applyThemeMode(String theme) {
+        if ("dark".equalsIgnoreCase(theme)) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        } else if ("light".equalsIgnoreCase(theme)) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        }
     }
 }

@@ -15,7 +15,7 @@
 ## 🧪 目前已包含之測試項目
 
 ### 1. 語系與資源一致性單元測試 (`LocaleAndResourceConsistencyTest.java`)
-- **檔案路徑**：[`app/src/test/java/inmethod/gitnotetaking/LocaleAndResourceConsistencyTest.java`](file:///W:/developer/project/inmethod/android/InMethodGitNoteTaking/app/src/test/java/inmethod/gitnotetaking/LocaleAndResourceConsistencyTest.java)
+- **檔案路徑**：[`app/src/test/java/inmethod/gitnotetaking/test/LocaleAndResourceConsistencyTest.java`](file:///W:/developer/project/inmethod/android/InMethodGitNoteTaking/app/src/test/java/inmethod/gitnotetaking/test/LocaleAndResourceConsistencyTest.java)
 - **測試項目**：
   - `testLocalesConfigMatchesLanguageValues`：驗證 `res/xml/locales_config.xml` 宣告之標籤（`zh-TW`, `zh-CN`, `ja-JP`, `en`）與所有 `arrays.xml` 中的 `language_values` 100% 吻合對齊。
   - `testLanguageEntriesAndValuesCountMatch`：驗證 4 國語系（繁中、簡中、日文、英文）的選項名稱與標籤數量、順序皆一致。
@@ -23,7 +23,7 @@
   - `testNoHkResourcesRemain`：確保 `values-zh-rHK` 冗餘目錄已被徹底清理。
 
 ### 2. Markdown 離線預覽與排版單元測試 (`MarkdownPreviewAndLayoutUnitTest.java`)
-- **檔案路徑**：[`app/src/test/java/inmethod/gitnotetaking/MarkdownPreviewAndLayoutUnitTest.java`](file:///W:/developer/project/inmethod/android/InMethodGitNoteTaking/app/src/test/java/inmethod/gitnotetaking/MarkdownPreviewAndLayoutUnitTest.java)
+- **檔案路徑**：[`app/src/test/java/inmethod/gitnotetaking/test/MarkdownPreviewAndLayoutUnitTest.java`](file:///W:/developer/project/inmethod/android/InMethodGitNoteTaking/app/src/test/java/inmethod/gitnotetaking/test/MarkdownPreviewAndLayoutUnitTest.java)
 - **測試項目**：
   - `testMarkdownAssetsExistAndAreValid`：驗證 `marked.min.js`, `github-markdown.css`, `preview.html` 離線靜態資產完整性與 API 接口。
   - `testGithubMarkdownCssCoverage`：驗證深淺色主題 (`prefers-color-scheme`)、圖片防跑版、表格獨立滾動與 Obsidian wikilink 樣式覆蓋。
@@ -33,8 +33,18 @@
   - `testMarkedJsSyntaxRulesContract`：驗證 Markdown 引擎完整具備標題 (H1~H6)、代碼塊、待辦方框 (Checkboxes)、表格、雙向鏈接與 Callout 區塊語法規範。
   - `testUrlRoutingClassification`：驗證外網連結 (`http/https`)、雙向連結 (`wikilink:`) 與相對路徑之智慧分類路由。
 
-### 3. 動態語系切換儀器測試 (`LanguageSwitchingInstrumentedTest.java`)
-- **檔案路徑**：[`app/src/androidTest/java/inmethod/gitnotetaking/LanguageSwitchingInstrumentedTest.java`](file:///W:/developer/project/inmethod/android/InMethodGitNoteTaking/app/src/androidTest/java/inmethod/gitnotetaking/LanguageSwitchingInstrumentedTest.java)
+### 3. PDF 原生預覽、密碼解鎖與主題適配單元測試 (`PdfPreviewUnitTest.java`)
+- **檔案路徑**：[`app/src/test/java/inmethod/gitnotetaking/test/PdfPreviewUnitTest.java`](file:///W:/developer/project/inmethod/android/InMethodGitNoteTaking/app/src/test/java/inmethod/gitnotetaking/test/PdfPreviewUnitTest.java)
+- **測試項目**：
+  - `testPdfAssetsExistAndAreValid`：驗證 `pdf_viewer.html`, `pdf.min.js`, `pdf.worker.min.js` 靜態資產完整性、JavascriptInterface 串接與深淺色 CSS 適配。
+  - `testPdfJsApiAndSecurityContract`：驗證 `pdf.min.js` 提供標準 `getDocument` API、`NEED_PASSWORD`、`INCORRECT_PASSWORD` 密碼事件與 `/Encrypt` 加密字典識別。
+  - `testPdfExtensionDetection`：驗證 `.pdf`, `.PDF` 等副檔名識別與專屬預覽路由分流。
+  - `testThemeModeMapping`：驗證 DayNight 深淺色主題模式值（`system`, `light`, `dark`）映射正確性。
+  - `testSampleProtectedPdfStructureAndEncryption`：驗證測試用加密 PDF 結構、標頭與 `/Encrypt` 密碼保護字典。
+  - `testPdfPasswordSessionCacheLifecycle`：驗證 Session 記憶體暫存密碼之讀寫與銷毀生命週期。
+
+### 4. 動態語系切換儀器測試 (`LanguageSwitchingInstrumentedTest.java`)
+- **檔案路徑**：[`app/src/androidTest/java/inmethod/gitnotetaking/test/LanguageSwitchingInstrumentedTest.java`](file:///W:/developer/project/inmethod/android/InMethodGitNoteTaking/app/src/androidTest/java/inmethod/gitnotetaking/test/LanguageSwitchingInstrumentedTest.java)
 - **測試項目**：
   - `testDynamicLocaleSwitching`：在 Android 運行環境中依序切換為 `zh-TW`、`zh-CN`、`ja-JP`、`en`，驗證系統能否即時正確解析對應語言之字串資源。
 

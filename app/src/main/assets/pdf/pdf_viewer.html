@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>PDF Viewer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #525659;
+      color: #333333;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow-x: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 8px 32px 8px;
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #1e1e1e;
+        color: #cccccc;
+      }
+    }
+    #viewer-container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .pdf-page-container {
+      background-color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+    #loading-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: #ffffff;
+      font-size: 16px;
+      gap: 12px;
+    }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    #error-message {
+      display: none;
+      background: #ffebee;
+      color: #c62828;
+      padding: 16px;
+      border-radius: 8px;
+      margin: 20px;
+      max-width: 80%;
+      text-align: center;
+    }
+    @media (prefers-color-scheme: dark) {
+      #error-message {
+        background: #3b1e1e;
+        color: #ef9a9a;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-indicator">
+    <div class="spinner"></div>
+    <div id="loading-text">Loading PDF...</div>
+  </div>
+
+  <div id="error-message"></div>
+
+  <div id="viewer-container"></div>
+
+  <script src="pdf.min.js"></script>
+  <script>
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
+    }
+
+    var currentPdfDoc = null;
+    var currentPasswordCallback = null;
+    var currentBase64Data = null;
+
+    function loadPdfFromBase64(base64Data) {
+      currentBase64Data = base64Data;
+      var raw = atob(base64Data);
+      var rawLength = raw.length;
+      var array = new Uint8Array(new ArrayBuffer(rawLength));
+      for (var i = 0; i < rawLength; i++) {
+        array[i] = raw.charCodeAt(i);
+      }
+
+      var loadingTask = pdfjsLib.getDocument({
+        data: array,
+        cMapUrl: 'cmaps/',
+        cMapPacked: true
+      });
+
+      loadingTask.onPassword = function(callback, reason) {
+        currentPasswordCallback = callback;
+        if (window.AndroidPDF && window.AndroidPDF.onPasswordRequired) {
+          window.AndroidPDF.onPasswordRequired(reason === 2 /* NEED_PASSWORD = 1, WRONG_PASSWORD = 2 */);
+        } else {
+          var pwd = prompt(reason === 2 ? "Incorrect password. Please try again:" : "This document is password protected:");
+          if (pwd !== null) {
+            callback(pwd);
+          }
+        }
+      };
+
+      loadingTask.promise.then(function(pdfDoc) {
+        currentPdfDoc = pdfDoc;
+        document.getElementById('loading-indicator').style.display = 'none';
+        if (window.AndroidPDF && window.AndroidPDF.onPdfLoaded) {
+          window.AndroidPDF.onPdfLoaded(pdfDoc.numPages);
+        }
+        renderAllPages(pdfDoc);
+      }).catch(function(err) {
+        document.getElementById('loading-indicator').style.display = 'none';
+        if (err.name === 'PasswordException') {
+          return;
+        }
+        var errorDiv = document.getElementById('error-message');
+        errorDiv.style.display = 'block';
+        errorDiv.innerText = "Error opening PDF: " + (err.message || err);
+        if (window.AndroidPDF && window.AndroidPDF.onPdfLoadError) {
+          window.AndroidPDF.onPdfLoadError(err.message || 'Unknown error');
+        }
+      });
+    }
+
+    function providePassword(password) {
+      if (currentPasswordCallback) {
+        var cb = currentPasswordCallback;
+        currentPasswordCallback = null;
+        cb(password);
+      }
+    }
+
+    function renderAllPages(pdfDoc) {
+      var container = document.getElementById('viewer-container');
+      container.innerHTML = '';
+
+      var totalPages = pdfDoc.numPages;
+      var scale = window.devicePixelRatio && window.devicePixelRatio > 1 ? window.devicePixelRatio : 1.5;
+
+      for (var pageNum = 1; pageNum <= totalPages; pageNum++) {
+        (function(num) {
+          var pageContainer = document.createElement('div');
+          pageContainer.className = 'pdf-page-container';
+          pageContainer.id = 'page-' + num;
+
+          var canvas = document.createElement('canvas');
+          pageContainer.appendChild(canvas);
+          container.appendChild(pageContainer);
+
+          pdfDoc.getPage(num).then(function(page) {
+            var viewport = page.getViewport({ scale: scale });
+            var context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            canvas.style.width = '100%';
+            canvas.style.height = 'auto';
+
+            var renderContext = {
+              canvasContext: context,
+              viewport: viewport
+            };
+            page.render(renderContext);
+          });
+        })(pageNum);
+      }
+    }
+  </script>
+</body>
+</html>

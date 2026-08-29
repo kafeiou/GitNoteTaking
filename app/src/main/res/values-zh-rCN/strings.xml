@@ -163,4 +163,19 @@
     <string name="pref_purge_success">历史记录瘦身完成！所有仓库已转换为单一版本。</string>
     <string name="tv_syncing_timestamps">正在更新文件真实日期...</string>
     <string name="tv_fetching_github_dates">向 GitHub 获取文件最近更新日...</string>
+
+    <!-- PDF Viewer & Password strings -->
+    <string name="view_pdf_action_open_external">使用外部应用打开</string>
+    <string name="pdf_password_dialog_title">加密保护的 PDF 文件</string>
+    <string name="pdf_password_dialog_message">此 PDF 文件已受密码保护，请输入密码以解锁查看：</string>
+    <string name="pdf_password_dialog_hint">请输入密码</string>
+    <string name="pdf_password_incorrect">密码错误，请重新输入。</string>
+    <string name="pdf_pages_indicator">第 %1$d / %2$d 页</string>
+
+    <!-- Theme Mode strings -->
+    <string name="pref_app_theme">深浅色主题模式</string>
+    <string name="pref_app_theme_summary">选择跟随系统、浅色或深色暗黑主题</string>
+    <string name="theme_system_default">跟随系统 (默认)</string>
+    <string name="theme_light">浅色模式 (亮色)</string>
+    <string name="theme_dark">深色模式 (夜间暗黑)</string>
 </resources>
