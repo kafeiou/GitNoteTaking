@@ -95,6 +95,9 @@
     <string name="title_search_text">Search</string>
     <string name="search_mode">Search Text</string>
     <string name="toast_pulling">Pulling Try later</string>
+    <string name="toast_pull_updated">Notes updated from remote</string>
+    <string name="toast_uncommitted_changes">Local uncommitted changes found. Please commit first</string>
+    <string name="toast_note_not_found">Note file not found</string>
     <string name="toast_cloning">Cloning Try later</string>
     <string name="message_search_text">" "</string>
     <string name="attachment">File</string>

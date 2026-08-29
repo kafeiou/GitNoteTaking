@@ -7,7 +7,9 @@ import android.util.Log;
 
 import androidx.preference.PreferenceManager;
 
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.errors.LockFailedException;
@@ -54,6 +56,9 @@ public class MyGitUtility {
     public static final int GIT_STATUS_PUSH_FAIL = -1;
     public static final int GIT_STATUS_CLONING = -3;
     public static final int GIT_STATUS_PULLING = -4;
+    public static final int PULL_RESULT_FAILED = 0;
+    public static final int PULL_RESULT_UP_TO_DATE = 1;
+    public static final int PULL_RESULT_UPDATED = 2;
     public static boolean bGitLock = false;
 
 
@@ -238,6 +243,24 @@ public class MyGitUtility {
         return false;
     }
 
+    public static boolean autoCommitIfDirty(Context context, String sRemoteUrl) {
+        String sLocalDirectory = getLocalGitDirectory(context, sRemoteUrl);
+        File gitDir = new File(sLocalDirectory, ".git");
+        if (!gitDir.exists()) {
+            return false;
+        }
+        try (Git git = Git.open(new File(sLocalDirectory))) {
+            Status status = git.status().call();
+            if (!status.isClean()) {
+                Log.d(TAG, "Working tree is dirty, auto-committing before sync: uncommitted changes = " + status.getUncommittedChanges());
+                return commit(context, sRemoteUrl, "Auto-saved locally before sync");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "autoCommitIfDirty exception: " + e.getMessage(), e);
+        }
+        return false;
+    }
+
     public static boolean deleteByRemoteUrl(Context context, String sRemoteUrl) {
         RemoteGitDAO aRemoteGitDAO = new RemoteGitDAO(context);
         boolean sReturn = aRemoteGitDAO.delete(sRemoteUrl);
@@ -333,9 +356,13 @@ public class MyGitUtility {
     }
 
     public static boolean pull(Context context, String sRemoteUrl) {
+        return pullWithResult(context, sRemoteUrl) != PULL_RESULT_FAILED;
+    }
+
+    public static int pullWithResult(Context context, String sRemoteUrl) {
         RemoteGitDAO aRemoteGitDAO = new RemoteGitDAO(context);
         RemoteGit aRemoteGit = aRemoteGitDAO.getByURL(sRemoteUrl);
-        if (aRemoteGit == null) return false;
+        if (aRemoteGit == null) return PULL_RESULT_FAILED;
         setGitLock(true);
 
         String sUserName = aRemoteGit.getUid();
@@ -354,11 +381,16 @@ public class MyGitUtility {
                 Log.e(TAG, "check remote url failed");
                 setGitLock(false);
                 if (aGitUtil != null) aGitUtil.close();
-                return false;
+                return PULL_RESULT_FAILED;
             }
             Log.d(TAG, "Remote repository exists ? " + bIsRemoteRepositoryExist);
             if (bIsRemoteRepositoryExist) {
                 Log.d(TAG, "try to pull remote repository , branch="+aRemoteGit.getRemoteName());
+                ObjectId oldHead = null;
+                try (Git git = Git.open(new File(sLocalDirectory))) {
+                    oldHead = git.getRepository().resolve("HEAD");
+                } catch (Exception ignored) {}
+
                 try{
                   if (aGitUtil.pull(aRemoteGit.getRemoteName(), sUserName, sUserPassword)) {
                     Log.d(TAG, "pull finished!");
@@ -366,15 +398,22 @@ public class MyGitUtility {
                     aRemoteGit.setStatus(GIT_STATUS_SUCCESS);
                     aRemoteGitDAO.update(aRemoteGit);
                     setGitLock(false);
+
+                    ObjectId newHead = null;
+                    try (Git git = Git.open(new File(sLocalDirectory))) {
+                        newHead = git.getRepository().resolve("HEAD");
+                    } catch (Exception ignored) {}
+
+                    boolean hasNewCommits = (oldHead != null && newHead != null && !oldHead.equals(newHead));
                     if (aGitUtil != null) aGitUtil.close();
-                    return true;
+                    return hasNewCommits ? PULL_RESULT_UPDATED : PULL_RESULT_UP_TO_DATE;
                   } else {
                       aGitUtil.reset(ResetCommand.ResetType.MIXED, PreferenceManager.getDefaultSharedPreferences(context).getString("GitRemoteName", "master"));
                       aRemoteGitDAO.update(aRemoteGit);
                       Log.d(TAG, "pull failed!");
                       setGitLock(false);
                       if (aGitUtil != null) aGitUtil.close();
-                      return false;
+                      return PULL_RESULT_FAILED;
                   }
                 }catch(LockFailedException lockfail){
                     lockfail.printStackTrace();
@@ -383,14 +422,14 @@ public class MyGitUtility {
                     setGitLock(false);
                     FileUtility.deleteLockFile(aGitUtil);
                     if (aGitUtil != null) aGitUtil.close();
-                    return false;
+                    return PULL_RESULT_FAILED;
                 }catch(JGitInternalException aJGitInternalException){
                         aRemoteGitDAO.update(aRemoteGit);
                         Log.d(TAG, "pull failed!");
                         setGitLock(false);
                         FileUtility.deleteLockFile(aGitUtil);
                         if (aGitUtil != null) aGitUtil.close();
-                        return false;
+                        return PULL_RESULT_FAILED;
                 }catch(WrongRepositoryStateException asd){
                     asd.printStackTrace();
                     try {
@@ -404,7 +443,7 @@ public class MyGitUtility {
                     Log.d(TAG, "pull failed!");
                     setGitLock(false);
                     if (aGitUtil != null) aGitUtil.close();
-                    return false;
+                    return PULL_RESULT_FAILED;
                 }
             }
             aRemoteGitDAO.update(aRemoteGit);
@@ -412,12 +451,12 @@ public class MyGitUtility {
             if (aGitUtil != null) aGitUtil.close();
             if( aRemoteGit!=null )
             aRemoteGitDAO.close();
-            return false;
+            return PULL_RESULT_FAILED;
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return false;
+        return PULL_RESULT_FAILED;
     }
 
 
@@ -823,6 +862,18 @@ public class MyGitUtility {
             Log.e(TAG, "Failed to purge local git repository history for " + sLocalDirectory, e);
             return false;
         }
+    }
+
+    public static boolean isWorkingTreeDirty(Context context, String sRemoteUrl) {
+        String sLocalDirectory = getLocalGitDirectory(context, sRemoteUrl);
+        if (sLocalDirectory == null) return false;
+        try (Git git = Git.open(new File(sLocalDirectory))) {
+            Status status = git.status().call();
+            return !status.isClean();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     public static void purgeAllLocalRepositoriesHistory(Context context) {

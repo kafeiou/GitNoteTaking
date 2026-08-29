@@ -90,6 +90,9 @@
     <string name="tv_create_local_git_fail">添加失败</string>
     <string name="dialog_title_add">添加文件</string>
     <string name="toast_pulling">后台同步中,请稍候</string>
+    <string name="toast_pull_updated">已同步远端最新笔记</string>
+    <string name="toast_uncommitted_changes">本地尚有未提交的笔记，请先提交</string>
+    <string name="toast_note_not_found">找不到笔记文件</string>
     <string name="toast_cloning">克隆中,请稍候</string>
     <string name="title_search_text">搜索</string>
     <string name="message_search_text">" "</string>

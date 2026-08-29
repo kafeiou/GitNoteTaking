@@ -198,4 +198,19 @@ public class MarkdownPreviewAndLayoutUnitTest {
         assertTrue("wikilink: 應識別為內部雙向連結", wikilinkUrl.startsWith("wikilink:"));
         assertTrue("以 .md 結尾應識別為本地 Markdown 檔案", relativeMdUrl.endsWith(".md") || relativeMdUrl.endsWith(".markdown"));
     }
+
+    /**
+     * 9. 驗證 marked.min.js 的佔位符機制絕不使用底線 _，杜絕斜體/粗體語法破壞導致 codeblock0 現象
+     */
+    @Test
+    public void testMarkedJsDoesNotExposePlaceholdersOrCorruptCodeblocks() throws Exception {
+        File dir = getAssetsDir();
+        File markedJs = new File(dir, "marked.min.js");
+        String jsCode = new String(Files.readAllBytes(markedJs.toPath()), StandardCharsets.UTF_8);
+
+        assertFalse("marked.min.js 絕不可使用 ___CODE_BLOCK_ 佔位符（會被粗體/斜體語法破壞）", jsCode.contains("___CODE_BLOCK_"));
+        assertFalse("marked.min.js 絕不可使用 ___INLINE_CODE_ 佔位符", jsCode.contains("___INLINE_CODE_"));
+        assertTrue("marked.min.js 應使用安全字母 Token FNCCODEBLOCK 佔位符", jsCode.contains("FNCCODEBLOCK"));
+        assertTrue("marked.min.js 應使用安全字母 Token INLCODEBLOCK 佔位符", jsCode.contains("INLCODEBLOCK"));
+    }
 }

@@ -26,6 +26,11 @@ All notable changes to this project will be documented in this file.
 - **JGit 核心升級**：升級 Eclipse JGit 核心至 7.7.1，大幅提升 Clone / Pull 傳輸效能與大儲存庫相容性。
 - **單元測試目錄與 Package 統一**：全專案單元測試與儀器測試統一重構至 `inmethod.gitnotetaking.test`，新增 Manifest 主題合規性與語系樣式安全性自動化檢驗。
 
+#### 5. Git 同步效能與未 Commit 安全防護 (Git Sync Optimization & Working Tree Guardrails)
+- **進入筆記零延遲背景同步**：進入筆記畫面時秒開本機清單，背景比對 Commit ID 執行 Pull，僅在遠端有新筆記下載時提示 Toast。
+- **本地未 Commit 嚴格防護**：手動重整或進入筆記時，若偵測到本地有未存/未提交修改，立即停止 Pull 並發出 Toast 警示，100% 杜絕覆蓋風險。
+- **手動「重整」按鈕接通遠端同步**：檔案總管「重整」按鈕完整串接遠端 Git 同步與本地/遠端智慧分流。
+
 ## [4.005] - 2026-08-29
 
 ### 🚀 Enhancements & Architecture

@@ -167,6 +167,47 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
             }
         });
         getDirFromRoot(m_curDir);
+        triggerGitSync(false);
+    }
+
+    private void triggerGitSync(boolean isManual) {
+        if (sGitRemoteUrl == null || sGitRemoteUrl.indexOf("local") != -1) {
+            getDirFromRoot(m_curDir);
+            return;
+        }
+
+        if (MyApplication.isNetworkConnected()) {
+            if (isManual) {
+                Toast.makeText(activity, getString(R.string.toast_pulling), Toast.LENGTH_SHORT).show();
+            }
+            new Thread(() -> {
+                if (MyGitUtility.isWorkingTreeDirty(activity, sGitRemoteUrl)) {
+                    runOnUiThread(() -> {
+                        if (!isFinishing()) {
+                            Toast.makeText(activity, getString(R.string.toast_uncommitted_changes), Toast.LENGTH_LONG).show();
+                        }
+                    });
+                    return;
+                }
+                int pullResult = MyGitUtility.pullWithResult(activity, sGitRemoteUrl);
+                runOnUiThread(() -> {
+                    if (!isFinishing()) {
+                        if (pullResult == MyGitUtility.PULL_RESULT_UPDATED) {
+                            Toast.makeText(activity, getString(R.string.toast_pull_updated), Toast.LENGTH_SHORT).show();
+                            getDirFromRoot(m_curDir);
+                        } else if (isManual) {
+                            if (pullResult == MyGitUtility.PULL_RESULT_UP_TO_DATE) {
+                                Toast.makeText(activity, getString(R.string.pulling_success), Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(activity, getString(R.string.pulling_failed), Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    }
+                });
+            }).start();
+        } else if (isManual) {
+            Toast.makeText(activity, getString(R.string.pulling_failed), Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -730,6 +771,7 @@ Log.d(TAG,"m_item name = "+m_item.get(position)+",position number = "+ position+
             sSearchText="";
             aEditTextSearch.setText("");
             getDirFromRoot(m_curDir);
+            triggerGitSync(true);
         } else if (id == R.id.action_search_text_file) {
             searchTextFile();
         } else if (id == R.id.action_add_file) {

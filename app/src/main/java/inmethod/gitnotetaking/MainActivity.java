@@ -686,22 +686,8 @@ public class MainActivity extends AppCompatActivity {
         boolean bCloning = false;
         for (final RemoteGit a : aList) {
             adapter.addData(new GitList(a.getNickname(), a.getUrl(), (int) a.getStatus(), a.getBranch()));
-            if (a.getUrl().indexOf("local") == -1 && a.getStatus() != MyGitUtility.GIT_STATUS_CLONING) {
-                Log.d(TAG, "try to pull from remote git to local repository");
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        String sBranchName = MyGitUtility.getLocalBranchName(MyApplication.getAppContext(), a.getUrl());
-                        Log.d(TAG, "remote url = " + a.getUrl() +",local branch name = " + sBranchName + ", setting's branch name = " + a.getRemoteName());
-                        if (sBranchName != null && sBranchName.equalsIgnoreCase(a.getRemoteName()))
-                            if (MyApplication.isNetworkConnected())
-                                MyGitUtility.pull(MyApplication.getAppContext(), a.getUrl());
-                    }
-                }).start();
-            }
             if (a.getStatus() == MyGitUtility.GIT_STATUS_CLONING)
                 bCloning = true;
-
         }
         if (bCloning) {
             new Thread(new Runnable() {

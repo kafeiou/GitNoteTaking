@@ -1,4 +1,7 @@
-• Markdown In-App Preview: Supports GFM syntax, code syntax highlighting, Mermaid diagrams, and [[WikiLink]] navigation.
-• In-App Offline PDF Viewer: Native rendering with pinch-to-zoom, paging, password-protected PDF unlocking, and external reader sharing.
-• DayNight Theme Adaptation: Seamless dark/light theme switching following system default, with manual override in Settings.
-• Performance & Architecture: Upgraded to Eclipse JGit 7.7.1 with enhanced unit test suite and stability improvements.
+• Markdown Preview: GFM syntax, code highlighting, Mermaid diagrams & [[WikiLink]] navigation.
+• In-App Offline PDF Viewer: Pinch-to-zoom, password unlock & external sharing.
+• DayNight Theme: Dark/light switching following system default or in Settings.
+• GitHub OAuth 2.0: One-tap login & PAT dual-track support.
+• Smart Progress Status & Accurate Commit Timestamp Sync.
+• Local History Purge & Instant multilingual switching.
+• Upgraded to Eclipse JGit 7.7.1 & stability improvements.

@@ -90,6 +90,9 @@
     <string name="tv_create_local_git_fail">作成に失敗しました</string>
     <string name="dialog_title_add">ファイル追加</string>
     <string name="toast_pulling">同期中、少々お待ちください</string>
+    <string name="toast_pull_updated">リモートの最新ノートを同期しました</string>
+    <string name="toast_uncommitted_changes">未コミットの変更があります。先にコミットしてください</string>
+    <string name="toast_note_not_found">ノートファイルが見つかりません</string>
     <string name="toast_cloning">クローン中、少々お待ちください</string>
     <string name="title_search_text">検索</string>
     <string name="message_search_text">" "</string>

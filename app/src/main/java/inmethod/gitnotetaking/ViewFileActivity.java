@@ -29,6 +29,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -222,6 +223,14 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                         @Override
                         public boolean shouldOverrideUrlLoading(WebView view, String url) {
                             return handleUrlLoading(url);
+                        }
+
+                        @Override
+                        public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                            super.onReceivedError(view, request, error);
+                            if (request != null && request.isForMainFrame()) {
+                                renderMarkdownInWebView();
+                            }
                         }
 
                         @Override
@@ -546,26 +555,38 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                 startActivity(browserIntent);
                 return true;
-            } else if (url.startsWith("file://") || url.endsWith(".md") || url.endsWith(".markdown")) {
+            } else if (url.contains("preview.html")) {
+                return false;
+            } else {
                 String targetPath = url.startsWith("file://") ? Uri.parse(url).getPath() : url;
                 if (targetPath != null) {
                     File targetFile = new File(targetPath);
                     if (!targetFile.exists() && file != null && file.getParentFile() != null) {
                         targetFile = new File(file.getParentFile(), targetPath);
                     }
-                    if (targetFile.exists()) {
+                    if (!targetFile.exists()) {
+                        String repoRoot = MyGitUtility.getLocalGitDirectory(this, sGitRemoteUrl);
+                        if (repoRoot != null) {
+                            String fileName = new File(targetPath).getName();
+                            targetFile = findFileRecursive(new File(repoRoot), fileName);
+                        }
+                    }
+                    if (targetFile != null && targetFile.exists()) {
                         Intent intent = new Intent(this, ViewFileActivity.class);
                         intent.putExtra("FILE_PATH", targetFile.getAbsolutePath());
                         intent.putExtra("GIT_REMOTE_URL", sGitRemoteUrl);
                         startActivity(intent);
-                        return true;
+                    } else {
+                        String displayName = new File(targetPath).getName();
+                        Toast.makeText(this, getString(R.string.toast_note_not_found) + ": " + displayName, Toast.LENGTH_SHORT).show();
                     }
                 }
+                return true;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return false;
+        return true;
     }
 
     private void openInternalNote(String noteName) {
@@ -590,7 +611,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
             intent.putExtra("GIT_REMOTE_URL", sGitRemoteUrl);
             startActivity(intent);
         } else {
-            Toast.makeText(this, noteName, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.toast_note_not_found) + ": " + noteName, Toast.LENGTH_SHORT).show();
         }
     }
 
