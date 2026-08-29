@@ -198,6 +198,16 @@ public class PdfPreviewUnitTest {
         assertTrue("深色模式必須定義 text_primary", darkStr.contains("name=\"text_primary\""));
         assertTrue("淺色模式必須定義 card_bg", lightStr.contains("name=\"card_bg\""));
         assertTrue("深色模式必須定義 card_bg", darkStr.contains("name=\"card_bg\""));
+        assertTrue("淺色模式必須定義 window_bg", lightStr.contains("name=\"window_bg\""));
+        assertTrue("深色模式必須定義 window_bg", darkStr.contains("name=\"window_bg\""));
+
+        File previewHtml = new File("src/main/assets/markdown/preview.html");
+        if (!previewHtml.exists()) {
+            previewHtml = new File("app/src/main/assets/markdown/preview.html");
+        }
+        assertTrue("preview.html 必須存在", previewHtml.exists());
+        String previewStr = new String(Files.readAllBytes(previewHtml.toPath()), StandardCharsets.UTF_8);
+        assertTrue("preview.html 必須包含 .dark-theme 樣式表", previewStr.contains(".dark-theme"));
     }
 }
 

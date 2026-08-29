@@ -3,7 +3,9 @@
     <color name="colorPrimary">#004D40</color>
     <color name="colorPrimaryDark">#00251A</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="window_bg">#121212</color>
     <color name="text_primary">#E0E0E0</color>
     <color name="text_secondary">#9E9E9E</color>
-    <color name="card_bg">#2D2D2D</color>
+    <color name="card_bg">#1E1E1E</color>
+    <color name="list_item_bg">#1E1E1E</color>
 </resources>

@@ -29,6 +29,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="0.15"
                 android:gravity="center"
+                android:textColor="@android:color/white"
                 android:layout_height="match_parent"
                 android:text="@string/textViewSearch" />
 
@@ -38,9 +39,9 @@
                 android:layout_weight="0.85"
                 android:layout_height="match_parent"
                 android:gravity="center|start"
-                android:ems="1"
-
-                 />
+                android:textColor="@android:color/white"
+                android:textColorHint="#B0FFFFFF"
+                android:ems="1" />
 
         </LinearLayout>
 

@@ -29,6 +29,7 @@
         android:layout_marginLeft="10dp"
         android:layout_toRightOf="@+id/lr_ivFileIcon"
         android:text="TextView"
+        android:textColor="@color/text_primary"
         android:clickable="false"
         android:focusable="false" />
 
@@ -40,6 +41,7 @@
         android:layout_marginLeft="10dp"
         android:layout_toRightOf="@+id/lr_ivFileIcon"
         android:text="TextView"
+        android:textColor="@color/text_secondary"
         android:focusable="false"
         android:clickable="false" />
 

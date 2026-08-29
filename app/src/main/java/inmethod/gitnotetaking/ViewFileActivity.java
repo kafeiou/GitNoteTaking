@@ -181,6 +181,13 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
             int iTextSize = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitEditTextSize", "18"));
             editText.setTextSize(iTextSize);
             editText.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary));
+            editText.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.window_bg));
+            if (scrollView2 != null) {
+                scrollView2.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.window_bg));
+            }
+            if (webViewMarkdown != null) {
+                webViewMarkdown.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.window_bg));
+            }
 
             if (file.exists()) {
                 if (isModify) {
@@ -513,7 +520,15 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
 
     private void renderMarkdownInWebView() {
         if (webViewMarkdown == null || !isMarkdownFile) return;
-        boolean isNightMode = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        boolean isNightMode = false;
+        String themePref = PreferenceManager.getDefaultSharedPreferences(this).getString("AppTheme", "system");
+        if ("dark".equalsIgnoreCase(themePref)) {
+            isNightMode = true;
+        } else if ("light".equalsIgnoreCase(themePref)) {
+            isNightMode = false;
+        } else {
+            isNightMode = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        }
         String text = editText != null ? editText.getText().toString() : "";
         String escaped = JSONObject.quote(text);
         String js = "setMarkdownContent(" + escaped + ", " + isNightMode + ");";

@@ -93,6 +93,7 @@ public class ViewPdfActivity extends AppCompatActivity {
         settings.setLoadWithOverviewMode(true);
 
         mWebView.addJavascriptInterface(new PdfJsInterface(), "AndroidPDF");
+        mWebView.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.window_bg));
 
         mProgressBar.setVisibility(View.VISIBLE);
 
@@ -100,6 +101,18 @@ public class ViewPdfActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                boolean isNightMode = false;
+                String themePref = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ViewPdfActivity.this).getString("AppTheme", "system");
+                if ("dark".equalsIgnoreCase(themePref)) {
+                    isNightMode = true;
+                } else if ("light".equalsIgnoreCase(themePref)) {
+                    isNightMode = false;
+                } else {
+                    isNightMode = (getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+                }
+                if (isNightMode) {
+                    mWebView.evaluateJavascript("document.documentElement.classList.add('dark-theme');", null);
+                }
                 loadPdfFileIntoWebView();
             }
         });

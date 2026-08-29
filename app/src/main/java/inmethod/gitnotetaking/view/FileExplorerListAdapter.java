@@ -85,10 +85,14 @@ public class FileExplorerListAdapter extends BaseAdapter {
             m_viewHolder.m_cbCheck.setVisibility(View.INVISIBLE);
             m_viewHolder.m_tvDate.setVisibility(View.INVISIBLE);
         }else {
-
             m_viewHolder.m_tvFileName.setText(m_item.get(p_position));
+            m_viewHolder.m_tvFileName.setTextColor(androidx.core.content.ContextCompat.getColor(m_context, R.color.text_primary));
             m_viewHolder.m_tvDate.setText(getLastDate(p_position));
+            m_viewHolder.m_tvDate.setTextColor(androidx.core.content.ContextCompat.getColor(m_context, R.color.text_secondary));
             m_viewHolder.m_ivIcon.setImageResource(setFileImageType(new File(m_path.get(p_position))));
+            m_viewHolder.m_ivIcon.setVisibility(View.VISIBLE);
+            m_viewHolder.m_cbCheck.setVisibility(View.VISIBLE);
+            m_viewHolder.m_tvDate.setVisibility(View.VISIBLE);
             m_viewHolder.m_cbCheck.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
                 @Override
