@@ -7,9 +7,14 @@
 ## 💡 特徴
 1. **Git バージョン管理**：変更履歴とコミットメッセージを完全に保持。
 2. **クラウド GitHub 同期**：無料のクラウドバックアップと複数端末間での同期。
-3. **完全オフライン対応**：ネット環境がなくても快適にノートの閲覧・編集が可能。
-4. **全文検索**：過去のノートやファイル内容を高速に検索。
-5. **ローカル履歴パージ**：ワンタップでリポジトリを単一バージョン（`depth = 1`）にスリム化し、端末容量を節約。
+3. **Markdown オフライン視覚化と Mermaid フローチャート表示**：Obsidian 双方向リンク (`[[...]]`)、テーブル、タスクリスト、Mermaid ベクター図に対応。
+4. **完全オフライン対応**：ネット環境がなくても快適にノートの閲覧・編集が可能。
+5. **全文検索**：過去のノートやファイル内容を高速に検索。
+6. **ローカル履歴パージ**：ワンタップでリポジトリを単一バージョン（`depth = 1`）にスリム化し、端末容量を節約。
+
+## 🏛️ システムアーキテクチャと自動テスト
+- **[システム設計と Mermaid 構造図 (Architecture)](ARCHITECTURE.md)**：階層化構造、デュアルモードライフサイクル、データフローの詳細。
+- **[自動テストガイド (Testing Guide)](TESTING.md)**：ユニットテストおよびインスツルメンテーションテストの実行方法。
 
 ## 🎯 設計理念
 GitHub クラウドサービスを通じて日々のドキュメントを同期。オフラインで閲覧・編集し、都合の良いタイミングで GitHub へ Push して同期します。
@@ -52,7 +57,7 @@ GitHub クラウドサービスを通じて日々のドキュメントを同期�
 - GitHub リポジトリ：https://github.com/WilliamFromTW/GitNoteTaking
 
 ## 📚 サードパーティライブラリ＆アセットライセンス
-- [Eclipse JGit](https://www.eclipse.org/jgit) (version 7.4.0)
+- [Eclipse JGit](https://www.eclipse.org/jgit) (version 7.7.1)
 - Git Logo by Jason Long is licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
 - 動作環境：Android 13 (API 33) 以降
 

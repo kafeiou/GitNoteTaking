@@ -33,6 +33,9 @@ android {
         targetCompatibility = 21
         sourceCompatibility = 21
     }
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
     namespace 'inmethod.gitnotetaking'
     packagingOptions {
         resources {
@@ -61,8 +64,8 @@ dependencies {
     implementation 'androidx.annotation:annotation:1.9.1'
     implementation "androidx.cardview:cardview:1.0.0"
     implementation 'com.github.HBiSoft:PickiT:2.0.5'
-    implementation group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '7.4.0.202509020913-r'
-    implementation group: 'org.eclipse.jgit', name: 'org.eclipse.jgit.archive', version: '7.4.0.202509020913-r'
+    implementation group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '7.7.1.202607240634-r'
+    implementation group: 'org.eclipse.jgit', name: 'org.eclipse.jgit.archive', version: '7.7.1.202607240634-r'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test:runner:1.5.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'

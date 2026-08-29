@@ -4,6 +4,7 @@
     <string name="action_settings">Settings</string>
     <string name="view_file_action_edit">Edit</string>
     <string name="view_file_action_save">Save</string>
+    <string name="view_file_action_preview">Preview</string>
     <string name="GitAuthorName">Name</string>
     <string name="GitAuthorEmail">Email</string>
     <string name="action_create_file">Create Text File</string>

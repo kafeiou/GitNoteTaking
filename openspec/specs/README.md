@@ -10,4 +10,6 @@
 | **language-selection** | 偏好設定應用程式內切換語系架構與即時生效規範 | [language-selection/spec.md](language-selection/spec.md) |
 | **input-sanitization** | 全專案文字輸入框自動過濾前後空白（.trim()）與空值防呆規範 | [input-sanitization/spec.md](input-sanitization/spec.md) |
 | **github-integration** | GitHub 筆記建立、OAuth 2.0 / PAT 雙軌授權、GraphQL 時間同步、本地歷史瘦身與多語系發布規格 | [github-integration/spec.md](github-integration/spec.md) |
+| **markdown-viewing** | Markdown 離線視覺化預覽、Mermaid 向量圖表、雙向連結跳轉、滿版排版優化規範 | [markdown-viewing/spec.md](markdown-viewing/spec.md) |
+
 

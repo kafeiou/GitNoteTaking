@@ -2,6 +2,7 @@ package inmethod.gitnotetaking.utility;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import androidx.preference.PreferenceManager;
@@ -361,8 +362,7 @@ public class MyGitUtility {
                 try{
                   if (aGitUtil.pull(aRemoteGit.getRemoteName(), sUserName, sUserPassword)) {
                     Log.d(TAG, "pull finished!");
-                    syncFileTimestampsWithGit(sLocalDirectory);
-                    syncFileTimestampsFromGitHubApi(sLocalDirectory, sRemoteUrl, sUserPassword);
+                    syncFileTimestampsAsync(context, sLocalDirectory, sRemoteUrl, sUserPassword);
                     aRemoteGit.setStatus(GIT_STATUS_SUCCESS);
                     aRemoteGitDAO.update(aRemoteGit);
                     setGitLock(false);
@@ -450,8 +450,7 @@ public class MyGitUtility {
                 Log.d(TAG, "try to clone remote repository if local repository is not exists \n");
                 if (aGitUtil.clone(sUserName, sUserPassword,1)) {
                     Log.d(TAG, "clone finished!");
-                    syncFileTimestampsWithGit(sLocalDirectory);
-                    syncFileTimestampsFromGitHubApi(sLocalDirectory, sRemoteUrl, sUserPassword);
+                    syncFileTimestampsAsync(context, sLocalDirectory, sRemoteUrl, sUserPassword);
                     setGitLock(false);
                     if (aGitUtil != null) aGitUtil.close();
                     return true;
@@ -465,8 +464,7 @@ public class MyGitUtility {
                 boolean bPull = aGitUtil.pull(sRemoteName, sUserName, sUserPassword);
                 Log.d(TAG, "pull branch = " + aGitUtil.getRemoteDefaultBranch() + " , status : " + bPull);
                 if (bPull) {
-                    syncFileTimestampsWithGit(sLocalDirectory);
-                    syncFileTimestampsFromGitHubApi(sLocalDirectory, sRemoteUrl, sUserPassword);
+                    syncFileTimestampsAsync(context, sLocalDirectory, sRemoteUrl, sUserPassword);
                 }
                 setGitLock(false);
                 if (aGitUtil != null) aGitUtil.close();
@@ -550,9 +548,47 @@ public class MyGitUtility {
         }
     }
 
+    public static void syncFileTimestampsAsync(final Context context, final String sLocalDirectory, final String sRemoteUrl, final String token) {
+        if (sLocalDirectory == null || sLocalDirectory.isEmpty()) return;
+        // 1. Fast local sync with HEAD commit time (~2ms)
+        syncFileTimestampsWithGit(sLocalDirectory);
+
+        // 2. Background async sync via GitHub GraphQL API with Commit hash marker
+        if (sRemoteUrl != null && sRemoteUrl.contains("github.com") && token != null && !token.isEmpty()) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    syncFileTimestampsFromGitHubApi(sLocalDirectory, sRemoteUrl, token);
+                }
+            }).start();
+        }
+    }
+
     public static void syncFileTimestampsFromGitHubApi(String sLocalDirectory, String sRemoteUrl, String token) {
         if (sRemoteUrl == null || !sRemoteUrl.contains("github.com") || sLocalDirectory == null || token == null || token.isEmpty()) return;
         try {
+            File gitDir = new File(sLocalDirectory, ".git");
+            if (!gitDir.exists()) return;
+
+            String currentHeadSha = "";
+            try (Repository repo = new FileRepositoryBuilder().setGitDir(gitDir).build()) {
+                ObjectId head = repo.resolve(Constants.HEAD);
+                if (head != null) {
+                    currentHeadSha = head.getName();
+                }
+            } catch (Exception ex) {
+                Log.e(TAG, "Error resolving HEAD commit for timestamp sync", ex);
+            }
+
+            if (!currentHeadSha.isEmpty()) {
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MyApplication.getAppContext());
+                String lastSyncedCommit = sp.getString("SYNC_TIMESTAMP_COMMIT_" + sLocalDirectory, "");
+                if (currentHeadSha.equals(lastSyncedCommit)) {
+                    Log.d(TAG, "File timestamps already synced for commit " + currentHeadSha + " at " + sLocalDirectory);
+                    return;
+                }
+            }
+
             String cleanUrl = sRemoteUrl;
             if (cleanUrl.endsWith(".git")) {
                 cleanUrl = cleanUrl.substring(0, cleanUrl.length() - 4);
@@ -572,11 +608,16 @@ public class MyGitUtility {
             collectFiles(workingDir, allFiles);
             if (allFiles.isEmpty()) return;
 
-            // Batch files in chunks of 40 to avoid overly large GraphQL query payloads
-            int chunkSize = 40;
+            // Batch files in chunks of 100 to minimize HTTP round-trips
+            int chunkSize = 100;
             for (int i = 0; i < allFiles.size(); i += chunkSize) {
                 List<File> chunk = allFiles.subList(i, Math.min(i + chunkSize, allFiles.size()));
                 syncChunkViaGraphQL(owner, repoName, workingDir, chunk, token);
+            }
+
+            if (!currentHeadSha.isEmpty()) {
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MyApplication.getAppContext());
+                sp.edit().putString("SYNC_TIMESTAMP_COMMIT_" + sLocalDirectory, currentHeadSha).apply();
             }
             Log.d(TAG, "File timestamps synced from GitHub GraphQL API for " + sLocalDirectory);
         } catch (Exception e) {

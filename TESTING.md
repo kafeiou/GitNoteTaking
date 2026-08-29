@@ -22,7 +22,18 @@
   - `testAllLanguageStringsComplete`：自動掃描比對所有語系的 `strings.xml`，確保 **零遺漏翻譯（Zero Missing Keys）**。
   - `testNoHkResourcesRemain`：確保 `values-zh-rHK` 冗餘目錄已被徹底清理。
 
-### 2. 動態語系切換儀器測試 (`LanguageSwitchingInstrumentedTest.java`)
+### 2. Markdown 離線預覽與排版單元測試 (`MarkdownPreviewAndLayoutUnitTest.java`)
+- **檔案路徑**：[`app/src/test/java/inmethod/gitnotetaking/MarkdownPreviewAndLayoutUnitTest.java`](file:///W:/developer/project/inmethod/android/InMethodGitNoteTaking/app/src/test/java/inmethod/gitnotetaking/MarkdownPreviewAndLayoutUnitTest.java)
+- **測試項目**：
+  - `testMarkdownAssetsExistAndAreValid`：驗證 `marked.min.js`, `github-markdown.css`, `preview.html` 離線靜態資產完整性與 API 接口。
+  - `testGithubMarkdownCssCoverage`：驗證深淺色主題 (`prefers-color-scheme`)、圖片防跑版、表格獨立滾動與 Obsidian wikilink 樣式覆蓋。
+  - `testMarkdownFileExtensionDetection`：驗證 `.md`, `.markdown` 等大小寫副檔名過濾與純文字檔案隔離邏輯。
+  - `testMarkdownContentJsonEscapingSafety`：驗證跨語言傳遞給 WebView 時之字元跳脫安全（防止雙引號、換行與 XSS 導致語法截斷）。
+  - `testWikilinkPatternParsing`：驗證 Obsidian 雙向連結 (`[[筆記名]]` 與 `[[筆記名|別名]]`) 正則提取與標準化補全副檔名邏輯。
+  - `testMarkedJsSyntaxRulesContract`：驗證 Markdown 引擎完整具備標題 (H1~H6)、代碼塊、待辦方框 (Checkboxes)、表格、雙向鏈接與 Callout 區塊語法規範。
+  - `testUrlRoutingClassification`：驗證外網連結 (`http/https`)、雙向連結 (`wikilink:`) 與相對路徑之智慧分類路由。
+
+### 3. 動態語系切換儀器測試 (`LanguageSwitchingInstrumentedTest.java`)
 - **檔案路徑**：[`app/src/androidTest/java/inmethod/gitnotetaking/LanguageSwitchingInstrumentedTest.java`](file:///W:/developer/project/inmethod/android/InMethodGitNoteTaking/app/src/androidTest/java/inmethod/gitnotetaking/LanguageSwitchingInstrumentedTest.java)
 - **測試項目**：
   - `testDynamicLocaleSwitching`：在 Android 運行環境中依序切換為 `zh-TW`、`zh-CN`、`ja-JP`、`en`，驗證系統能否即時正確解析對應語言之字串資源。

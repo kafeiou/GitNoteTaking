@@ -7,9 +7,14 @@
 ## 💡 特色
 1. **使用 Git 版本控制機制**：完整保留修改紀錄與 Commit 訊息。
 2. **支援免費雲端 GitHub 同步**：隨時隨地備份與多裝置同步。
-3. **完全可離線使用**：沒有網路時依然能流暢查閱與編輯筆記。
-4. **全文搜尋**：快速尋找歷史筆記與檔案內容。
-5. **本地歷史瘦身**：一鍵將本地版本庫清理至單一版本（`depth = 1`），節省手機空間。
+3. **Markdown 離線視覺化與 Mermaid 流程圖預覽**：支援 Obsidian 雙向連結 (`[[...]]`)、表格、待辦清單與 Mermaid 向量圖表。
+4. **完全可離線使用**：沒有網路時依然能流暢查閱與編輯筆記。
+5. **全文搜尋**：快速尋找歷史筆記與檔案內容。
+6. **本地歷史瘦身**：一鍵將本地版本庫清理至單一版本（`depth = 1`），節省手機空間。
+
+## 🏛️ 系統架構與自動化測試
+- **[系統架構與 Mermaid 設計流程圖 (Architecture)](ARCHITECTURE.md)**：詳細記錄分層架構、雙模式生命週期與圖表渲染資料流。
+- **[自動化測試指南 (Testing Guide)](TESTING.md)**：單元測試與儀器測試執行說明。
 
 ## 🎯 設計理念
 透過雲端 GitHub 服務，可將平時紀錄的文件同步到 APP；可離線觀看或編輯，適當時機再將檔案 Push 同步回雲端 GitHub。
@@ -52,7 +57,7 @@
 - GitHub 專案：https://github.com/WilliamFromTW/GitNoteTaking
 
 ## 📚 第三方函式庫與資源授權
-- [Eclipse JGit](https://www.eclipse.org/jgit) (version 7.4.0)
+- [Eclipse JGit](https://www.eclipse.org/jgit) (version 7.7.1)
 - Git Logo by Jason Long is licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
 - 系統需求：只支援 Android 13 (API 33) 或以上版本
 

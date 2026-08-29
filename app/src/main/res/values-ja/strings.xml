@@ -4,6 +4,7 @@
     <string name="action_settings">設定</string>
     <string name="view_file_action_edit">編集</string>
     <string name="view_file_action_save">保存</string>
+    <string name="view_file_action_preview">プレビュー</string>
     <string name="GitAuthorName">名前</string>
     <string name="GitAuthorEmail">メールアドレス</string>
     <string name="action_create_file">ファイル作成</string>

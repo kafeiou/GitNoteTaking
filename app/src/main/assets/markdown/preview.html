@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
+    <link rel="stylesheet" href="github-markdown.css">
+    <script src="marked.min.js"></script>
+    <script src="mermaid.min.js"></script>
+    <style>
+        body {
+            padding: 16px;
+            margin: 0;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        #content {
+            min-height: 100%;
+        }
+        .mermaid-diagram {
+            display: flex;
+            justify-content: center;
+            margin: 16px 0;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+        .mermaid-rendered {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="content" class="markdown-body"></div>
+
+    <script>
+        function setMarkdownContent(mdText, isDarkMode) {
+            try {
+                if (isDarkMode) {
+                    document.documentElement.classList.add('dark-theme');
+                } else {
+                    document.documentElement.classList.remove('dark-theme');
+                }
+                const html = marked.parse(mdText || "");
+                document.getElementById('content').innerHTML = html;
+
+                if (window.mermaid) {
+                    try {
+                        mermaid.initialize({ theme: isDarkMode ? 'dark' : 'default' });
+                        mermaid.run();
+                    } catch (mErr) {
+                        console.error("Mermaid error:", mErr);
+                    }
+                }
+            } catch (e) {
+                document.getElementById('content').innerText = mdText || "";
+            }
+        }
+    </script>
+</body>
+</html>

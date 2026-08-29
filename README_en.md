@@ -7,9 +7,14 @@
 ## 💡 Features
 1. **Git Version Control**: Full modification history and commit logs preserved.
 2. **Cloud GitHub Sync**: Free cloud backup and multi-device synchronization.
-3. **100% Offline Support**: Read and edit notes seamlessly even without an internet connection.
-4. **Full-text Search**: Fast search across note titles and file contents.
-5. **Local History Purge**: Easily slim down local repositories to depth = 1 to save device storage.
+3. **Markdown Preview & Offline Mermaid Diagrams**: Obsidian Wikilinks (`[[...]]`), tables, task lists, and offline SVG Mermaid charts.
+4. **100% Offline Support**: Read and edit notes seamlessly even without an internet connection.
+5. **Full-text Search**: Fast search across note titles and file contents.
+6. **Local History Purge**: Easily slim down local repositories to depth = 1 to save device storage.
+
+## 🏛️ Architecture & Testing
+- **[System Architecture & Mermaid Flowcharts (Architecture)](ARCHITECTURE.md)**: Detailed layered architecture, dual-mode lifecycle, and diagram rendering data flow.
+- **[Automated Testing Guide (Testing Guide)](TESTING.md)**: Guide for running unit and instrumentation tests.
 
 ## 🎯 Design Philosophy
 Sync your daily markdown notes and documentation via GitHub. Read or edit offline anytime, and push back to GitHub when convenient.
@@ -52,7 +57,7 @@ Please help me release a new version [version number, e.g. 4.002]:
 - GitHub Repository: https://github.com/WilliamFromTW/GitNoteTaking
 
 ## 📚 3rd-Party Libraries & Asset Licensing
-- [Eclipse JGit](https://www.eclipse.org/jgit) (version 7.4.0)
+- [Eclipse JGit](https://www.eclipse.org/jgit) (version 7.7.1)
 - Git Logo by Jason Long is licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
 - System Requirement: Android 13 (API 33) or above
 

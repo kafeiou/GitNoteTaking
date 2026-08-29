@@ -4,6 +4,7 @@
     <string name="action_settings">设置</string>
     <string name="view_file_action_edit">编辑</string>
     <string name="view_file_action_save">保存</string>
+    <string name="view_file_action_preview">预览</string>
     <string name="GitAuthorName">名字</string>
     <string name="GitAuthorEmail">电子邮件</string>
     <string name="action_create_file">新建文件</string>

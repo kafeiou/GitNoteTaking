@@ -44,6 +44,16 @@ public class MyApplication extends Application {
         if (!"system".equalsIgnoreCase(lang) && !lang.isEmpty()) {
             AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(lang));
         }
+
+        try {
+            org.eclipse.jgit.storage.file.WindowCacheConfig config = new org.eclipse.jgit.storage.file.WindowCacheConfig();
+            config.setPackedGitLimit(10 * 1024 * 1024); // 10MB limit for mobile RAM safety
+            config.setPackedGitWindowSize(8192); // 8KB window size
+            config.setPackedGitMMAP(false); // Disable MMAP on Android to avoid leaks & fragmentation
+            config.install();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static boolean isNetworkConnected(){
