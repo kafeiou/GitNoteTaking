@@ -266,16 +266,21 @@ public class ViewPdfActivity extends AppCompatActivity {
             File file = new File(mFilePath);
             if (!file.exists()) return;
 
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-
             String authority = getPackageName() + ".fileprovider";
             Uri uri = FileProvider.getUriForFile(this, authority, file);
-            intent.setDataAndType(uri, "application/pdf");
 
-            startActivity(intent);
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(uri, "application/pdf");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            java.util.List<android.content.pm.ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(intent, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY);
+            for (android.content.pm.ResolveInfo resolveInfo : resInfoList) {
+                String packageName = resolveInfo.activityInfo.packageName;
+                grantUriPermission(packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
+
+            startActivity(Intent.createChooser(intent, getString(R.string.view_pdf_action_open_external)));
         } catch (ActivityNotFoundException e) {
             Toast.makeText(this, "No PDF viewer app found", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {

@@ -26,5 +26,8 @@
     <item
         android:id="@+id/Backup"
         android:title="@string/Backup"/>
+    <item
+        android:id="@+id/CleanTempFiles"
+        android:title="@string/main_notes_clean_temp_files"/>
 
 </menu>

@@ -177,4 +177,43 @@ public class GitSyncAndGuardrailUnitTest {
         assertEquals("10 MB", inmethod.gitnotetaking.utility.MyGitUtility.formatStorageSize(10 * 1024 * 1024));
         assertEquals("1.2 GB", inmethod.gitnotetaking.utility.MyGitUtility.formatStorageSize((long) (1.2 * 1024 * 1024 * 1024)));
     }
+
+    @Test
+    public void testIsTemporaryFileNameClassification() {
+        // Temporary files should return true
+        assertTrue("~開頭檔案應視為暫存檔", inmethod.gitnotetaking.utility.MyGitUtility.isTemporaryFileName("~$note.docx"));
+        assertTrue("~開頭檔案應視為暫存檔", inmethod.gitnotetaking.utility.MyGitUtility.isTemporaryFileName("~temp.txt"));
+        assertTrue("~結尾檔案應視為暫存檔", inmethod.gitnotetaking.utility.MyGitUtility.isTemporaryFileName("note.md~"));
+        assertTrue(".tmp 結尾應視為暫存檔", inmethod.gitnotetaking.utility.MyGitUtility.isTemporaryFileName("cache.tmp"));
+        assertTrue(".swp 結尾應視為暫存檔", inmethod.gitnotetaking.utility.MyGitUtility.isTemporaryFileName(".note.md.swp"));
+        assertTrue(".DS_Store 應視為系統暫存檔", inmethod.gitnotetaking.utility.MyGitUtility.isTemporaryFileName(".DS_Store"));
+        assertTrue("Thumbs.db 應視為系統暫存檔", inmethod.gitnotetaking.utility.MyGitUtility.isTemporaryFileName("Thumbs.db"));
+
+        // Regular files should return false
+        assertFalse("正常 markdown 筆記不可誤判", inmethod.gitnotetaking.utility.MyGitUtility.isTemporaryFileName("note.md"));
+        assertFalse("正常 txt 筆記不可誤判", inmethod.gitnotetaking.utility.MyGitUtility.isTemporaryFileName("readme.txt"));
+        assertFalse("正常圖片檔案不可誤判", inmethod.gitnotetaking.utility.MyGitUtility.isTemporaryFileName("photo.png"));
+        assertFalse("正常 PDF 檔案不可誤判", inmethod.gitnotetaking.utility.MyGitUtility.isTemporaryFileName("manual.pdf"));
+    }
+
+    @Test
+    public void testEnsureDefaultGitIgnoreCreatesAndMergesRules() throws Exception {
+        File repoDir = tempFolder.newFolder("test_repo_gitignore");
+
+        // 1. 初始無 .gitignore 時，應自動建立並包含暫存規則
+        boolean created = inmethod.gitnotetaking.utility.MyGitUtility.ensureDefaultGitIgnore(repoDir.getAbsolutePath());
+        assertTrue("初始無 .gitignore 時應回傳 true 表示已建立更新", created);
+
+        File gitignoreFile = new File(repoDir, ".gitignore");
+        assertTrue(".gitignore 檔案必須被建立", gitignoreFile.exists());
+
+        String content = new String(java.nio.file.Files.readAllBytes(gitignoreFile.toPath()), java.nio.charset.StandardCharsets.UTF_8);
+        assertTrue("必須包含 ~* 規則", content.contains("~*"));
+        assertTrue("必須包含 *.tmp 規則", content.contains("*.tmp"));
+        assertTrue("必須包含 .DS_Store 規則", content.contains(".DS_Store"));
+
+        // 2. 再次呼叫時，規則已存在，不應重複寫入
+        boolean secondCall = inmethod.gitnotetaking.utility.MyGitUtility.ensureDefaultGitIgnore(repoDir.getAbsolutePath());
+        assertFalse("規則已完整時應回傳 false", secondCall);
+    }
 }

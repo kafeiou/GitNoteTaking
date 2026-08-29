@@ -63,20 +63,22 @@ public class GitList {
         TextView layout0 = ((TextView) layoutData[0]);
 
         if (aGitList.getRemoteUrl().indexOf("local") == -1) {
-            if (aGitList.getPushStatus() ==  MyGitUtility.GIT_STATUS_PUSH_FAIL) {
-                layout0.setTextColor(Color.RED);
+            if (aGitList.getPushStatus() == MyGitUtility.GIT_STATUS_PUSH_FAIL) {
+                int errorColor = androidx.core.content.ContextCompat.getColor(layout0.getContext(), R.color.colorAccent);
+                layout0.setTextColor(errorColor);
                 if (!aGitList.getBranch().equalsIgnoreCase(BRANCH_MASTER))
-                    layout0.setText( "[" + aGitList.getBranch() + "] "+aGitList.getGitName() + MyApplication.getAppContext().getResources().getString(R.string.main_notes_need_push) );
+                    layout0.setText("[" + aGitList.getBranch() + "] " + aGitList.getGitName() + " " + MyApplication.getAppContext().getResources().getString(R.string.main_notes_need_push));
                 else
-                    layout0.setText(aGitList.getGitName() + MyApplication.getAppContext().getResources().getString(R.string.main_notes_need_push));
-            } else if (aGitList.getPushStatus() ==  MyGitUtility.GIT_STATUS_CLONING) {
-                layout0.setTextColor(Color.RED);
-                layout0.setText("「"+aGitList.getGitName() + "」" + MyApplication.getAppContext().getResources().getString(R.string.main_notes_cloning));
+                    layout0.setText(aGitList.getGitName() + " " + MyApplication.getAppContext().getResources().getString(R.string.main_notes_need_push));
+            } else if (aGitList.getPushStatus() == MyGitUtility.GIT_STATUS_CLONING) {
+                int errorColor = androidx.core.content.ContextCompat.getColor(layout0.getContext(), R.color.colorAccent);
+                layout0.setTextColor(errorColor);
+                layout0.setText("「" + aGitList.getGitName() + "」" + MyApplication.getAppContext().getResources().getString(R.string.main_notes_cloning));
             } else {
                 layout0.setTextColor(androidx.core.content.ContextCompat.getColor(layout0.getContext(), R.color.text_primary));
 
                 if (!aGitList.getBranch().equalsIgnoreCase(BRANCH_MASTER))
-                    layout0.setText("[" + aGitList.getBranch() + "] "+aGitList.getGitName());
+                    layout0.setText("[" + aGitList.getBranch() + "] " + aGitList.getGitName());
                 else
                     layout0.setText(aGitList.getGitName());
             }
@@ -87,7 +89,6 @@ public class GitList {
         }
 
         ((TextView) layoutData[1]).setText(aGitList.getRemoteUrl());
-
     }
 
     public static Object[] getDeviceInfoFromLayoutId(View view) {

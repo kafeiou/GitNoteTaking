@@ -181,6 +181,8 @@ public class MarkdownPreviewAndLayoutUnitTest {
         assertTrue("mermaid.min.js 必須支援 Sequence 循序圖", jsCode.contains("renderSequence"));
         assertTrue("mermaid.min.js 必須支援 Pie 圓餅圖", jsCode.contains("renderPie"));
         assertTrue("mermaid.min.js 必須支援深淺色主題 THEMES", jsCode.contains("THEMES") && jsCode.contains("dark"));
+        assertTrue("mermaid.min.js 必須支援全語系字寬分級引擎 getCharWidth", jsCode.contains("getCharWidth"));
+        assertTrue("mermaid.min.js 深色主題連接線必須為高對比亮藍色 79c0ff", jsCode.contains("#79c0ff"));
     }
 
     /**

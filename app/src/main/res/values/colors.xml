@@ -3,9 +3,11 @@
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
+    <color name="sync_badge_color">#D97706</color>
     <color name="window_bg">#FAFAFA</color>
     <color name="text_primary">#000000</color>
     <color name="text_secondary">#666666</color>
     <color name="card_bg">#FFFFFF</color>
+    <color name="card_stroke">#CCCCCC</color>
     <color name="list_item_bg">#FFFFFF</color>
 </resources>

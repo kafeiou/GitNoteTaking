@@ -41,11 +41,14 @@ import android.widget.Toast;
 import org.eclipse.jgit.revwalk.RevCommit;
 
 import android.net.Uri;
+import android.view.LayoutInflater;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import androidx.recyclerview.widget.DividerItemDecoration;
 
 import org.eclipse.jgit.util.FileUtils;
 
@@ -198,6 +201,9 @@ public class MainActivity extends AppCompatActivity {
         adapter = new RecyclerAdapterForDevice(this);
         LinearLayoutManager llm = new LinearLayoutManager(this);
         rv.setLayoutManager(llm);
+        if (rv.getItemDecorationCount() == 0) {
+            rv.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
+        }
         rv.setAdapter(adapter);
         adapter.setOnItemClickListener(new RecyclerAdapterForDevice.OnItemClickListener() {
             @Override
@@ -274,90 +280,28 @@ public class MainActivity extends AppCompatActivity {
                                     .setMessage( MyApplication.getAppContext().getString(R.string.message_remove))
                                     .setPositiveButton(MyApplication.getAppContext().getText(R.string.dialog_ok), new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int whichButton) {
-
-                                            runOnUiThread(new Runnable() {
+                                            showWaitDialog();
+                                            new Thread(new Runnable() {
                                                 @Override
                                                 public void run() {
-                                                    showWaitDialog();
-
-                                                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            try {
-                                                                MyGitUtility.deleteByRemoteUrl(activity, ((TextView) aTextView[1]).getText().toString());
-                                                                Log.d(TAG, "try to delete local git repository");
-                                                                MyGitUtility.deleteLocalGitRepository(activity, sRemoteUrl);
-                                                                adapter.clear();
-                                                                ArrayList<RemoteGit> aList = MyGitUtility.getRemoteGitList(activity);
-                                                                for (final RemoteGit a : aList) {
-                                                                    adapter.addData(new GitList(a.getNickname(), a.getUrl(), (int) a.getStatus(), a.getBranch()));
-                                                                }
-
-                                                                    runOnUiThread(new Runnable() {
-                                                                        @Override
-                                                                        public void run() {
-                                                                            Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pushing_success), Toast.LENGTH_SHORT).show();
-                                                                            dismissWaitDialog();
-                                                                        }
-                                                                    });
-
-                                                            } catch (Exception e) {
-                                                                runOnUiThread(new Runnable() {
-                                                                    @Override
-                                                                    public void run() {
-                                                                        Toast.makeText(activity,MyApplication.getAppContext().getText(R.string.pushing_failed) , Toast.LENGTH_SHORT).show();
-                                                                        dismissWaitDialog();
-                                                                    }
-                                                                });
-                                                                throw new RuntimeException(e);
-                                                            }
-                                                        }                                                // Your Code
-
-                                                    }, 300);
-                                                }
-                                            });
-
-
-
-
-                                        }
-                                    }).setNegativeButton(MyApplication.getAppContext().getText(R.string.dialog_cancel) , new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int whichButton) {
-                                        }
-                                    }).show();
-
-
-
-                            return true;
-                        } else if (id == R.id.Push) {
-                            if (!MyApplication.isNetworkConnected()) {
-                                Log.d(TAG, "no netework ");
-
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(activity, "No Network", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
-                            } else {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        showWaitDialog();
-
-                                        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                try {
-                                                    if (MyGitUtility.push(MyApplication.getAppContext(), ((TextView) aTextView[1]).getText().toString())) {
+                                                    try {
+                                                        MyGitUtility.deleteByRemoteUrl(activity, ((TextView) aTextView[1]).getText().toString());
+                                                        Log.d(TAG, "try to delete local git repository");
+                                                        MyGitUtility.deleteLocalGitRepository(activity, sRemoteUrl);
+                                                        final ArrayList<RemoteGit> aList = MyGitUtility.getRemoteGitList(activity);
                                                         runOnUiThread(new Runnable() {
                                                             @Override
                                                             public void run() {
+                                                                adapter.clear();
+                                                                for (final RemoteGit a : aList) {
+                                                                    adapter.addData(new GitList(a.getNickname(), a.getUrl(), (int) a.getStatus(), a.getBranch()));
+                                                                }
                                                                 Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pushing_success), Toast.LENGTH_SHORT).show();
                                                                 dismissWaitDialog();
                                                             }
                                                         });
-                                                    }else{
+                                                    } catch (Exception e) {
+                                                        Log.e(TAG, "Failed to remove repository: " + sRemoteUrl, e);
                                                         runOnUiThread(new Runnable() {
                                                             @Override
                                                             public void run() {
@@ -365,115 +309,90 @@ public class MainActivity extends AppCompatActivity {
                                                                 dismissWaitDialog();
                                                             }
                                                         });
-
                                                     }
-                                                } catch (Exception e) {
-                                                    runOnUiThread(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            Toast.makeText(activity,MyApplication.getAppContext().getText(R.string.pushing_failed) , Toast.LENGTH_SHORT).show();
-                                                            dismissWaitDialog();
-                                                        }
-                                                    });
-                                                    throw new RuntimeException(e);
                                                 }
-                                            }                                                // Your Code
-
-                                        }, 300);
-                                    }
-                                });
-
-                                /*
-                                AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-                                builder.setCancelable(false);
-                                builder.setView(R.layout.loading_dialog);
-                                final AlertDialog dialog = builder.create();
-                                dialog.show();
-                                new Thread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if (MyGitUtility.push(MyApplication.getAppContext(), ((TextView) aTextView[1]).getText().toString())) {
-                                            ((TextView) aTextView[0]).setTextColor(Color.BLACK);
-                                            ((TextView) aTextView[0]).setText(MyGitUtility.getRemoteGit(MyApplication.getAppContext(), ((TextView) aTextView[1]).getText().toString()).getNickname());
+                                            }).start();
                                         }
-                                        dialog.dismiss();
-                                    }
-                                }).start();
+                                    }).setNegativeButton(MyApplication.getAppContext().getText(R.string.dialog_cancel) , new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int whichButton) {
+                                        }
+                                    }).show();
 
-                                 */
-                            }
-
-                        } else if (id == R.id.Pull) {
+                            return true;
+                        } else if (id == R.id.Push) {
                             if (!MyApplication.isNetworkConnected()) {
                                 Log.d(TAG, "no netework ");
-
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(activity, "No Network", Toast.LENGTH_SHORT).show();
-                                    }
-                                });
+                                Toast.makeText(activity, "No Network", Toast.LENGTH_SHORT).show();
                             } else {
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        showWaitDialog();
-
-                                        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                try {
-                                                    if (MyGitUtility.pull(MyApplication.getAppContext(), ((TextView) aTextView[1]).getText().toString())) {
-                                                        runOnUiThread(new Runnable() {
-                                                            @Override
-                                                            public void run() {
-                                                                Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pulling_success), Toast.LENGTH_SHORT).show();
-                                                                dismissWaitDialog();
-                                                            }
-                                                        });
-                                                    }else{
-                                                        runOnUiThread(new Runnable() {
-                                                            @Override
-                                                            public void run() {
-                                                                Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pulling_failed), Toast.LENGTH_SHORT).show();
-                                                                dismissWaitDialog();
-                                                            }
-                                                        });
-
-                                                    }
-                                                } catch (Exception e) {
-                                                    runOnUiThread(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            Toast.makeText(activity,MyApplication.getAppContext().getText(R.string.pulling_failed) , Toast.LENGTH_SHORT).show();
-                                                            dismissWaitDialog();
-                                                        }
-                                                    });
-                                                    throw new RuntimeException(e);
-                                                }
-                                            }                                                // Your Code
-
-                                        }, 300);
-                                    }
-                                });
-                                /*
+                                showWaitDialog();
                                 new Thread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        if (MyGitUtility.pull(MyApplication.getAppContext(), ((TextView) aTextView[1]).getText().toString())) {
-
-                                        }else{
+                                        try {
+                                            final boolean success = MyGitUtility.push(MyApplication.getAppContext(), ((TextView) aTextView[1]).getText().toString());
                                             runOnUiThread(new Runnable() {
                                                 @Override
                                                 public void run() {
-                                                    Toast.makeText(activity,MyApplication.getAppContext().getText(R.string.pulling_failed) , Toast.LENGTH_SHORT).show();
+                                                    dismissWaitDialog();
+                                                    reloadRepositoryList();
+                                                    if (success) {
+                                                        Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pushing_success), Toast.LENGTH_SHORT).show();
+                                                    } else {
+                                                        Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pushing_failed), Toast.LENGTH_SHORT).show();
+                                                    }
+                                                }
+                                            });
+                                        } catch (Exception e) {
+                                            Log.e(TAG, "Push failed for " + sRemoteUrl, e);
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    dismissWaitDialog();
+                                                    reloadRepositoryList();
+                                                    Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pushing_failed), Toast.LENGTH_SHORT).show();
                                                 }
                                             });
                                         }
                                     }
                                 }).start();
+                            }
 
-                                 */
+                        } else if (id == R.id.Pull) {
+                            if (!MyApplication.isNetworkConnected()) {
+                                Log.d(TAG, "no netework ");
+                                Toast.makeText(activity, "No Network", Toast.LENGTH_SHORT).show();
+                            } else {
+                                showWaitDialog();
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            final boolean success = MyGitUtility.pull(MyApplication.getAppContext(), ((TextView) aTextView[1]).getText().toString());
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    dismissWaitDialog();
+                                                    reloadRepositoryList();
+                                                    if (success) {
+                                                        Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pulling_success), Toast.LENGTH_SHORT).show();
+                                                    } else {
+                                                        Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pulling_failed), Toast.LENGTH_SHORT).show();
+                                                    }
+                                                }
+                                            });
+                                        } catch (Exception e) {
+                                            Log.e(TAG, "Pull failed for " + sRemoteUrl, e);
+                                            runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    dismissWaitDialog();
+                                                    reloadRepositoryList();
+                                                    Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pulling_failed), Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                        }
+                                    }
+                                }).start();
                             }
 
                         } else if (id == R.id.Modify) {
@@ -605,6 +524,7 @@ public class MainActivity extends AppCompatActivity {
                                                 @Override
                                                 public void run() {
                                                     dismissWaitDialog();
+                                                    reloadRepositoryList();
                                                     if (finalPushSuccess) {
                                                         Toast.makeText(activity, getString(R.string.toast_auto_commit_push_success), Toast.LENGTH_LONG).show();
                                                     } else {
@@ -618,6 +538,7 @@ public class MainActivity extends AppCompatActivity {
                                             @Override
                                             public void run() {
                                                 dismissWaitDialog();
+                                                reloadRepositoryList();
                                                 Toast.makeText(activity, getString(R.string.toast_auto_commit_not_needed), Toast.LENGTH_SHORT).show();
                                             }
                                         });
@@ -654,11 +575,57 @@ public class MainActivity extends AppCompatActivity {
                                     });
                                 }
                             }).start();
+                        } else if (id == R.id.CleanTempFiles) {
+                            showWaitDialog();
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        final int cleanedCount = MyGitUtility.cleanTemporaryFilesAndSync(activity, sRemoteUrl);
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                dismissWaitDialog();
+                                                reloadRepositoryList();
+                                                if (cleanedCount > 0) {
+                                                    Toast.makeText(activity, String.format(getString(R.string.toast_clean_temp_files_success), cleanedCount), Toast.LENGTH_LONG).show();
+                                                } else {
+                                                    Toast.makeText(activity, getString(R.string.toast_clean_temp_files_none), Toast.LENGTH_SHORT).show();
+                                                }
+                                            }
+                                        });
+                                    } catch (final Exception e) {
+                                        Log.e(TAG, "Failed to clean temporary files: " + sRemoteUrl, e);
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                dismissWaitDialog();
+                                                reloadRepositoryList();
+                                                Toast.makeText(activity, getString(R.string.toast_clean_temp_files_failed) + e.getMessage(), Toast.LENGTH_LONG).show();
+                                            }
+                                        });
+                                    }
+                                }
+                            }).start();
                         }
                         return true;
                     }
                 });
                 popup.show();
+            }
+        });
+
+    }
+
+    private void reloadRepositoryList() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                adapter.clear();
+                ArrayList<RemoteGit> aList = MyGitUtility.getRemoteGitList(activity);
+                for (final RemoteGit a : aList) {
+                    adapter.addData(new GitList(a.getNickname(), a.getUrl(), (int) a.getStatus(), a.getBranch()));
+                }
             }
         });
         String sGitAuthorName = PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorName", null);
@@ -1023,22 +990,29 @@ public class MainActivity extends AppCompatActivity {
         }
 
         final boolean[] isDownloaded = new boolean[noteRepos.size()];
-        final String[] repoNames = new String[noteRepos.size()];
         for (int i = 0; i < noteRepos.size(); i++) {
             GitHubRepo r = noteRepos.get(i);
             String cloneUrl = r.getCloneUrl() != null ? r.getCloneUrl().toLowerCase().trim() : "";
             boolean downloaded = downloadedUrls.contains(cloneUrl) || (cloneUrl.endsWith(".git") && downloadedUrls.contains(cloneUrl.substring(0, cloneUrl.length() - 4)));
             isDownloaded[i] = downloaded;
-
-            String desc = r.getDescription();
-            boolean hasDesc = desc != null && !desc.trim().isEmpty() && !desc.equalsIgnoreCase("null");
-            String badge = r.isPrivate() ? getString(R.string.github_private_badge) : getString(R.string.github_public_badge);
-            String downloadedBadge = downloaded ? getString(R.string.github_downloaded_badge) : "";
-            repoNames[i] = r.getFullName() + badge + downloadedBadge +
-                    (hasDesc ? "\n" + desc.trim() : "");
         }
 
-        ArrayAdapter<String> repoAdapter = new ArrayAdapter<String>(activity, android.R.layout.select_dialog_item, repoNames) {
+        final BaseAdapter repoAdapter = new BaseAdapter() {
+            @Override
+            public int getCount() {
+                return noteRepos.size();
+            }
+
+            @Override
+            public Object getItem(int position) {
+                return noteRepos.get(position);
+            }
+
+            @Override
+            public long getItemId(int position) {
+                return position;
+            }
+
             @Override
             public boolean isEnabled(int position) {
                 return !isDownloaded[position];
@@ -1046,13 +1020,34 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
-                TextView view = (TextView) super.getView(position, convertView, parent);
-                if (isDownloaded[position]) {
-                    view.setTextColor(0xFF888888);
-                } else {
-                    view.setTextColor(0xFF212121);
+                if (convertView == null) {
+                    convertView = LayoutInflater.from(activity).inflate(R.layout.item_github_repo, parent, false);
                 }
-                return view;
+                GitHubRepo r = noteRepos.get(position);
+                TextView tvName = convertView.findViewById(R.id.tv_repo_name);
+                TextView tvDesc = convertView.findViewById(R.id.tv_repo_desc);
+
+                String badge = r.isPrivate() ? getString(R.string.github_private_badge) : getString(R.string.github_public_badge);
+                String downloadedBadge = isDownloaded[position] ? " " + getString(R.string.github_downloaded_badge) : "";
+                tvName.setText(r.getFullName() + badge + downloadedBadge);
+
+                String desc = r.getDescription();
+                boolean hasDesc = desc != null && !desc.trim().isEmpty() && !desc.equalsIgnoreCase("null");
+                if (hasDesc) {
+                    tvDesc.setText(desc.trim());
+                    tvDesc.setVisibility(View.VISIBLE);
+                } else {
+                    tvDesc.setVisibility(View.GONE);
+                }
+
+                if (isDownloaded[position]) {
+                    tvName.setTextColor(0xFF888888);
+                    tvDesc.setTextColor(0xFF666666);
+                } else {
+                    tvName.setTextColor(ContextCompat.getColor(activity, R.color.text_primary));
+                    tvDesc.setTextColor(ContextCompat.getColor(activity, R.color.text_secondary));
+                }
+                return convertView;
             }
         };
 

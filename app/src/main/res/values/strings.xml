@@ -190,4 +190,10 @@
     <string name="theme_system_default">Follow System (Default)</string>
     <string name="theme_light">Light Mode</string>
     <string name="theme_dark">Dark Mode</string>
+
+    <!-- Clean Temporary Files strings -->
+    <string name="main_notes_clean_temp_files">Exclude Temp Files (.gitignore)</string>
+    <string name="toast_clean_temp_files_success">Successfully excluded %d temporary file(s) and synced.</string>
+    <string name="toast_clean_temp_files_none">No temporary files found; .gitignore is up to date.</string>
+    <string name="toast_clean_temp_files_failed">Failed to exclude temporary files: </string>
 </resources>

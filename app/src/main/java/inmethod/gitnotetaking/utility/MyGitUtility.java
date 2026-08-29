@@ -78,16 +78,27 @@ public class MyGitUtility {
 
     public static boolean deleteLocalGitRepository(Context context, String sRemoteUrl) {
         String sLocalDirectory = getLocalGitDirectory(context, sRemoteUrl);
-        //   Log.d(TAG, "check local repository, status = " + checkLocalGitRepository(sRemoteUrl));
-        if (checkLocalGitRepository(context, sRemoteUrl)) {
-            GitUtil aGitUtil;
+        if (sLocalDirectory == null || sLocalDirectory.trim().isEmpty()) {
+            return false;
+        }
+        File localDir = new File(sLocalDirectory);
+        if (localDir.exists()) {
             try {
-                aGitUtil = new GitUtil(sRemoteUrl, sLocalDirectory);
-                aGitUtil.removeLocalGitRepository();
-                if (aGitUtil != null) aGitUtil.close();
+                if (checkLocalGitRepository(context, sRemoteUrl)) {
+                    GitUtil aGitUtil = new GitUtil(sRemoteUrl, sLocalDirectory);
+                    aGitUtil.removeLocalGitRepository();
+                    aGitUtil.close();
+                }
+            } catch (Exception ee) {
+                Log.w(TAG, "GitUtil remove failed, falling back to FileUtils: " + ee.getMessage());
+            }
+            try {
+                if (localDir.exists()) {
+                    FileUtils.delete(localDir, FileUtils.RECURSIVE | FileUtils.RETRY | FileUtils.SKIP_MISSING);
+                }
                 return true;
             } catch (Exception ee) {
-                ee.printStackTrace();
+                Log.e(TAG, "FileUtils delete failed: " + ee.getMessage(), ee);
             }
         }
         return false;
@@ -1043,6 +1054,170 @@ public class MyGitUtility {
         for (RemoteGit g : list) {
             String localDir = getLocalGitDirectory(context, g.getUrl());
             purgeLocalGitRepositoryHistory(localDir);
+        }
+    }
+
+    public static boolean isTemporaryFileName(String name) {
+        if (name == null || name.isEmpty()) return false;
+        String lower = name.toLowerCase();
+        return name.startsWith("~") ||
+               name.endsWith("~") ||
+               lower.endsWith(".tmp") ||
+               lower.endsWith(".temp") ||
+               lower.endsWith(".swp") ||
+               lower.endsWith(".swo") ||
+               name.equals(".DS_Store") ||
+               name.equalsIgnoreCase("Thumbs.db") ||
+               name.equalsIgnoreCase("desktop.ini");
+    }
+
+    public static boolean ensureDefaultGitIgnore(String sLocalDirectory) {
+        if (sLocalDirectory == null || sLocalDirectory.isEmpty()) return false;
+        File ignoreFile = new File(sLocalDirectory, ".gitignore");
+        List<String> requiredRules = new ArrayList<>();
+        requiredRules.add("~*");
+        requiredRules.add("*~");
+        requiredRules.add("~$*");
+        requiredRules.add("*.tmp");
+        requiredRules.add("*.temp");
+        requiredRules.add("*.swp");
+        requiredRules.add("*.swo");
+        requiredRules.add(".DS_Store");
+        requiredRules.add("Thumbs.db");
+        requiredRules.add("desktop.ini");
+
+        List<String> existingLines = new ArrayList<>();
+        if (ignoreFile.exists()) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(ignoreFile), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    existingLines.add(line.trim());
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Failed to read existing .gitignore", e);
+            }
+        }
+
+        List<String> rulesToAdd = new ArrayList<>();
+        for (String rule : requiredRules) {
+            if (!existingLines.contains(rule)) {
+                rulesToAdd.add(rule);
+            }
+        }
+
+        if (rulesToAdd.isEmpty() && ignoreFile.exists()) {
+            return false; // Already up to date
+        }
+
+        try (FileWriter writer = new FileWriter(ignoreFile, true)) {
+            if (ignoreFile.length() > 0 && !existingLines.isEmpty()) {
+                writer.write("\n");
+            }
+            if (existingLines.isEmpty()) {
+                writer.write("# Temporary & System Files\n");
+            }
+            for (String r : rulesToAdd) {
+                writer.write(r + "\n");
+            }
+            writer.flush();
+            Log.d(TAG, "Updated .gitignore with " + rulesToAdd.size() + " new rules in " + sLocalDirectory);
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to write .gitignore", e);
+            return false;
+        }
+    }
+
+    public static int cleanTemporaryFilesAndSync(Context context, String sRemoteUrl) throws Exception {
+        String sLocalDirectory = getLocalGitDirectory(context, sRemoteUrl);
+        if (sLocalDirectory == null) return 0;
+        File localDir = new File(sLocalDirectory);
+        if (!localDir.exists()) return 0;
+
+        // 1. Guardrail: If working tree has uncommitted user edits, auto-commit first to protect user notes
+        String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(new java.util.Date());
+        autoCommitIfDirtyWithMessage(context, sRemoteUrl, "Auto-saved before excluding temp files: " + timestamp);
+
+        // 2. Sync: Pull latest changes from remote first to prevent non-fast-forward push rejections
+        if (MyApplication.isNetworkConnected() && sRemoteUrl != null && !sRemoteUrl.contains("local")) {
+            try {
+                pull(context, sRemoteUrl);
+            } catch (Exception e) {
+                Log.w(TAG, "Pull before excluding temp files encountered issue (proceeding with local cleanup): " + sRemoteUrl, e);
+            }
+        }
+
+        int removedCount = 0;
+        boolean gitignoreUpdated = ensureDefaultGitIgnore(sLocalDirectory);
+
+        try (Git git = Git.open(localDir)) {
+            Repository repository = git.getRepository();
+            ObjectId headId = repository.resolve(Constants.HEAD);
+            
+            // 3. Scan and untrack temporary files already tracked in HEAD
+            if (headId != null) {
+                try (RevWalk revWalk = new RevWalk(repository)) {
+                    RevCommit commit = revWalk.parseCommit(headId);
+                    try (TreeWalk treeWalk = new TreeWalk(repository)) {
+                        treeWalk.addTree(commit.getTree());
+                        treeWalk.setRecursive(true);
+                        while (treeWalk.next()) {
+                            String pathString = treeWalk.getPathString();
+                            String fileName = pathString.substring(pathString.lastIndexOf('/') + 1);
+                            if (isTemporaryFileName(fileName)) {
+                                Log.d(TAG, "Removing tracked temp file: " + pathString);
+                                git.rm().addFilepattern(pathString).call();
+                                removedCount++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. Also delete any untracked temporary files from disk
+            cleanWorkingTreeTempFilesRecursive(localDir);
+
+            // 5. If files were removed or .gitignore was updated, commit and push
+            Status status = git.status().call();
+            if (status.hasUncommittedChanges() || removedCount > 0 || gitignoreUpdated) {
+                git.add().addFilepattern(".gitignore").call();
+                git.add().addFilepattern(".").call();
+                String authorName = PreferenceManager.getDefaultSharedPreferences(context).getString("GitAuthorName", "root");
+                String authorEmail = PreferenceManager.getDefaultSharedPreferences(context).getString("GitAuthorEmail", "root@your.email.com");
+                git.commit()
+                   .setMessage("chore: exclude temporary files and update .gitignore")
+                   .setAuthor(authorName, authorEmail)
+                   .setCommitter(authorName, authorEmail)
+                   .call();
+                Log.d(TAG, "Committed exclusion of " + removedCount + " temp files in " + sRemoteUrl);
+
+                if (MyApplication.isNetworkConnected() && sRemoteUrl != null && !sRemoteUrl.contains("local")) {
+                    push(context, sRemoteUrl);
+                }
+            }
+        }
+
+        return removedCount;
+    }
+
+    private static void cleanWorkingTreeTempFilesRecursive(File current) {
+        if (current == null || !current.exists()) return;
+        if (current.isDirectory()) {
+            if (current.getName().equals(".git")) return;
+            File[] files = current.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    cleanWorkingTreeTempFilesRecursive(f);
+                }
+            }
+        } else {
+            if (isTemporaryFileName(current.getName())) {
+                try {
+                    current.delete();
+                } catch (Exception e) {
+                    // Best effort
+                }
+            }
         }
     }
 }

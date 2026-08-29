@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.008] - 2026-08-29
+
+### 🚀 New Features & Enhancements
+
+#### 1. 長按選單新增「排除暫存檔(.gitignore)」(Exclude Temp Files & .gitignore)
+- **主動掃描與歷史暫存檔剔除**：自動從 Git 追蹤索引中執行 `git rm` 剔除已被誤傳的暫存檔案，並實體清理磁碟上的未追蹤暫存檔案。
+- **自動補齊與同步 .gitignore**：自動檢查並將常見暫存規則寫入本機 `.gitignore`，完成 Commit 並推送到遠端 GitHub，防止未來再次追蹤。
+- **支援過濾之暫存檔特徵清單**：
+  - `~*` / `~$*`：Microsoft Office（Word、Excel、PowerPoint）的鎖定與臨時編輯暫存檔（例如 `~$筆記.docx`、`~temp.tmp`）。
+  - `*~`：Linux/Unix 與各類文字編輯器自動備份檔案（例如 `note.md~`）。
+  - `*.tmp` / `*.temp`：系統與應用程式產生的通用暫存檔。
+  - `*.swp` / `*.swo`：Vim/Vi 編輯器的交換檔案（Swap files）。
+  - `.DS_Store`：macOS Finder 目錄結構與自訂屬性快取檔。
+  - `Thumbs.db` / `desktop.ini`：Windows 縮圖快取與資料夾配置檔。
+- **完整 4 國語系支援**：繁體中文（`排除暫存檔(.gitignore)`）、簡體中文（`排除暂存文件(.gitignore)`）、日本語（`一時ファイル除外(.gitignore)`）與 English（`Exclude Temp Files (.gitignore)`）。
+
+#### 2. Mermaid 流程圖全語系完美 Fit & 深色模式高對比
+- **萬國碼全語系字寬分級引擎**：全面精準適配繁體中文、簡體中文、日文（漢字/平假名/片假名/全形標點「」【】、。〜）、韓文 (Hangul) 與歐美西文，方塊文字完美包裹居中，徹底解決文字溢出。
+- **動態 ViewBox 畫布計算**：移除寫死高度，由節點幾何尺寸動態撐開，杜絕任何圖表被截斷破版。
+- **深色模式超高對比連接線**：連接線與箭頭改用 `#79c0ff` 亮藍色（WCAG AAA 9.5:1 對比度），線條清清楚楚。
+
+#### 3. 深色模式 3D 視覺與圖示適配
+- **立體亮銀框線**：主畫面筆記卡片與長按彈出選單（PopupMenu）加入 `1.5dp` 亮銀立體外框（`#5A5A5A`）與 `8dp` 圓角，黑底質感大幅提升。
+- **筆記總管檔案圖示高亮**：Markdown、TXT、PDF、圖片、DOC 等檔案圖示在深色模式下套用純白高亮剪影濾鏡，黃色資料夾維持經典黃。
+- **GitHub 挑選 Repo 對話框適配**：Repo 名稱與描述改用 DayNight 高對比文字與實體分隔線。
+- **100% 官方標準 Git Logo**：替換「建立」選單中 Git 圖示為官方正統 45 度珊瑚橘（`#F05032`）雙層分支標誌。
+
+#### 4. 外部 PDF 閱讀器密碼解鎖權限與 ISO 標準加密修復
+- **外部 Reader 密碼驗證支援**：移除呼叫外部 PDF 閱讀器時的 `FLAG_ACTIVITY_NO_HISTORY` 旗標，並主動透過 `grantUriPermission` 授權，避免第三方 Reader（如 Adobe Acrobat、Google PDF 等）跳出輸入密碼框時 Android 系統提前收回 FileProvider 讀取權限。
+- **補齊 ProviderPaths 路徑**：在 `provider_paths.xml` 補齊 `<external-files-path>`、`<files-path>` 與 `<cache-path>`。
+- **正統 ISO-32000-1 密碼學加密**：測試檔 `sample_protected_123456.pdf` 全面以正統 RC4-128 演算法重新生成，內部檢視與第三方 Reader 均可 100% 順暢解鎖。
+
+#### 5. 檔案總管「系統隱藏檔」預設隱形
+- **清爽知識庫視覺**：在 `FileExplorerActivity` 中將 `.` 開頭的系統檔案（如 `.gitignore`、`.DS_Store`）預設隱藏，維持純淨閱讀清單並防止誤觸與手滑刪除。
+
+#### 6. 穩定性與防呆機制強化
+- **筆記移除強制物理清空**：強化 `deleteLocalGitRepository` 雙層保險刪除，確保點擊「移除」時 100% 清空本機實體檔案與資料夾。
+- **主畫面非同步執行緒化**：將主畫面 `Pull`、`Push`、`Remove` 全面轉為背景工作執行緒，消除主執行緒卡頓並提升 Pixel 10 (Android 16) 相容性。
+
 ## [4.007] - 2026-08-29
 
 ### 🚀 New Features & Enhancements

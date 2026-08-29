@@ -11,6 +11,12 @@
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+        <item name="popupMenuStyle">@style/CustomPopupMenuStyle</item>
+        <item name="android:popupMenuStyle">@style/CustomPopupMenuStyle</item>
+        <item name="actionOverflowMenuStyle">@style/CustomActionOverflowMenuStyle</item>
+        <item name="android:actionOverflowMenuStyle">@style/CustomActionOverflowMenuStyle</item>
+        <item name="listPopupWindowStyle">@style/CustomListPopupWindowStyle</item>
+        <item name="android:listPopupWindowStyle">@style/CustomListPopupWindowStyle</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -20,6 +26,24 @@
         <item name="android:colorBackground">@color/window_bg</item>
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="popupMenuStyle">@style/CustomPopupMenuStyle</item>
+        <item name="android:popupMenuStyle">@style/CustomPopupMenuStyle</item>
+        <item name="actionOverflowMenuStyle">@style/CustomActionOverflowMenuStyle</item>
+        <item name="android:actionOverflowMenuStyle">@style/CustomActionOverflowMenuStyle</item>
+        <item name="listPopupWindowStyle">@style/CustomListPopupWindowStyle</item>
+        <item name="android:listPopupWindowStyle">@style/CustomListPopupWindowStyle</item>
+    </style>
+
+    <style name="CustomPopupMenuStyle" parent="@style/Widget.AppCompat.PopupMenu">
+        <item name="android:popupBackground">@drawable/bg_popup_menu</item>
+    </style>
+
+    <style name="CustomActionOverflowMenuStyle" parent="@style/Widget.AppCompat.PopupMenu.Overflow">
+        <item name="android:popupBackground">@drawable/bg_popup_menu</item>
+    </style>
+
+    <style name="CustomListPopupWindowStyle" parent="@style/Widget.AppCompat.ListPopupWindow">
+        <item name="android:popupBackground">@drawable/bg_popup_menu</item>
     </style>
 
     <style name="BarFontSize" parent="@style/Base.TextAppearance.AppCompat.Title">
@@ -27,12 +51,20 @@
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
-
+        <item name="actionOverflowMenuStyle">@style/CustomActionOverflowMenuStyle</item>
+        <item name="android:actionOverflowMenuStyle">@style/CustomActionOverflowMenuStyle</item>
     </style>
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.DayNight">
         <item name="android:colorBackground">@color/card_bg</item>
         <item name="android:textColor">@color/text_primary</item>
+        <item name="android:popupBackground">@drawable/bg_popup_menu</item>
+        <item name="actionOverflowMenuStyle">@style/CustomActionOverflowMenuStyle</item>
+        <item name="android:actionOverflowMenuStyle">@style/CustomActionOverflowMenuStyle</item>
+        <item name="popupMenuStyle">@style/CustomPopupMenuStyle</item>
+        <item name="android:popupMenuStyle">@style/CustomPopupMenuStyle</item>
+        <item name="listPopupWindowStyle">@style/CustomListPopupWindowStyle</item>
+        <item name="android:listPopupWindowStyle">@style/CustomListPopupWindowStyle</item>
     </style>
 
 </resources>

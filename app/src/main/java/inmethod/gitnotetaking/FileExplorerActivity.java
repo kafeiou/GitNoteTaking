@@ -326,7 +326,9 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
 
         for (int i = 0; i < m_filesArray.length; i++) {
             File file = m_filesArray[i];
-
+            if (file.getName().startsWith(".")) {
+                continue;
+            }
 
             if (file.isDirectory()) {
                 try {
@@ -536,15 +538,18 @@ Log.d(TAG,"m_item name = "+m_item.get(position)+",position number = "+ position+
                     } else {
                         Uri path = Uri.fromFile(m_isFile);
                         if (m_isFile.exists()) {
-                            Intent intent = new Intent();
-                            intent.setAction(android.content.Intent.ACTION_VIEW);
-                            Log.d(TAG, "file type = " + getMimeType(Uri.fromFile(m_isFile), activity) + ", uri=" + path.getPath());
-                            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                            intent.setFlags(FLAG_GRANT_READ_URI_PERMISSION);
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                            Intent intent = new Intent(Intent.ACTION_VIEW);
+                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             String authority = activity.getPackageName() + ".fileprovider";
                             Uri uri = FileProvider.getUriForFile(activity, authority, m_isFile);
                             intent.setDataAndType(uri, getMimeType(path, activity));
+
+                            java.util.List<android.content.pm.ResolveInfo> resInfoList = activity.getPackageManager().queryIntentActivities(intent, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY);
+                            for (android.content.pm.ResolveInfo resolveInfo : resInfoList) {
+                                String packageName = resolveInfo.activityInfo.packageName;
+                                activity.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            }
 
                             try {
                                 startActivity(intent);

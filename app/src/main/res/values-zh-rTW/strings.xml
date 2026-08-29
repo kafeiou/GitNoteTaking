@@ -190,4 +190,10 @@
     <string name="theme_system_default">跟隨系統 (預設)</string>
     <string name="theme_light">淺色模式 (亮色)</string>
     <string name="theme_dark">深色模式 (夜間暗黑)</string>
+
+    <!-- Clean Temporary Files strings -->
+    <string name="main_notes_clean_temp_files">排除暫存檔(.gitignore)</string>
+    <string name="toast_clean_temp_files_success">已成功排除 %d 個暫存檔並同步。</string>
+    <string name="toast_clean_temp_files_none">未發現多餘的暫存檔，.gitignore 已是最新狀態。</string>
+    <string name="toast_clean_temp_files_failed">排除暫存檔失敗：</string>
 </resources>

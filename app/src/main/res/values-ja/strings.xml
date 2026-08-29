@@ -190,4 +190,10 @@
     <string name="theme_system_default">システム連動 (デフォルト)</string>
     <string name="theme_light">ライトモード</string>
     <string name="theme_dark">ダークモード (夜間)</string>
+
+    <!-- Clean Temporary Files strings -->
+    <string name="main_notes_clean_temp_files">一時ファイル除外(.gitignore)</string>
+    <string name="toast_clean_temp_files_success">%d 件の一時ファイルを除外し、同期しました。</string>
+    <string name="toast_clean_temp_files_none">一時ファイルは見つかりませんでした。.gitignore は最新です。</string>
+    <string name="toast_clean_temp_files_failed">一時ファイルの除外に失敗しました：</string>
 </resources>
