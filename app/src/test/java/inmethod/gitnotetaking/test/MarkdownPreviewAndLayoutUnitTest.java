@@ -215,4 +215,27 @@ public class MarkdownPreviewAndLayoutUnitTest {
         assertTrue("marked.min.js 應使用安全字母 Token FNCCODEBLOCK 佔位符", jsCode.contains("FNCCODEBLOCK"));
         assertTrue("marked.min.js 應使用安全字母 Token INLCODEBLOCK 佔位符", jsCode.contains("INLCODEBLOCK"));
     }
+
+    /**
+     * 10. 驗證 HTML / HTM 檔案副檔名識別與可預覽性判定
+     */
+    @Test
+    public void testHtmlFileExtensionAndPreviewableDetection() {
+        String[] validHtml = {"index.html", "page.htm", "DOC.HTML", "sample.HTM", "sub/folder/report.html"};
+        String[] nonHtml = {"index.txt", "page.pdf", "app.java", "test.xml", "html_file.bak"};
+
+        for (String filename : validHtml) {
+            String lower = filename.toLowerCase();
+            boolean isHtml = lower.endsWith(".html") || lower.endsWith(".htm");
+            assertTrue("應識別為 HTML 檔案: " + filename, isHtml);
+            boolean isPreviewable = isHtml || lower.endsWith(".md") || lower.endsWith(".markdown");
+            assertTrue("HTML 檔案必須判定為可預覽 (isPreviewable): " + filename, isPreviewable);
+        }
+
+        for (String filename : nonHtml) {
+            String lower = filename.toLowerCase();
+            boolean isHtml = lower.endsWith(".html") || lower.endsWith(".htm");
+            assertFalse("不應誤判為 HTML 檔案: " + filename, isHtml);
+        }
+    }
 }

@@ -148,8 +148,12 @@
     <string name="github_auth_loading">GitHub 認証に接続中...</string>
     <string name="github_fetching_repos">ノートリポジトリを検索中...</string>
     <string name="github_select_repo_title">ノート選択 (note* のみ)</string>
+    <string name="github_select_repo_title_with_prefix">ノートを選択 (%1$s* のみ)</string>
+    <string name="github_select_repo_title_all">リポジトリを選択 (すべて)</string>
     <string name="github_no_note_repos_title">ノートリポジトリが見つかりません</string>
     <string name="github_no_note_repos_msg">GitHub アカウント内に「note」で始まるリポジトリが見つかりませんでした。\n\n先に GitHub 上で「note」で始まるリポジトリ（例: note-work, NoteTaking など）を作成してください。</string>
+    <string name="github_no_note_repos_msg_with_prefix">GitHub アカウント内に「%1$s」で始まるリポジトリが見つかりませんでした。\n\n先に GitHub 上で「%1$s」で始まるリポジトリ（例: %1$s-work, %1$sTaking など）を作成するか、「設定」で接頭辞ルールを変更してください。</string>
+    <string name="github_no_note_repos_msg_all">GitHub アカウント内にリポジトリが見つかりませんでした。\n\n先に GitHub 上でリポジトリを作成してください。</string>
     <string name="github_create_repo_online">GitHub で作成</string>
     <string name="github_auth_failed">GitHub 認証に失敗しました: </string>
     <string name="github_oauth_login_btn">ワンタップで GitHub 認証 (推奨)</string>
@@ -164,6 +168,10 @@
     <string name="github_private_badge"> [非公開]</string>
     <string name="github_public_badge"> [公開]</string>
     <string name="github_downloaded_badge"> [ダウンロード済]</string>
+
+    <!-- GitHub Repo Prefix Preference -->
+    <string name="pref_github_repo_prefix_title">GitHub リポジトリ接頭辞フィルター</string>
+    <string name="pref_github_repo_prefix_summary">デフォルトは note、空欄にすると全リポジトリを取得</string>
 
     <!-- Purge History strings -->
     <string name="pref_purge_title">履歴をパージ (単一バージョンのみ保持) (実験中)</string>
@@ -196,4 +204,25 @@
     <string name="toast_clean_temp_files_success">%d 件の一時ファイルを除外し、同期しました。</string>
     <string name="toast_clean_temp_files_none">一時ファイルは見つかりませんでした。.gitignore は最新です。</string>
     <string name="toast_clean_temp_files_failed">一時ファイルの除外に失敗しました：</string>
+
+    <!-- Auto-sync on Entry strings -->
+    <string name="pref_sync_interval_title">ノート進入時の自動同期同期間隔</string>
+    <string name="pref_sync_interval_summary">前回の成功から指定秒数が経過した時のみ再同期 (デフォルト60秒)</string>
+
+    <!-- About & Support strings -->
+    <string name="pref_about_category_title">アプリ情報とサポート</string>
+    <string name="pref_app_version_title">アプリバージョン</string>
+    <string name="pref_feedback_title">フィードバックとサポート</string>
+    <string name="pref_privacy_policy_title">プライバシーポリシー</string>
+    <string name="about_dialog_title">GIT Note Taking について</string>
+    <string name="feedback_email_subject">[GIT Note Taking v%1$s] フィードバック</string>
+
+    <!-- Git Diff strings -->
+    <string name="diff_action_title">差分を確認 (Diff)</string>
+    <string name="diff_dialog_title">ファイルの差分</string>
+    <string name="diff_no_changes">前回のコミット (HEAD) と同じで、変更はありません。</string>
+    <string name="diff_status_uncommitted">未コミットの変更 (HEAD ⇄ 現在の内容)</string>
+    <string name="diff_status_latest_commit">最新コミットの変更 (HEAD~1 ⇄ HEAD)</string>
+    <string name="diff_stats_summary">🟢 +%1$d 行追加   🔴 -%2$d 行削除</string>
+    <string name="diff_line_near">📍 %1$d 行目付近</string>
 </resources>

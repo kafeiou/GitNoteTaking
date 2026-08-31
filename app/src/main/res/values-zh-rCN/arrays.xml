@@ -36,4 +36,18 @@
         <item>light</item>
         <item>dark</item>
     </string-array>
+    <string-array name="sync_interval_entries">
+        <item>60 秒 (建议默认)</item>
+        <item>30 秒</item>
+        <item>3 分钟</item>
+        <item>5 分钟</item>
+        <item>每次进入皆同步 (无冷却)</item>
+    </string-array>
+    <string-array name="sync_interval_values">
+        <item>60</item>
+        <item>30</item>
+        <item>180</item>
+        <item>300</item>
+        <item>0</item>
+    </string-array>
 </resources>

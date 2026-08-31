@@ -1,8 +1,7 @@
-• Markdown Preview: GFM, syntax highlight, Mermaid & [[WikiLinks]].
-• PDF Viewer: Smooth zoom, password unlock & external app sharing.
-• DayNight Theme: Follow system or switch manually in Settings.
-• Long-Press Menu: On-demand Auto Commit & Storage Usage Analyzer.
-• Zero-Permission Backup: Full ZIP backup directly to Download.
-• Fixed commit history text visibility in Dark Mode.
-• GitHub OAuth 2.0 One-Tap Login & PAT Dual-Track.
-• Eclipse JGit 7.7.1 Upgrade.
+• Bidirectional Auto-sync on Entry: Auto-commits and pushes local changes upon opening notes, with customizable cooldown (default: 60s).
+• Plain Text Git Diff: Compare current edits with HEAD commit for .txt/.md/.html with color-coded Unified Diff.
+• HTML Visual Preview: Render .html/.htm notes via WebView with seamless "Edit ⇄ Preview" toggle.
+• GitHub Repo Prefix: Filter repos with custom prefix (default: note) or leave blank for all repos.
+• App Version & Support: View version in Settings, email feedback to william@kafeiou.pw, view Privacy Policy.
+• Markdown & PDF: GFM preview, Mermaid charts, [[WikiLinks]], native PDF viewer with zoom & unlock.
+• DayNight Theme, Temp Files Exclude (.gitignore), Zero-permission Backup & JGit 7.7.1.

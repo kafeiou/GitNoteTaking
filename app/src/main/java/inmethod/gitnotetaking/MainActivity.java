@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.icu.text.SimpleDateFormat;
 import android.os.Build;
@@ -957,14 +958,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showGitHubRepoSelectionDialog(final String username, final String token, final List<GitHubRepo> noteRepos, int totalReposCount) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MyApplication.getAppContext());
+        final String prefix = sp.getString("GitHubRepoPrefix", "note").trim();
+
         if (noteRepos == null || noteRepos.isEmpty()) {
+            String emptyTitle = getString(R.string.github_no_note_repos_title);
+            String emptyMsg;
+            final String createNameUrl;
+            if (prefix.isEmpty()) {
+                emptyMsg = getString(R.string.github_no_note_repos_msg_all);
+                createNameUrl = "https://github.com/new";
+            } else {
+                emptyMsg = getString(R.string.github_no_note_repos_msg_with_prefix, prefix);
+                createNameUrl = "https://github.com/new?name=" + prefix + "-";
+            }
+
             new AlertDialog.Builder(activity)
-                    .setTitle(R.string.github_no_note_repos_title)
-                    .setMessage(R.string.github_no_note_repos_msg)
+                    .setTitle(emptyTitle)
+                    .setMessage(emptyMsg)
                     .setPositiveButton(R.string.github_create_repo_online, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/new?name=note-"));
+                            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(createNameUrl));
                             startActivity(browserIntent);
                         }
                     })
@@ -1051,8 +1066,15 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+        String dialogTitle;
+        if (prefix.isEmpty()) {
+            dialogTitle = getString(R.string.github_select_repo_title_all) + " (" + username + ")";
+        } else {
+            dialogTitle = getString(R.string.github_select_repo_title_with_prefix, prefix) + " (" + username + ")";
+        }
+
         new AlertDialog.Builder(activity)
-                .setTitle(getString(R.string.github_select_repo_title) + " (" + username + ")")
+                .setTitle(dialogTitle)
                 .setAdapter(repoAdapter, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {

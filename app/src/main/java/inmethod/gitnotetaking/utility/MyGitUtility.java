@@ -12,6 +12,11 @@ import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.eclipse.jgit.diff.DiffAlgorithm;
+import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.diff.EditList;
+import org.eclipse.jgit.diff.RawText;
+import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.errors.LockFailedException;
 import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.Constants;
@@ -25,6 +30,25 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.TreeFilter;
 import org.eclipse.jgit.util.FileUtils;
+
+import java.io.ByteArrayOutputStream;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
+import android.text.style.StrikethroughSpan;
+import android.text.style.StyleSpan;
+import android.widget.HorizontalScrollView;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.content.res.Configuration;
+import androidx.appcompat.app.AlertDialog;
+import inmethod.gitnotetaking.R;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -1219,5 +1243,379 @@ public class MyGitUtility {
                 }
             }
         }
+    }
+
+    /**
+     * 尋找給定路徑所屬之 Git 根目錄（包含 .git 的目錄）
+     */
+    public static File findGitRootDir(File fileOrDir) {
+        if (fileOrDir == null) return null;
+        File current = fileOrDir.isDirectory() ? fileOrDir : fileOrDir.getParentFile();
+        while (current != null) {
+            File gitDir = new File(current, ".git");
+            if (gitDir.exists() && gitDir.isDirectory()) {
+                return current;
+            }
+            current = current.getParentFile();
+        }
+        return null;
+    }
+
+    /**
+     * 從指定 Commit (例如 HEAD, HEAD~1) 讀取目標檔案內容
+     */
+    public static String getCommitFileContent(File repoRoot, String commitRef, File targetFile) {
+        if (repoRoot == null || targetFile == null || commitRef == null) return null;
+        File gitDir = new File(repoRoot, ".git");
+        if (!gitDir.exists()) return null;
+
+        try {
+            String repoCanonical = repoRoot.getCanonicalPath();
+            String targetCanonical = targetFile.getCanonicalPath();
+            String relativePath = "";
+            if (targetCanonical.startsWith(repoCanonical)) {
+                relativePath = targetCanonical.substring(repoCanonical.length());
+                if (relativePath.startsWith("/") || relativePath.startsWith("\\")) {
+                    relativePath = relativePath.substring(1);
+                }
+            } else {
+                relativePath = targetFile.getName();
+            }
+            relativePath = relativePath.replace('\\', '/');
+
+            try (Repository repo = new FileRepositoryBuilder().setGitDir(gitDir).build()) {
+                ObjectId commitId = repo.resolve(commitRef);
+                if (commitId == null) return "";
+
+                try (RevWalk revWalk = new RevWalk(repo)) {
+                    RevCommit commit = revWalk.parseCommit(commitId);
+                    try (TreeWalk treeWalk = TreeWalk.forPath(repo, relativePath, commit.getTree())) {
+                        if (treeWalk != null) {
+                            ObjectId blobId = treeWalk.getObjectId(0);
+                            byte[] bytes = repo.open(blobId).getBytes();
+                            return new String(bytes, StandardCharsets.UTF_8);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "getCommitFileContent failed for " + targetFile + " at " + commitRef, e);
+        }
+        return null;
+    }
+
+    /**
+     * 從 Git 倉庫讀取 HEAD 提交版本之指定檔案內容
+     */
+    public static String getHeadContent(Context context, String sRemoteUrl, String relativeFilePath) {
+        if (context == null || sRemoteUrl == null || relativeFilePath == null) return null;
+        String sLocalDirectory = getLocalGitDirectory(context, sRemoteUrl);
+        if (sLocalDirectory == null) return null;
+        File gitDir = new File(sLocalDirectory, ".git");
+        if (!gitDir.exists()) return null;
+
+        String normalizedPath = relativeFilePath.replace('\\', '/');
+        while (normalizedPath.startsWith("/")) {
+            normalizedPath = normalizedPath.substring(1);
+        }
+
+        try (Repository repo = new FileRepositoryBuilder().setGitDir(gitDir).build()) {
+            ObjectId head = repo.resolve(Constants.HEAD);
+            if (head == null) return "";
+
+            try (RevWalk revWalk = new RevWalk(repo)) {
+                RevCommit commit = revWalk.parseCommit(head);
+                try (TreeWalk treeWalk = TreeWalk.forPath(repo, normalizedPath, commit.getTree())) {
+                    if (treeWalk != null) {
+                        ObjectId blobId = treeWalk.getObjectId(0);
+                        byte[] bytes = repo.open(blobId).getBytes();
+                        return new String(bytes, StandardCharsets.UTF_8);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "getHeadContent failed for " + relativeFilePath, e);
+        }
+        return null;
+    }
+
+    /**
+     * 比對兩段字串產生 Unified Diff 文本
+     */
+    public static String computeDiff(String oldContent, String newContent, String oldLabel, String newLabel) {
+        try {
+            String oldStr = (oldContent != null ? oldContent : "");
+            String newStr = (newContent != null ? newContent : "");
+            if (oldStr.equals(newStr)) {
+                return "";
+            }
+
+            RawText a = new RawText(oldStr.getBytes(StandardCharsets.UTF_8));
+            RawText b = new RawText(newStr.getBytes(StandardCharsets.UTF_8));
+            EditList edits = DiffAlgorithm.getAlgorithm(DiffAlgorithm.SupportedAlgorithm.HISTOGRAM)
+                    .diff(RawTextComparator.DEFAULT, a, b);
+
+            if (edits == null || edits.isEmpty()) {
+                return "";
+            }
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            try (DiffFormatter formatter = new DiffFormatter(out)) {
+                formatter.format(edits, a, b);
+            }
+            return out.toString(StandardCharsets.UTF_8.name());
+        } catch (Exception e) {
+            Log.e(TAG, "computeDiff error", e);
+            return null;
+        }
+    }
+
+    public static class FileDiffResult {
+        public String diffText;
+        public String subtitle;
+        public boolean hasChanges;
+
+        public FileDiffResult(String diffText, String subtitle, boolean hasChanges) {
+            this.diffText = diffText;
+            this.subtitle = subtitle;
+            this.hasChanges = hasChanges;
+        }
+    }
+
+    /**
+     * 雙軌智慧差異比對：
+     * 1. 優先比對「HEAD vs 當前內容 (未提交修改)」
+     * 2. 若無未提交修改，自動比對「HEAD~1 vs HEAD (最新提交變更)」
+     */
+    public static FileDiffResult getSmartFileDiff(Context context, File targetFile, String currentContent) {
+        if (targetFile == null) {
+            return new FileDiffResult("", "", false);
+        }
+        File repoRoot = findGitRootDir(targetFile);
+        if (repoRoot == null) {
+            return new FileDiffResult("", "", false);
+        }
+
+        String fileName = targetFile.getName();
+        String headContent = getCommitFileContent(repoRoot, Constants.HEAD, targetFile);
+        String textToCompare = (currentContent != null) ? currentContent : "";
+
+        // 1. 軌道一：比對 HEAD 與當前內容
+        String diffVsHead = computeDiff(headContent, textToCompare, "a/" + fileName + " (HEAD)", "b/" + fileName + " (Current)");
+        if (diffVsHead != null && !diffVsHead.trim().isEmpty()) {
+            String title = (context != null) ? context.getString(R.string.diff_status_uncommitted) : "Uncommitted Changes";
+            return new FileDiffResult(diffVsHead, title, true);
+        }
+
+        // 2. 軌道二：若無未提交修改，比對 HEAD~1 與 HEAD (最新一次 Commit 的修改)
+        String parentContent = getCommitFileContent(repoRoot, "HEAD~1", targetFile);
+        if (parentContent != null && headContent != null) {
+            String diffVsParent = computeDiff(parentContent, headContent, "a/" + fileName + " (HEAD~1)", "b/" + fileName + " (HEAD)");
+            if (diffVsParent != null && !diffVsParent.trim().isEmpty()) {
+                String title = (context != null) ? context.getString(R.string.diff_status_latest_commit) : "Latest Commit Changes";
+                return new FileDiffResult(diffVsParent, title, true);
+            }
+        }
+
+        // 3. 兩者皆無變更
+        String noChangeMsg = (context != null) ? context.getString(R.string.diff_no_changes) : "No changes found.";
+        return new FileDiffResult("", noChangeMsg, false);
+    }
+
+    /**
+     * 生成 GitHub 風格之純 HTML/CSS 視覺化差異對照表
+     */
+    public static String generateGitHubDiffHtml(Context context, String fileName, String subtitle, String diffText, boolean isDark) {
+        if (diffText == null || diffText.trim().isEmpty()) {
+            return "";
+        }
+
+        int addedCount = 0;
+        int deletedCount = 0;
+        String[] rawLines = diffText.split("\n");
+        for (String line : rawLines) {
+            if (line.startsWith("+") && !line.startsWith("+++")) {
+                addedCount++;
+            } else if (line.startsWith("-") && !line.startsWith("---")) {
+                deletedCount++;
+            }
+        }
+
+        String bgColor = isDark ? "#121212" : "#ffffff";
+        String textColor = isDark ? "#c9d1d9" : "#24292f";
+        String borderColor = isDark ? "#30363d" : "#d0d7de";
+        String hunkBg = isDark ? "#1e293b" : "#ddf4ff";
+        String hunkText = isDark ? "#7dd3fc" : "#0969da";
+        String lineNumBg = isDark ? "#161b22" : "#f6f8fa";
+        String lineNumText = isDark ? "#768390" : "#8c959f";
+        String delBg = isDark ? "#3d1b20" : "#ffebe9";
+        String delText = isDark ? "#ff7b72" : "#24292f";
+        String delSign = isDark ? "#f85149" : "#cf222e";
+        String delWordBg = isDark ? "#6e1d24" : "#ffc1be";
+        String insBg = isDark ? "#143821" : "#e6ffec";
+        String insText = isDark ? "#7ee787" : "#24292f";
+        String insSign = isDark ? "#3fb950" : "#1a7f37";
+        String insWordBg = isDark ? "#1f6f3b" : "#abf2bc";
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<!DOCTYPE html><html><head><meta charset='utf-8'>");
+        sb.append("<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes'>");
+        sb.append("<style>");
+        sb.append("* { box-sizing: border-box; }");
+        sb.append("body { margin: 0; padding: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; line-height: 1.45; background-color: ").append(bgColor).append("; color: ").append(textColor).append("; }");
+        sb.append(".badge-container { margin-bottom: 10px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }");
+        sb.append(".subtitle { font-size: 13px; font-weight: bold; color: #58a6ff; margin-bottom: 4px; }");
+        sb.append(".stats { font-size: 12px; color: #8b949e; }");
+        sb.append(".diff-table { width: 100%; border-collapse: collapse; border: 1px solid ").append(borderColor).append("; border-radius: 6px; overflow: hidden; margin-top: 6px; }");
+        sb.append(".hunk-header { background-color: ").append(hunkBg).append("; color: ").append(hunkText).append("; font-weight: bold; padding: 6px 10px; font-size: 11px; border-top: 1px solid ").append(borderColor).append("; border-bottom: 1px solid ").append(borderColor).append("; }");
+        sb.append(".diff-row { font-family: inherit; }");
+        sb.append(".diff-row.del { background-color: ").append(delBg).append("; color: ").append(delText).append("; }");
+        sb.append(".diff-row.ins { background-color: ").append(insBg).append("; color: ").append(insText).append("; }");
+        sb.append(".diff-row.cntx { background-color: transparent; }");
+        sb.append(".num { width: 34px; min-width: 34px; max-width: 34px; padding: 2px 4px; text-align: right; user-select: none; font-size: 10px; color: ").append(lineNumText).append("; background-color: ").append(lineNumBg).append("; border-right: 1px solid ").append(borderColor).append("; vertical-align: top; }");
+        sb.append(".sign { width: 16px; min-width: 16px; max-width: 16px; text-align: center; padding: 2px 0; font-weight: bold; user-select: none; vertical-align: top; }");
+        sb.append(".diff-row.del .sign { color: ").append(delSign).append("; }");
+        sb.append(".diff-row.ins .sign { color: ").append(insSign).append("; }");
+        sb.append(".code { padding: 2px 6px; white-space: pre-wrap; word-break: break-all; vertical-align: top; }");
+        sb.append(".w-del { background-color: ").append(delWordBg).append("; border-radius: 2px; padding: 0 2px; }");
+        sb.append(".w-ins { background-color: ").append(insWordBg).append("; border-radius: 2px; padding: 0 2px; font-weight: bold; }");
+        sb.append("</style></head><body>");
+
+        // Top badges
+        sb.append("<div class='badge-container'>");
+        if (context != null) {
+            String statsStr = context.getString(R.string.diff_stats_summary, addedCount, deletedCount);
+            sb.append("<div class='stats'>").append(escapeHtml(statsStr)).append("</div>");
+        }
+        sb.append("</div>");
+
+        sb.append("<table class='diff-table'>");
+
+        java.util.regex.Pattern hunkPattern = java.util.regex.Pattern.compile("@@ -(\\d+)(?:,\\d+)? \\+(\\d+)(?:,\\d+)? @@(.*)");
+        int curOldLine = 1;
+        int curNewLine = 1;
+
+        for (int i = 0; i < rawLines.length; i++) {
+            String line = rawLines[i];
+            if (line.startsWith("diff ") || line.startsWith("index ") || line.startsWith("---") || line.startsWith("+++")) {
+                continue;
+            }
+
+            java.util.regex.Matcher m = hunkPattern.matcher(line);
+            if (m.matches()) {
+                try {
+                    curOldLine = Integer.parseInt(m.group(1));
+                    curNewLine = Integer.parseInt(m.group(2));
+                } catch (Exception ignored) {}
+
+                String sectionLabel = (context != null) ? context.getString(R.string.diff_line_near, curNewLine > 0 ? curNewLine : curOldLine) : ("📍 Near line " + (curNewLine > 0 ? curNewLine : curOldLine));
+                sb.append("<tr><td colspan='4' class='hunk-header'>").append(escapeHtml(sectionLabel)).append("</td></tr>");
+            } else if (line.startsWith("-")) {
+                String delContent = line.substring(1);
+                // Check if next line is an addition (replacement) for word-level highlighting
+                if (i + 1 < rawLines.length && rawLines[i + 1].startsWith("+") && !rawLines[i + 1].startsWith("+++")) {
+                    String insContent = rawLines[i + 1].substring(1);
+                    String[] highlighted = computeWordLevelDiff(delContent, insContent);
+                    sb.append("<tr class='diff-row del'><td class='num'>").append(curOldLine++).append("</td><td class='num'></td><td class='sign'>-</td><td class='code'>").append(highlighted[0]).append("</td></tr>");
+                    sb.append("<tr class='diff-row ins'><td class='num'></td><td class='num'>").append(curNewLine++).append("</td><td class='sign'>+</td><td class='code'>").append(highlighted[1]).append("</td></tr>");
+                    i++; // Skip the next line since it was processed together
+                } else {
+                    sb.append("<tr class='diff-row del'><td class='num'>").append(curOldLine++).append("</td><td class='num'></td><td class='sign'>-</td><td class='code'>").append(escapeHtml(delContent)).append("</td></tr>");
+                }
+            } else if (line.startsWith("+")) {
+                String insContent = line.substring(1);
+                sb.append("<tr class='diff-row ins'><td class='num'></td><td class='num'>").append(curNewLine++).append("</td><td class='sign'>+</td><td class='code'>").append(escapeHtml(insContent)).append("</td></tr>");
+            } else {
+                String cntxContent = line.startsWith(" ") ? line.substring(1) : line;
+                sb.append("<tr class='diff-row cntx'><td class='num'>").append(curOldLine++).append("</td><td class='num'>").append(curNewLine++).append("</td><td class='sign'> </td><td class='code'>").append(escapeHtml(cntxContent)).append("</td></tr>");
+            }
+        }
+
+        sb.append("</table></body></html>");
+        return sb.toString();
+    }
+
+    public static String[] computeWordLevelDiff(String oldStr, String newStr) {
+        if (oldStr == null) oldStr = "";
+        if (newStr == null) newStr = "";
+
+        int prefixLen = 0;
+        int minLen = Math.min(oldStr.length(), newStr.length());
+        while (prefixLen < minLen && oldStr.charAt(prefixLen) == newStr.charAt(prefixLen)) {
+            prefixLen++;
+        }
+
+        int suffixLen = 0;
+        while (suffixLen < (minLen - prefixLen) &&
+                oldStr.charAt(oldStr.length() - 1 - suffixLen) == newStr.charAt(newStr.length() - 1 - suffixLen)) {
+            suffixLen++;
+        }
+
+        String prefix = escapeHtml(oldStr.substring(0, prefixLen));
+        String suffix = escapeHtml(oldStr.substring(oldStr.length() - suffixLen));
+
+        String oldMid = escapeHtml(oldStr.substring(prefixLen, oldStr.length() - suffixLen));
+        String newMid = escapeHtml(newStr.substring(prefixLen, newStr.length() - suffixLen));
+
+        String resOld = prefix + (oldMid.isEmpty() ? "" : "<span class='w-del'>" + oldMid + "</span>") + suffix;
+        String resNew = prefix + (newMid.isEmpty() ? "" : "<span class='w-ins'>" + newMid + "</span>") + suffix;
+
+        return new String[]{resOld, resNew};
+    }
+
+    public static String escapeHtml(String text) {
+        if (text == null) return "";
+        return text.replace("&", "&amp;")
+                   .replace("<", "&lt;")
+                   .replace(">", "&gt;")
+                   .replace("\"", "&quot;")
+                   .replace("'", "&#39;");
+    }
+
+    /**
+     * 顯示 GitHub 風格視覺化差異表 (100% 離線純 HTML/CSS) 對話框
+     */
+    public static void showDiffDialog(Activity activity, String fileName, String subtitle, String diffText) {
+        if (activity == null || activity.isFinishing()) return;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        builder.setTitle(fileName + " (" + activity.getString(R.string.diff_dialog_title) + ")");
+
+        if (diffText == null || diffText.trim().isEmpty()) {
+            builder.setMessage(subtitle != null && !subtitle.isEmpty() ? subtitle : activity.getString(R.string.diff_no_changes));
+            builder.setPositiveButton(R.string.dialog_ok, null);
+            builder.show();
+            return;
+        }
+
+        boolean isDark = (activity.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        String htmlContent = generateGitHubDiffHtml(activity, fileName, subtitle, diffText, isDark);
+
+        WebView webView = new WebView(activity);
+        webView.getSettings().setJavaScriptEnabled(false);
+        webView.getSettings().setBuiltInZoomControls(true);
+        webView.getSettings().setDisplayZoomControls(false);
+        webView.getSettings().setSupportZoom(true);
+        webView.setBackgroundColor(isDark ? Color.parseColor("#121212") : Color.WHITE);
+
+        int screenHeight = activity.getResources().getDisplayMetrics().heightPixels;
+        int targetHeight = Math.max((int) (screenHeight * 0.65), (int) (350 * activity.getResources().getDisplayMetrics().density));
+        android.widget.FrameLayout container = new android.widget.FrameLayout(activity);
+        android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
+                android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
+                targetHeight
+        );
+        webView.setLayoutParams(lp);
+        container.addView(webView);
+
+        webView.loadDataWithBaseURL(null, htmlContent, "text/html", "utf-8", null);
+
+        builder.setView(container);
+        builder.setPositiveButton(R.string.dialog_ok, null);
+        builder.show();
+    }
+
+    public static void showDiffDialog(Activity activity, String fileName, String diffText) {
+        showDiffDialog(activity, fileName, null, diffText);
     }
 }

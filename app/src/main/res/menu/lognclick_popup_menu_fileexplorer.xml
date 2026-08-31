@@ -3,6 +3,9 @@
         android:id="@+id/Download"
         android:title="@string/download"/>
     <item
+        android:id="@+id/show_file_diff"
+        android:title="@string/diff_action_title"/>
+    <item
         android:id="@+id/show_commit_short_log"
         android:title="@string/main_notes_show_changelog"/>
 

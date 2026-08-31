@@ -148,8 +148,12 @@
     <string name="github_auth_loading">正在连接 GitHub 授权中...</string>
     <string name="github_fetching_repos">正在查询笔记仓库...</string>
     <string name="github_select_repo_title">选择 note 开头笔记</string>
+    <string name="github_select_repo_title_with_prefix">选择笔记 (%1$s* 开头)</string>
+    <string name="github_select_repo_title_all">选择仓库 (全部)</string>
     <string name="github_no_note_repos_title">未找到笔记仓库</string>
     <string name="github_no_note_repos_msg">在您的 GitHub 账号中未找到名称以「note」开头的仓库。\n\n请先在 GitHub 上创建名称以「note」开头的仓库（例如 note-work, NoteTaking 等）后再进行连接。</string>
+    <string name="github_no_note_repos_msg_with_prefix">在您的 GitHub 账号中未找到名称以「%1$s」开头的仓库。\n\n请先在 GitHub 上创建名称以「%1$s」开头的仓库（例如 %1$s-work, %1$sTaking），或至「设置」中调整前缀过滤规则。</string>
+    <string name="github_no_note_repos_msg_all">在您的 GitHub 账号中未找到任何仓库。\n\n请先在 GitHub 上创建仓库后再进行连接。</string>
     <string name="github_create_repo_online">前往 GitHub 创建</string>
     <string name="github_auth_failed">GitHub 验证失败：</string>
     <string name="github_oauth_login_btn">一键登录 GitHub 授权 (推荐)</string>
@@ -164,6 +168,10 @@
     <string name="github_private_badge"> [私有]</string>
     <string name="github_public_badge"> [公开]</string>
     <string name="github_downloaded_badge"> [已下载]</string>
+
+    <!-- GitHub Repo Prefix Preference -->
+    <string name="pref_github_repo_prefix_title">GitHub 笔记仓库前缀过滤</string>
+    <string name="pref_github_repo_prefix_summary">默认为 note，留空则抓取所有仓库</string>
 
     <!-- Purge History strings -->
     <string name="pref_purge_title">历史记录瘦身 (保留单一版本) (实验中)</string>
@@ -196,4 +204,25 @@
     <string name="toast_clean_temp_files_success">已成功排除 %d 个暂存文件并同步。</string>
     <string name="toast_clean_temp_files_none">未发现多余的暂存文件，.gitignore 已是最新状态。</string>
     <string name="toast_clean_temp_files_failed">排除暂存文件失败：</string>
+
+    <!-- Auto-sync on Entry strings -->
+    <string name="pref_sync_interval_title">进笔记自动同步冷却时间</string>
+    <string name="pref_sync_interval_summary">距上次成功同步超过指定时间才再次自动同步 (默认 60 秒)</string>
+
+    <!-- About & Support strings -->
+    <string name="pref_about_category_title">关于与支持</string>
+    <string name="pref_app_version_title">App 版本</string>
+    <string name="pref_feedback_title">问题反馈</string>
+    <string name="pref_privacy_policy_title">隐私政策</string>
+    <string name="about_dialog_title">关于 GIT Note Taking</string>
+    <string name="feedback_email_subject">[GIT Note Taking v%1$s] 问题反馈</string>
+
+    <!-- Git Diff strings -->
+    <string name="diff_action_title">查看差异</string>
+    <string name="diff_dialog_title">文件差异</string>
+    <string name="diff_no_changes">与上次提交版本 (HEAD) 相同，无任何修改。</string>
+    <string name="diff_status_uncommitted">未提交的修改 (HEAD ⇄ 当前内容)</string>
+    <string name="diff_status_latest_commit">最新提交的变更 (HEAD~1 ⇄ HEAD)</string>
+    <string name="diff_stats_summary">🟢 +%1$d 行新增   🔴 -%2$d 行删除</string>
+    <string name="diff_line_near">📍 第 %1$d 行附近</string>
 </resources>

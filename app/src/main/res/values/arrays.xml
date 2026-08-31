@@ -35,4 +35,18 @@
     <item>light</item>
     <item>dark</item>
 </string-array>
+<string-array name="sync_interval_entries">
+    <item>60 seconds (Default)</item>
+    <item>30 seconds</item>
+    <item>3 minutes</item>
+    <item>5 minutes</item>
+    <item>Always on entry (No cooldown)</item>
+</string-array>
+<string-array name="sync_interval_values">
+    <item>60</item>
+    <item>30</item>
+    <item>180</item>
+    <item>300</item>
+    <item>0</item>
+</string-array>
 </resources>

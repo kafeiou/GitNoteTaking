@@ -33,6 +33,7 @@
         app:summary=""
         app:title="@string/GitAuthorEmail">
     </androidx.preference.EditTextPreference>
+
     <androidx.preference.EditTextPreference
         app:defaultValue="18"
         app:key="GitEditTextSize"
@@ -40,6 +41,7 @@
         app:allowDividerBelow="true"
         app:title="@string/GitEditTextSize">
     </androidx.preference.EditTextPreference>
+
     <androidx.preference.CheckBoxPreference
         app:allowDividerAbove="true"
         app:allowDividerBelow="true"
@@ -47,6 +49,16 @@
         app:key="GitCheckBoxCommitMessage"
         app:title="@string/GitCheckBoxCommitMessage">
     </androidx.preference.CheckBoxPreference>
+
+    <androidx.preference.EditTextPreference
+        app:defaultValue="note"
+        app:key="GitHubRepoPrefix"
+        app:allowDividerAbove="true"
+        app:allowDividerBelow="true"
+        app:title="@string/pref_github_repo_prefix_title"
+        app:summary="@string/pref_github_repo_prefix_summary">
+    </androidx.preference.EditTextPreference>
+
     <androidx.preference.CheckBoxPreference
         app:allowDividerAbove="true"
         app:allowDividerBelow="true"
@@ -54,13 +66,15 @@
         app:key="GitCloneSkipLocal"
         app:title="@string/GitCloneSkipLocal">
     </androidx.preference.CheckBoxPreference>
-    <androidx.preference.CheckBoxPreference
-        app:allowDividerAbove="true"
-        app:allowDividerBelow="true"
-        app:defaultValue="false"
-        app:key="GitShowAttachDir"
-        app:title="@string/GitShowAttachDir">
-    </androidx.preference.CheckBoxPreference>
+
+    <ListPreference
+        android:key="GitSyncInterval"
+        android:title="@string/pref_sync_interval_title"
+        android:summary="@string/pref_sync_interval_summary"
+        android:entries="@array/sync_interval_entries"
+        android:entryValues="@array/sync_interval_values"
+        android:defaultValue="60" />
+
     <ListPreference
         android:key="Sort"
         android:title="@string/Sort"
@@ -68,13 +82,7 @@
         app:summary="@string/Sort11"
         app:defaultValue="11"
         android:entryValues="@array/SortData"/>
-    <androidx.preference.EditTextPreference
-        app:defaultValue="gitnotetaking"
-        app:key="GitLocalDirName"
-        app:allowDividerAbove="true"
-        app:allowDividerBelow="true"
-        app:title="@string/GitLocalDirName">
-    </androidx.preference.EditTextPreference>
+
     <androidx.preference.EditTextPreference
         app:defaultValue="master"
         app:key="GitRemoteName"
@@ -89,5 +97,26 @@
         app:allowDividerBelow="true"
         app:title="@string/pref_purge_title"
         app:summary="@string/pref_purge_summary" />
+
+    <androidx.preference.PreferenceCategory
+        app:allowDividerAbove="true"
+        app:title="@string/pref_about_category_title">
+
+        <androidx.preference.Preference
+            app:key="AppVersion"
+            app:title="@string/pref_app_version_title"
+            app:summary="4.009" />
+
+        <androidx.preference.Preference
+            app:key="FeedbackEmail"
+            app:title="@string/pref_feedback_title"
+            app:summary="william@kafeiou.pw" />
+
+        <androidx.preference.Preference
+            app:key="PrivacyPolicy"
+            app:title="@string/pref_privacy_policy_title"
+            app:summary="https://kafeiou.pw/GitNotePrivacyPolicy.html" />
+
+    </androidx.preference.PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

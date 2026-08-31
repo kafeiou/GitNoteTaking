@@ -45,17 +45,25 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.PopupMenu;
+import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 import androidx.preference.PreferenceManager;
+
+import java.nio.charset.StandardCharsets;
 import inmethod.gitnotetaking.utility.FileUtility;
 import inmethod.gitnotetaking.utility.PermissionHelper;
 
 import com.hbisoft.pickit.PickiT;
 import com.hbisoft.pickit.PickiTCallbacks;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.util.FileUtils;
 
 import java.io.File;
@@ -100,6 +108,7 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
     private static String sSearchText = "";
     PickiT pickiT;
     EditText aEditTextSearch;
+    private static final java.util.Map<String, Long> sLastSyncTimeMap = new java.util.concurrent.ConcurrentHashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -176,22 +185,37 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
             return;
         }
 
+        if (!isManual) {
+            long cooldownSeconds = 60L;
+            try {
+                String prefVal = PreferenceManager.getDefaultSharedPreferences(MyApplication.getAppContext()).getString("GitSyncInterval", "60");
+                cooldownSeconds = Long.parseLong(prefVal);
+            } catch (Exception ignored) {}
+
+            long cooldownMs = cooldownSeconds * 1000L;
+            Long lastTime = sLastSyncTimeMap.get(sGitRemoteUrl);
+            if (lastTime != null && cooldownMs > 0 && (System.currentTimeMillis() - lastTime < cooldownMs)) {
+                Log.d(TAG, "Skipping background auto-sync (cooldown active: " + (System.currentTimeMillis() - lastTime) + "ms / " + cooldownMs + "ms)");
+                return;
+            }
+        }
+
         if (MyApplication.isNetworkConnected()) {
             if (isManual) {
                 Toast.makeText(activity, getString(R.string.toast_pulling), Toast.LENGTH_SHORT).show();
             }
             new Thread(() -> {
+                boolean hadAutoCommit = false;
+                // 步驟 1：保底檢查是否有未存檔的修改，若有則自動提交
                 if (MyGitUtility.isWorkingTreeDirty(activity, sGitRemoteUrl)) {
-                    if (isManual) {
-                        runOnUiThread(() -> {
-                            if (!isFinishing()) {
-                                Toast.makeText(activity, getString(R.string.toast_uncommitted_changes), Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    }
-                    return;
+                    String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(new java.util.Date());
+                    hadAutoCommit = MyGitUtility.autoCommitIfDirtyWithMessage(activity, sGitRemoteUrl, "Auto-commit: " + timestamp);
                 }
+
+                // 步驟 2：執行安全 Pull
                 int pullResult = MyGitUtility.pullWithResult(activity, sGitRemoteUrl);
+                final boolean wasAutoCommitted = hadAutoCommit;
+
                 runOnUiThread(() -> {
                     if (!isFinishing()) {
                         if (pullResult == MyGitUtility.PULL_RESULT_UPDATED) {
@@ -206,6 +230,36 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
                         }
                     }
                 });
+
+                // 步驟 3：只有在 Pull 成功的前提下，若有自動提交或 Merge 節點，背景推送回遠端
+                if (pullResult != MyGitUtility.PULL_RESULT_FAILED) {
+                    sLastSyncTimeMap.put(sGitRemoteUrl, System.currentTimeMillis());
+
+                    boolean needPush = wasAutoCommitted;
+                    if (!needPush) {
+                        try (Git git = Git.open(new File(sGitRootDir))) {
+                            Repository repo = git.getRepository();
+                            ObjectId head = repo.resolve(Constants.HEAD);
+                            if (head != null) {
+                                try (RevWalk walk = new RevWalk(repo)) {
+                                    RevCommit commit = walk.parseCommit(head);
+                                    if (commit.getParentCount() > 1) {
+                                        needPush = true;
+                                    }
+                                }
+                            }
+                        } catch (Exception ignored) {}
+                    }
+
+                    if (needPush && MyApplication.isNetworkConnected()) {
+                        try {
+                            Log.d(TAG, "Auto-pushing changes after entry sync for: " + sGitRemoteUrl);
+                            MyGitUtility.push(activity, sGitRemoteUrl);
+                        } catch (Exception e) {
+                            Log.w(TAG, "Auto-push failed for: " + sGitRemoteUrl, e);
+                        }
+                    }
+                }
             }).start();
         } else if (isManual) {
             Toast.makeText(activity, getString(R.string.pulling_failed), Toast.LENGTH_SHORT).show();
@@ -332,9 +386,11 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
 
             if (file.isDirectory()) {
                 try {
-                    if (  !PreferenceManager.getDefaultSharedPreferences(activity).getBoolean("GitShowAttachDir", false) && file.getCanonicalPath().contains("_attach")) {
+                    if (file.getCanonicalPath().contains("_attach")) {
+                        continue;
                     }
                     else if (file.getName().charAt(0) == '.') {
+                        continue;
                     }
                     else if( sSearchText!=null && !sSearchText.isEmpty()) {
 
@@ -417,6 +473,14 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
 
                 popup.getMenuInflater()
                         .inflate(R.menu.lognclick_popup_menu_fileexplorer, popup.getMenu());
+
+                File clickedFile = new File(m_path.get(pos));
+                if (!MyApplication.isText(clickedFile.getName())) {
+                    MenuItem diffItem = popup.getMenu().findItem(R.id.show_file_diff);
+                    if (diffItem != null) {
+                        diffItem.setVisible(false);
+                    }
+                }
                 /*
                 if (sRemoteUrl.indexOf("local") != -1) {
                     for (int i = 0; i < popup.getMenu().size(); i++) {
@@ -434,7 +498,33 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     public boolean onMenuItemClick(MenuItem item) {
                         int id = item.getItemId();
-                        if (id == R.id.show_commit_short_log) {
+                        if (id == R.id.show_file_diff) {
+                            final String filePath = m_path.get(pos);
+                            final File selectedFile = new File(filePath);
+
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    String currentContent = "";
+                                    if (selectedFile.exists()) {
+                                        try {
+                                            byte[] bytes = Files.readAllBytes(selectedFile.toPath());
+                                            currentContent = new String(bytes, StandardCharsets.UTF_8);
+                                        } catch (Exception e) {
+                                            Log.e(TAG, "Failed to read file " + selectedFile, e);
+                                        }
+                                    }
+                                    final MyGitUtility.FileDiffResult diffResult = MyGitUtility.getSmartFileDiff(FileExplorerActivity.this, selectedFile, currentContent);
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            MyGitUtility.showDiffDialog(FileExplorerActivity.this, selectedFile.getName(), diffResult.subtitle, diffResult.diffText);
+                                        }
+                                    });
+                                }
+                            }).start();
+                        }
+                        else if (id == R.id.show_commit_short_log) {
                             String sFilePath = m_path.get(pos).substring(sGitRootDir.length()+1);
                             AlertDialog.Builder dialogbuilder = new AlertDialog.Builder(activity);
                             dialogbuilder.setTitle(sFilePath);

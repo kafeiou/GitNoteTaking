@@ -148,8 +148,12 @@
     <string name="github_auth_loading">正在連接 GitHub 授權中...</string>
     <string name="github_fetching_repos">正在查詢筆記儲存庫...</string>
     <string name="github_select_repo_title">選擇 note 開頭筆記</string>
+    <string name="github_select_repo_title_with_prefix">選擇筆記 (%1$s* 開頭)</string>
+    <string name="github_select_repo_title_all">選擇儲存庫 (全部)</string>
     <string name="github_no_note_repos_title">未找到筆記儲存庫</string>
     <string name="github_no_note_repos_msg">在您的 GitHub 帳號中未找到名稱以「note」開頭的儲存庫。\n\n請先在 GitHub 上建立名稱以「note」開頭的儲存庫（例如 note-work, NoteTaking 等）後再進行連線。</string>
+    <string name="github_no_note_repos_msg_with_prefix">在您的 GitHub 帳號中未找到名稱以「%1$s」開頭的儲存庫。\n\n請先在 GitHub 上建立名稱以「%1$s」開頭的儲存庫（例如 %1$s-work, %1$sTaking），或至「設定」中調整前綴過濾規則。</string>
+    <string name="github_no_note_repos_msg_all">在您的 GitHub 帳號中未找到任何儲存庫。\n\n請先在 GitHub 上建立儲存庫後再進行連線。</string>
     <string name="github_create_repo_online">前往 GitHub 建立</string>
     <string name="github_auth_failed">GitHub 驗證失敗：</string>
     <string name="github_oauth_login_btn">一鍵登入 GitHub 授權 (推薦)</string>
@@ -164,6 +168,10 @@
     <string name="github_private_badge"> [私有]</string>
     <string name="github_public_badge"> [公開]</string>
     <string name="github_downloaded_badge"> [已下載]</string>
+
+    <!-- GitHub Repo Prefix Preference -->
+    <string name="pref_github_repo_prefix_title">GitHub 筆記庫前綴過濾</string>
+    <string name="pref_github_repo_prefix_summary">預設為 note，留空則抓取所有儲存庫</string>
 
     <!-- Purge History strings -->
     <string name="pref_purge_title">歷史紀錄瘦身 (保留單一版本) (實驗中)</string>
@@ -196,4 +204,25 @@
     <string name="toast_clean_temp_files_success">已成功排除 %d 個暫存檔並同步。</string>
     <string name="toast_clean_temp_files_none">未發現多餘的暫存檔，.gitignore 已是最新狀態。</string>
     <string name="toast_clean_temp_files_failed">排除暫存檔失敗：</string>
+
+    <!-- Auto-sync on Entry strings -->
+    <string name="pref_sync_interval_title">進筆記自動同步冷卻時間</string>
+    <string name="pref_sync_interval_summary">距上次成功同步超過指定時間才再次自動同步 (預設 60 秒)</string>
+
+    <!-- About & Support strings -->
+    <string name="pref_about_category_title">關於與支援</string>
+    <string name="pref_app_version_title">App 版本</string>
+    <string name="pref_feedback_title">問題回饋</string>
+    <string name="pref_privacy_policy_title">隱私權政策</string>
+    <string name="about_dialog_title">關於 GIT Note Taking</string>
+    <string name="feedback_email_subject">[GIT Note Taking v%1$s] 問題回饋</string>
+
+    <!-- Git Diff strings -->
+    <string name="diff_action_title">查看差異</string>
+    <string name="diff_dialog_title">檔案差異</string>
+    <string name="diff_no_changes">與上次提交版本 (HEAD) 相同，無任何修改。</string>
+    <string name="diff_status_uncommitted">未提交的修改 (HEAD ⇄ 目前內容)</string>
+    <string name="diff_status_latest_commit">最新提交的變更 (HEAD~1 ⇄ HEAD)</string>
+    <string name="diff_stats_summary">🟢 +%1$d 行新增   🔴 -%2$d 行刪除</string>
+    <string name="diff_line_near">📍 第 %1$d 行附近</string>
 </resources>

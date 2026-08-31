@@ -103,7 +103,12 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
     private ScrollView scrollView2;
     private HorizontalScrollView scrollAttachment;
     private boolean isMarkdownFile = false;
+    private boolean isHtmlFile = false;
     private boolean isPreviewMode = false;
+
+    private boolean isPreviewable() {
+        return isMarkdownFile || isHtmlFile;
+    }
     private File photoFile;
     //  TextView tvCountFiles;
     private boolean isModify = false;
@@ -173,6 +178,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
         if (file != null && file.getName() != null) {
             String nameLower = file.getName().toLowerCase();
             isMarkdownFile = nameLower.endsWith(".md") || nameLower.endsWith(".markdown");
+            isHtmlFile = nameLower.endsWith(".html") || nameLower.endsWith(".htm");
         }
 
         try {
@@ -205,7 +211,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                 }
                 Log.d(TAG, "file = " + file.getCanonicalPath());
 
-                if (isMarkdownFile && webViewMarkdown != null) {
+                if (isPreviewable() && webViewMarkdown != null) {
                     WebSettings settings = webViewMarkdown.getSettings();
                     settings.setJavaScriptEnabled(true);
                     settings.setAllowFileAccess(true);
@@ -229,18 +235,27 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                         public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                             super.onReceivedError(view, request, error);
                             if (request != null && request.isForMainFrame()) {
-                                renderMarkdownInWebView();
+                                if (isMarkdownFile) {
+                                    renderMarkdownInWebView();
+                                }
                             }
                         }
 
                         @Override
                         public void onPageFinished(WebView view, String url) {
                             super.onPageFinished(view, url);
-                            renderMarkdownInWebView();
+                            if (isMarkdownFile) {
+                                renderMarkdownInWebView();
+                            }
                         }
                     });
 
-                    webViewMarkdown.loadUrl("file:///android_asset/markdown/preview.html");
+                    if (isMarkdownFile) {
+                        webViewMarkdown.loadUrl("file:///android_asset/markdown/preview.html");
+                    } else if (isHtmlFile) {
+                        renderHtmlInWebView();
+                    }
+
                     if (!isModify) {
                         isPreviewMode = true;
                         webViewMarkdown.setVisibility(View.VISIBLE);
@@ -454,7 +469,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
         editText.setKeyListener(null);
         if (itemEdit != null) itemEdit.setVisible(true);
         if (itemSave != null) itemSave.setVisible(false);
-        if (isMarkdownFile && itemPreview != null) {
+        if (isPreviewable() && itemPreview != null) {
             itemPreview.setVisible(!isPreviewMode);
         }
     }
@@ -467,7 +482,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
             s.setSpan(new ForegroundColorSpan(Color.RED), 0, s.length(), 0);
             itemSave.setTitle(s);
         }
-        if (isMarkdownFile && itemPreview != null) {
+        if (isPreviewable() && itemPreview != null) {
             itemPreview.setVisible(true);
         }
         editText.setKeyListener(listener);
@@ -487,7 +502,11 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
         isPreviewMode = true;
         isModify = false;
         if (webViewMarkdown != null) {
-            renderMarkdownInWebView();
+            if (isMarkdownFile) {
+                renderMarkdownInWebView();
+            } else if (isHtmlFile) {
+                renderHtmlInWebView();
+            }
             webViewMarkdown.setVisibility(View.VISIBLE);
         }
         if (scrollView2 != null) {
@@ -499,6 +518,16 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
         disable();
         hideSoftKeyboard();
         invalidateOptionsMenu();
+    }
+
+    private void renderHtmlInWebView() {
+        if (webViewMarkdown == null || !isHtmlFile) return;
+        String text = editText != null ? editText.getText().toString() : "";
+        String baseUrl = null;
+        if (file != null && file.getParentFile() != null) {
+            baseUrl = "file://" + file.getParentFile().getAbsolutePath() + "/";
+        }
+        webViewMarkdown.loadDataWithBaseURL(baseUrl, text, "text/html", "UTF-8", null);
     }
 
     private void switchToEditMode() {
@@ -678,7 +707,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
         itemEdit = menu.findItem(R.id.view_file_action_edit);
         itemSave = menu.findItem(R.id.view_file_action_save);
 
-        if (isMarkdownFile) {
+        if (isPreviewable()) {
             if (isPreviewMode) {
                 if (itemPreview != null) itemPreview.setVisible(false);
                 if (itemEdit != null) itemEdit.setVisible(true);
@@ -840,7 +869,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
             switchToPreviewMode();
             return true;
         } else if (id == R.id.view_file_action_edit) {
-            if (isMarkdownFile) {
+            if (isPreviewable()) {
                 switchToEditMode();
             } else {
                 enable();
@@ -889,7 +918,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                                     @Override
                                     public void run() {
                                         Toast.makeText(MyApplication.getAppContext(), MyApplication.getAppContext().getText(R.string.toast_pulling), Toast.LENGTH_SHORT).show();
-                                        if (isMarkdownFile) {
+                                        if (isPreviewable()) {
                                             switchToPreviewMode();
                                         } else {
                                             isModify = false;
@@ -923,7 +952,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                     @Override
                     public void run() {
                         Toast.makeText(MyApplication.getAppContext(), MyApplication.getAppContext().getText(R.string.toast_pulling), Toast.LENGTH_SHORT).show();
-                        if (isMarkdownFile) {
+                        if (isPreviewable()) {
                             switchToPreviewMode();
                         } else {
                             isModify = false;

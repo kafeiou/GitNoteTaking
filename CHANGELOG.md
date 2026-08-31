@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.009] - 2026-08-31
+
+### 🚀 New Features & Enhancements
+
+#### 1. 進入筆記雙向智慧同步流水線 (Intelligent Bidirectional Git Sync on Entry)
+- **進入筆記自動保底與同步**：進入筆記時，若工作目錄有未存修改，自動執行保底 Commit（訊息帶時間戳），接著執行安全 Pull，若有本地新增提交則自動 Push 推送至遠端 GitHub。
+- **冷卻時間可自訂 (Anti-Spam Sync Cooldown)**：設定中新增「進筆記自動同步冷卻時間」（預設 60 秒，支援 0 秒、30 秒、60 秒、180 秒、300 秒），在子目錄間穿梭時不重複觸發網路請求，操作極速流暢。
+
+#### 2. 自訂 GitHub 筆記庫前綴過濾 (Customizable GitHub Note Repository Prefix Filter)
+- **靈活篩選規則**：設定選單新增「GitHub 筆記庫前綴過濾」項目（預設值為 `note`）。
+- **全部儲存庫支援**：將欄位清空留白即可列出該帳號下的所有 GitHub Repositories；亦可自訂為 `wiki`、`memo` 等前綴。
+
+#### 3. HTML 網頁視覺化預覽與雙向切換 (HTML Visual Preview & Dual-Mode Editing)
+- **內建網頁渲染引擎**：點選 `.html` / `.htm` 檔案時預設以 WebView 渲染排版網頁，支援 CSS 樣式、JavaScript 與同目錄圖片相對路徑讀取。
+- **「編輯 ⇄ 預覽」一鍵切換**：右上角提供編輯按鈕，隨時切換至原始碼修改標籤，儲存後即時重新載入渲染。
+
+#### 4. 設定頁面新增「App 版本、問題回饋 Email 與隱私權政策」 (App Version, Feedback & Privacy Policy)
+- **版本號一目了然**：設定頁面底部專屬「關於與支援」區塊直接顯示目前 App 版本號（`4.009`）。
+- **一鍵問題回饋**：點擊即可啟動 Email 應用程式發送信件至 `william@kafeiou.pw`，主旨自動帶入版本號。
+- **隱私權政策連結**：一鍵開啟官方隱私政策網頁（`https://kafeiou.pw/GitNotePrivacyPolicy.html`）。
+
+#### 5. 純文字檔案 GitHub 風格視覺化差異比對 (GitHub-Style Visual Git Diff Viewer)
+- **檔案清單長按比對**：在檔案總管（`FileExplorerActivity`）長按純文字檔案（`.txt`、`.md`、`.html`、`.java`、`.py`、`.sql` 等）時，彈出選單支援「查看差異 (Diff)」。
+- **雙軌智慧差異呈現**：優先比對未提交修改（`HEAD ⇄ 目前內容`）；若已存檔提交，則自動比對最新一次提交變更（`HEAD~1 ⇄ HEAD`）。
+- **GitHub 經典視覺對照表**：採用 100% 離線純原生 HTML5/CSS3 渲染，提供舊行號/新行號雙欄對齊、整行淡紅/淡綠底色與單詞級螢光筆高亮（Word-Level Intra-line Diff），並自動適配系統與 App 深淺色主題（Dark / Light Mode）。
+- **設定頁面排序精簡最佳化**：移除冗餘之「手機端根目錄」選項，將「note 前綴過濾」與「自動同步冷卻時間」調至更直覺便利的視覺位置。
+
 ## [4.008] - 2026-08-29
 
 ### 🚀 New Features & Enhancements

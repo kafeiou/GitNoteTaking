@@ -148,8 +148,12 @@
     <string name="github_auth_loading">Connecting to GitHub...</string>
     <string name="github_fetching_repos">Fetching note repositories...</string>
     <string name="github_select_repo_title">Select Note (note* only)</string>
+    <string name="github_select_repo_title_with_prefix">Select Note (%1$s* only)</string>
+    <string name="github_select_repo_title_all">Select Repository (All)</string>
     <string name="github_no_note_repos_title">No Note Repositories Found</string>
     <string name="github_no_note_repos_msg">No repositories starting with \"note\" were found in your GitHub account.\n\nPlease create a repository starting with \"note\" (e.g. note-work, NoteTaking) on GitHub first.</string>
+    <string name="github_no_note_repos_msg_with_prefix">No repositories starting with \"%1$s\" were found in your GitHub account.\n\nPlease create a repository starting with \"%1$s\" (e.g. %1$s-work, %1$sTaking) on GitHub, or change the prefix filter in Settings.</string>
+    <string name="github_no_note_repos_msg_all">No repositories were found in your GitHub account.\n\nPlease create a repository on GitHub first.</string>
     <string name="github_create_repo_online">Create on GitHub</string>
     <string name="github_auth_failed">GitHub authentication failed: </string>
     <string name="github_oauth_login_btn">One-Tap GitHub Authorization (Recommended)</string>
@@ -164,6 +168,10 @@
     <string name="github_private_badge"> [Private]</string>
     <string name="github_public_badge"> [Public]</string>
     <string name="github_downloaded_badge"> [Downloaded]</string>
+
+    <!-- GitHub Repo Prefix Preference -->
+    <string name="pref_github_repo_prefix_title">GitHub Note Repository Prefix</string>
+    <string name="pref_github_repo_prefix_summary">Default: note. Leave blank to fetch all repositories.</string>
 
     <!-- Purge History strings -->
     <string name="pref_purge_title">Purge History (Keep 1 Version) (Experimental)</string>
@@ -196,4 +204,25 @@
     <string name="toast_clean_temp_files_success">Successfully excluded %d temporary file(s) and synced.</string>
     <string name="toast_clean_temp_files_none">No temporary files found; .gitignore is up to date.</string>
     <string name="toast_clean_temp_files_failed">Failed to exclude temporary files: </string>
+
+    <!-- Auto-sync on Entry strings -->
+    <string name="pref_sync_interval_title">Auto-sync Cooldown on Entry</string>
+    <string name="pref_sync_interval_summary">Auto-sync when elapsed time exceeds interval (default: 60s)</string>
+
+    <!-- About & Support strings -->
+    <string name="pref_about_category_title">About &amp; Support</string>
+    <string name="pref_app_version_title">App Version</string>
+    <string name="pref_feedback_title">Feedback &amp; Support</string>
+    <string name="pref_privacy_policy_title">Privacy Policy</string>
+    <string name="about_dialog_title">About GIT Note Taking</string>
+    <string name="feedback_email_subject">[GIT Note Taking v%1$s] Feedback</string>
+
+    <!-- Git Diff strings -->
+    <string name="diff_action_title">View Diff</string>
+    <string name="diff_dialog_title">File Diff</string>
+    <string name="diff_no_changes">No changes found compared to HEAD.</string>
+    <string name="diff_status_uncommitted">Uncommitted Changes (HEAD vs Current)</string>
+    <string name="diff_status_latest_commit">Latest Commit Changes (HEAD~1 vs HEAD)</string>
+    <string name="diff_stats_summary">+%1$d added, -%2$d deleted</string>
+    <string name="diff_line_near">📍 Near line %1$d</string>
 </resources>

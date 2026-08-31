@@ -185,7 +185,7 @@ public class FileExplorerListAdapter extends BaseAdapter {
             {
                 return R.mipmap.xml;
             }
-            else if(m_filepath.substring(m_lastIndex).equalsIgnoreCase(".html"))
+            else if(m_filepath.substring(m_lastIndex).equalsIgnoreCase(".html") || m_filepath.substring(m_lastIndex).equalsIgnoreCase(".htm"))
             {
                 return R.mipmap.html;
             }

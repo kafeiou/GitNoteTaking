@@ -88,6 +88,25 @@ public class CustomPreferenceFragment extends PreferenceFragmentCompat {
             });
         }
 
+        ListPreference gitSyncInterval = (ListPreference) findPreference("GitSyncInterval");
+        if (gitSyncInterval != null) {
+            String currentInterval = sharedPreferences.getString("GitSyncInterval", "60");
+            gitSyncInterval.setValue(currentInterval);
+            int intervalIndex = gitSyncInterval.findIndexOfValue(currentInterval);
+            if (intervalIndex >= 0) {
+                gitSyncInterval.setSummary(gitSyncInterval.getEntries()[intervalIndex]);
+            }
+            gitSyncInterval.setOnPreferenceChangeListener((preference, o) -> {
+                String selectedInterval = (o != null) ? o.toString().trim() : "60";
+                sharedPreferences.edit().putString("GitSyncInterval", selectedInterval).apply();
+                int idx = ((ListPreference) preference).findIndexOfValue(selectedInterval);
+                if (idx >= 0) {
+                    gitSyncInterval.setSummary(((ListPreference) preference).getEntries()[idx]);
+                }
+                return true;
+            });
+        }
+
         EditTextPreference GitAuthorName = (EditTextPreference) findPreference("GitAuthorName");
         if (GitAuthorName != null) {
             GitAuthorName.setSummary(sharedPreferences.getString("GitAuthorName", ""));
@@ -139,17 +158,6 @@ public class CustomPreferenceFragment extends PreferenceFragmentCompat {
             });
         }
 
-        EditTextPreference GitLocalDirName = (EditTextPreference) findPreference("GitLocalDirName");
-        if (GitLocalDirName != null) {
-            GitLocalDirName.setSummary(sharedPreferences.getString("GitLocalDirName", "gitnotetaking"));
-            GitLocalDirName.setOnPreferenceChangeListener((preference, o) -> {
-                String yourString = (o != null) ? o.toString().trim() : "";
-                ((EditTextPreference) preference).setText(yourString);
-                GitLocalDirName.setSummary(yourString);
-                return false;
-            });
-        }
-
         EditTextPreference GitRemoteName = (EditTextPreference) findPreference("GitRemoteName");
         if (GitRemoteName != null) {
             GitRemoteName.setSummary(sharedPreferences.getString("GitRemoteName", "master"));
@@ -157,6 +165,26 @@ public class CustomPreferenceFragment extends PreferenceFragmentCompat {
                 String yourString = (o != null) ? o.toString().trim() : "";
                 ((EditTextPreference) preference).setText(yourString);
                 GitRemoteName.setSummary(yourString);
+                return false;
+            });
+        }
+
+        EditTextPreference gitHubRepoPrefix = (EditTextPreference) findPreference("GitHubRepoPrefix");
+        if (gitHubRepoPrefix != null) {
+            String currentPrefix = sharedPreferences.getString("GitHubRepoPrefix", "note");
+            if (currentPrefix.isEmpty()) {
+                gitHubRepoPrefix.setSummary(getString(R.string.pref_github_repo_prefix_summary));
+            } else {
+                gitHubRepoPrefix.setSummary(currentPrefix);
+            }
+            gitHubRepoPrefix.setOnPreferenceChangeListener((preference, o) -> {
+                String yourString = (o != null) ? o.toString().trim() : "";
+                ((EditTextPreference) preference).setText(yourString);
+                if (yourString.isEmpty()) {
+                    gitHubRepoPrefix.setSummary(getString(R.string.pref_github_repo_prefix_summary));
+                } else {
+                    gitHubRepoPrefix.setSummary(yourString);
+                }
                 return false;
             });
         }
@@ -183,6 +211,54 @@ public class CustomPreferenceFragment extends PreferenceFragmentCompat {
                         })
                         .setNegativeButton(R.string.dialog_cancel, null)
                         .show();
+                return true;
+            });
+        }
+
+        Preference appVersion = findPreference("AppVersion");
+        if (appVersion != null) {
+            String versionName = BuildConfig.VERSION_NAME;
+            appVersion.setSummary(versionName);
+            appVersion.setOnPreferenceClickListener(preference -> {
+                if (getContext() == null || getActivity() == null) return true;
+                new androidx.appcompat.app.AlertDialog.Builder(requireActivity())
+                        .setTitle(R.string.about_dialog_title)
+                        .setMessage("GIT Note Taking\n" +
+                                "Version: " + BuildConfig.VERSION_NAME + "\n\n" +
+                                "Feedback: william@kafeiou.pw\n" +
+                                "Privacy Policy: https://kafeiou.pw/GitNotePrivacyPolicy.html")
+                        .setPositiveButton(R.string.dialog_ok, null)
+                        .show();
+                return true;
+            });
+        }
+
+        Preference feedbackEmail = findPreference("FeedbackEmail");
+        if (feedbackEmail != null) {
+            feedbackEmail.setOnPreferenceClickListener(preference -> {
+                if (getContext() == null || getActivity() == null) return true;
+                try {
+                    android.content.Intent emailIntent = new android.content.Intent(android.content.Intent.ACTION_SENDTO);
+                    emailIntent.setData(android.net.Uri.parse("mailto:william@kafeiou.pw"));
+                    emailIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, getString(R.string.feedback_email_subject, BuildConfig.VERSION_NAME));
+                    startActivity(android.content.Intent.createChooser(emailIntent, getString(R.string.pref_feedback_title)));
+                } catch (Exception e) {
+                    android.widget.Toast.makeText(getContext(), "william@kafeiou.pw", android.widget.Toast.LENGTH_LONG).show();
+                }
+                return true;
+            });
+        }
+
+        Preference privacyPolicy = findPreference("PrivacyPolicy");
+        if (privacyPolicy != null) {
+            privacyPolicy.setOnPreferenceClickListener(preference -> {
+                if (getContext() == null || getActivity() == null) return true;
+                try {
+                    android.content.Intent browserIntent = new android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://kafeiou.pw/GitNotePrivacyPolicy.html"));
+                    startActivity(browserIntent);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 return true;
             });
         }

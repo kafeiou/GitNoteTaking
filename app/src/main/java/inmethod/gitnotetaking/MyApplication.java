@@ -69,16 +69,17 @@ public class MyApplication extends Application {
     }
 
     public static boolean isText(String sFileName){
-        if (sFileName.toLowerCase().lastIndexOf(".txt") != -1 ||
-                sFileName.toLowerCase().lastIndexOf(".xml") != -1 ||
-                sFileName.toLowerCase().lastIndexOf(".kt") != -1 ||
-                sFileName.toLowerCase().lastIndexOf(".java") != -1 ||
-                sFileName.toLowerCase().lastIndexOf(".html") != -1 ||
-                sFileName.toLowerCase().lastIndexOf(".py") != -1 ||
-                sFileName.toLowerCase().lastIndexOf(".sql") != -1 ||
-                sFileName.toLowerCase().lastIndexOf(".md") != -1
-        ) return true;
-        else return false;
+        String lower = sFileName.toLowerCase();
+        return lower.endsWith(".txt") ||
+                lower.endsWith(".xml") ||
+                lower.endsWith(".kt") ||
+                lower.endsWith(".java") ||
+                lower.endsWith(".html") ||
+                lower.endsWith(".htm") ||
+                lower.endsWith(".py") ||
+                lower.endsWith(".sql") ||
+                lower.endsWith(".md") ||
+                lower.endsWith(".markdown");
     }
 
     public static boolean isLocal(String sRemoteUrl ){

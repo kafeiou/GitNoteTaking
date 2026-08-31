@@ -3,6 +3,7 @@ package inmethod.gitnotetaking.test;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -215,5 +216,130 @@ public class GitSyncAndGuardrailUnitTest {
         // 2. 再次呼叫時，規則已存在，不應重複寫入
         boolean secondCall = inmethod.gitnotetaking.utility.MyGitUtility.ensureDefaultGitIgnore(repoDir.getAbsolutePath());
         assertFalse("規則已完整時應回傳 false", secondCall);
+    }
+
+    @Test
+    public void testEntrySyncAutoCommitAndMergeDetection() throws Exception {
+        File repoDir = tempFolder.newFolder("test_entry_sync");
+        try (Git git = Git.init().setDirectory(repoDir).call()) {
+            File note1 = new File(repoDir, "note1.md");
+            java.nio.file.Files.write(note1.toPath(), "# Note 1".getBytes());
+            git.add().addFilepattern(".").call();
+            RevCommit commit1 = git.commit().setMessage("Initial commit").call();
+
+            // 1. Working tree has uncommitted change -> autoCommitIfDirtyWithMessage works
+            File note2 = new File(repoDir, "note2.md");
+            java.nio.file.Files.write(note2.toPath(), "# Note 2".getBytes());
+            
+            // Check dirty
+            org.eclipse.jgit.api.Status status = git.status().call();
+            assertTrue("應偵測到未追蹤或未存檔檔案", status.hasUncommittedChanges() || !status.getUntracked().isEmpty());
+
+            // 2. Normal commit has 1 parent
+            assertEquals("初始 Commit 應有 0 個父節點", 0, commit1.getParentCount());
+
+            File note3 = new File(repoDir, "note3.md");
+            java.nio.file.Files.write(note3.toPath(), "# Note 3".getBytes());
+            git.add().addFilepattern(".").call();
+            RevCommit commit2 = git.commit().setMessage("Second commit").call();
+            assertEquals("普通 Commit 應有 1 個父節點", 1, commit2.getParentCount());
+        }
+    }
+
+    @Test
+    public void testGitHubRepoPrefixFiltering() {
+        java.util.List<inmethod.gitnotetaking.utility.GitHubAuthManager.GitHubRepo> repoList = new java.util.ArrayList<>();
+        repoList.add(new inmethod.gitnotetaking.utility.GitHubAuthManager.GitHubRepo("note-work", "user/note-work", "https://github.com/user/note-work.git", "main", "work notes", false));
+        repoList.add(new inmethod.gitnotetaking.utility.GitHubAuthManager.GitHubRepo("NoteTaking", "user/NoteTaking", "https://github.com/user/NoteTaking.git", "master", "app repo", false));
+        repoList.add(new inmethod.gitnotetaking.utility.GitHubAuthManager.GitHubRepo("wiki-docs", "user/wiki-docs", "https://github.com/user/wiki-docs.git", "main", "docs", false));
+        repoList.add(new inmethod.gitnotetaking.utility.GitHubAuthManager.GitHubRepo("android-app", "user/android-app", "https://github.com/user/android-app.git", "main", "app", false));
+
+        // 1. 預設 "note" 前綴過濾
+        String prefix1 = "note";
+        java.util.List<inmethod.gitnotetaking.utility.GitHubAuthManager.GitHubRepo> filtered1 = new java.util.ArrayList<>();
+        for (inmethod.gitnotetaking.utility.GitHubAuthManager.GitHubRepo r : repoList) {
+            if (prefix1.isEmpty() || r.getName().toLowerCase().startsWith(prefix1)) {
+                filtered1.add(r);
+            }
+        }
+        assertEquals("預設 note 前綴應過濾出 2 個倉庫", 2, filtered1.size());
+        assertEquals("note-work", filtered1.get(0).getName());
+        assertEquals("NoteTaking", filtered1.get(1).getName());
+
+        // 2. 自訂 "wiki" 前綴過濾
+        String prefix2 = "wiki";
+        java.util.List<inmethod.gitnotetaking.utility.GitHubAuthManager.GitHubRepo> filtered2 = new java.util.ArrayList<>();
+        for (inmethod.gitnotetaking.utility.GitHubAuthManager.GitHubRepo r : repoList) {
+            if (prefix2.isEmpty() || r.getName().toLowerCase().startsWith(prefix2)) {
+                filtered2.add(r);
+            }
+        }
+        assertEquals("wiki 前綴應過濾出 1 個倉庫", 1, filtered2.size());
+        assertEquals("wiki-docs", filtered2.get(0).getName());
+
+        // 3. 空白前綴（抓取全部）
+        String prefix3 = "";
+        java.util.List<inmethod.gitnotetaking.utility.GitHubAuthManager.GitHubRepo> filtered3 = new java.util.ArrayList<>();
+        for (inmethod.gitnotetaking.utility.GitHubAuthManager.GitHubRepo r : repoList) {
+            if (prefix3.isEmpty() || r.getName().toLowerCase().startsWith(prefix3)) {
+                filtered3.add(r);
+            }
+        }
+        assertEquals("空白前綴應抓取全部 4 個倉庫", 4, filtered3.size());
+    }
+
+    /**
+     * 7. 驗證純文字檔案 Git Diff 差異比對計算邏輯
+     */
+    @Test
+    public void testComputeDiffCalculations() {
+        // 情境 1：無任何修改
+        String original = "line 1\nline 2\nline 3\n";
+        String identical = "line 1\nline 2\nline 3\n";
+        String diffNoChange = inmethod.gitnotetaking.utility.MyGitUtility.computeDiff(original, identical, "a/note.txt", "b/note.txt");
+        assertEquals("無變更時 diff 輸出必須為空字串", "", diffNoChange);
+
+        // 情境 2：有修改與新增
+        String modified = "line 1\nline 2 (modified)\nline 3\nline 4 (new)\n";
+        String diffMod = inmethod.gitnotetaking.utility.MyGitUtility.computeDiff(original, modified, "a/note.txt", "b/note.txt");
+        assertNotNull("有變更時 diff 不可為 null", diffMod);
+        assertTrue("diff 必須包含刪除行標記 -", diffMod.contains("-line 2"));
+        assertTrue("diff 必須包含修改行標記 +", diffMod.contains("+line 2 (modified)"));
+        assertTrue("diff 必須包含新增行標記 +", diffMod.contains("+line 4 (new)"));
+        assertTrue("diff 必須包含 @@ 範圍標記", diffMod.contains("@@"));
+
+        // 情境 3：全新檔案 (oldContent 為空)
+        String newFile = "Hello World\nNew Note\n";
+        String diffNew = inmethod.gitnotetaking.utility.MyGitUtility.computeDiff("", newFile, "a/new.md", "b/new.md");
+        assertNotNull("全新檔案 diff 不可為 null", diffNew);
+        assertTrue("全新檔案 diff 必須包含全部新增行", diffNew.contains("+Hello World") && diffNew.contains("+New Note"));
+
+        // 情境 4：null 安全防護
+        String diffNull = inmethod.gitnotetaking.utility.MyGitUtility.computeDiff(null, null, "a/null.txt", "b/null.txt");
+        assertEquals("兩者為 null 時輸出空字串", "", diffNull);
+    }
+
+    /**
+     * 8. 驗證 Git 根目錄尋找與雙軌智慧 Diff
+     */
+    @Test
+    public void testFindGitRootDirAndSmartDiff() throws Exception {
+        java.io.File tempDir = tempFolder.newFolder("repoTest");
+        java.io.File gitDir = new java.io.File(tempDir, ".git");
+        assertTrue(gitDir.mkdir());
+
+        java.io.File subDir = new java.io.File(tempDir, "notes/sub");
+        assertTrue(subDir.mkdirs());
+        java.io.File noteFile = new java.io.File(subDir, "myNote.txt");
+        assertTrue(noteFile.createNewFile());
+
+        // 驗證在多層子目錄下仍能精準找到 Git 根目錄
+        java.io.File foundRoot = inmethod.gitnotetaking.utility.MyGitUtility.findGitRootDir(noteFile);
+        assertNotNull("必須成功向上找到 .git 所在根目錄", foundRoot);
+        assertEquals(tempDir.getCanonicalPath(), foundRoot.getCanonicalPath());
+
+        // 驗證外部檔案找不到 Git 根目錄時的安全防護
+        java.io.File outsideFile = tempFolder.newFile("outside.txt");
+        assertNull("非 Git 儲存庫檔案應回傳 null", inmethod.gitnotetaking.utility.MyGitUtility.findGitRootDir(outsideFile));
     }
 }

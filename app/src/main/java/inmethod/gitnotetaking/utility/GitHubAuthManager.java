@@ -5,12 +5,16 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
 import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.preference.PreferenceManager;
+
+import inmethod.gitnotetaking.MyApplication;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -297,9 +301,11 @@ public class GitHubAuthManager {
             try {
                 String username = fetchUsername(accessToken);
                 List<GitHubRepo> allRepos = fetchUserRepos(accessToken);
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MyApplication.getAppContext());
+                String prefix = sp.getString("GitHubRepoPrefix", "note").trim().toLowerCase();
                 List<GitHubRepo> noteRepos = new ArrayList<>();
                 for (GitHubRepo repo : allRepos) {
-                    if (repo.getName().toLowerCase().startsWith("note")) {
+                    if (prefix.isEmpty() || repo.getName().toLowerCase().startsWith(prefix)) {
                         noteRepos.add(repo);
                     }
                 }
