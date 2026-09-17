@@ -23,7 +23,7 @@
 
 *(「リモートノートを取得」から自作 Git サーバーの URL / 認証情報を入力して接続することも可能です)*
 
-## 🛠️ オープンソース＆技術情報
-• GitHub リポジトリ：https://github.com/WilliamFromTW/GitNoteTaking
+## 🛠️ オープンソースとアーキテクチャ (Open Source)
+• GitHub リポジトリ：https://github.com/kafeiou/GitNoteTaking
 • 内部エンジン：Eclipse JGit
 • 必要環境：Android 13 (API 33) 以上

@@ -190,7 +190,7 @@ public class MarkdownPreviewAndLayoutUnitTest {
      */
     @Test
     public void testUrlRoutingClassification() {
-        String webUrl1 = "https://github.com/WilliamFromTW";
+        String webUrl1 = "https://github.com/kafeiou/GitNoteTaking";
         String webUrl2 = "http://example.com/api";
         String wikilinkUrl = "wikilink:%E6%AF%8F%E6%97%A5%E7%AD%86%E8%A8%98";
         String relativeMdUrl = "subfolder/another_note.md";

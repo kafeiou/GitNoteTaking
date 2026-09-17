@@ -23,7 +23,7 @@
 
 *(亦可在“下载远端笔记”中输入任意自建 Git 服务器之 URL / 账号密码进行连接)*
 
-## 开源项目与技术架构 (Open Source)
-• GitHub 仓库：https://github.com/WilliamFromTW/GitNoteTaking
+## 🛠️ 开源项目与技术架构 (Open Source)
+• GitHub 仓库：https://github.com/kafeiou/GitNoteTaking
 • 底层引擎：Eclipse JGit
 • 系统要求：Android 13 (API 33) 或以上版本

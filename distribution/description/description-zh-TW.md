@@ -24,6 +24,6 @@
 *(亦可在「下載遠端筆記」中輸入任意自建 Git 伺服器之 URL / 帳密進行連線)*
 
 ## 🛠️ 開源專案與技術架構 (Open Source)
-• GitHub 倉庫：https://github.com/WilliamFromTW/GitNoteTaking
+• GitHub 倉庫：https://github.com/kafeiou/GitNoteTaking
 • 底層引擎：Eclipse JGit
 • 系統需求：Android 13 (API 33) 或以上版本

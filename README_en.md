@@ -54,7 +54,7 @@ Please help me release a new version [version number, e.g. 4.002]:
 ```
 
 ## 🌐 Open Source
-- GitHub Repository: https://github.com/WilliamFromTW/GitNoteTaking
+- GitHub Repository: https://github.com/kafeiou/GitNoteTaking
 
 ## 📚 3rd-Party Libraries & Asset Licensing
 - [Eclipse JGit](https://www.eclipse.org/jgit) (version 7.7.1)

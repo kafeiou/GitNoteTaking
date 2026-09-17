@@ -24,6 +24,6 @@
 *(You can also connect to any self-hosted Git server by entering the URL and credentials in "Download Remote Note".)*
 
 ## 🛠️ Open Source & Architecture
-• GitHub Repository: https://github.com/WilliamFromTW/GitNoteTaking
+• GitHub Repository: https://github.com/kafeiou/GitNoteTaking
 • Core Engine: Eclipse JGit
 • Requirements: Android 13 (API 33) or higher

@@ -54,7 +54,7 @@ GitHub クラウドサービスを通じて日々のドキュメントを同期�
 ```
 
 ## 🌐 オープンソース情報
-- GitHub リポジトリ：https://github.com/WilliamFromTW/GitNoteTaking
+- GitHub リポジトリ：https://github.com/kafeiou/GitNoteTaking
 
 ## 📚 サードパーティライブラリ＆アセットライセンス
 - [Eclipse JGit](https://www.eclipse.org/jgit) (version 7.7.1)

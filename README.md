@@ -54,7 +54,7 @@
 ```
 
 ## 🌐 開源資訊 Open Source
-- GitHub 專案：https://github.com/WilliamFromTW/GitNoteTaking
+- GitHub 專案：https://github.com/kafeiou/GitNoteTaking
 
 ## 📚 第三方函式庫與資源授權
 - [Eclipse JGit](https://www.eclipse.org/jgit) (version 7.7.1)

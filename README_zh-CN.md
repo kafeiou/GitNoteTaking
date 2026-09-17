@@ -54,7 +54,7 @@
 ```
 
 ## 🌐 开源信息 Open Source
-- GitHub 项目：https://github.com/WilliamFromTW/GitNoteTaking
+- GitHub 项目：https://github.com/kafeiou/GitNoteTaking
 
 ## 📚 第三方库与资源授权
 - [Eclipse JGit](https://www.eclipse.org/jgit) (version 7.7.1)
