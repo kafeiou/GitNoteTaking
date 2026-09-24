@@ -237,4 +237,13 @@
     <string name="attach_sheet_no_app">このファイルを開くことができるアプリが見つかりません</string>
     <string name="attach_sheet_download_success">ダウンロードフォルダに保存しました：%1$s</string>
     <string name="attach_sheet_file_not_found">添付ファイルが存在しません</string>
+
+    <!-- GitHub Auth Renewal strings -->
+    <string name="github_auth_expired_title">GitHub 認証の有効期限切れ</string>
+    <string name="github_auth_expired_msg">「%1$s」の同期に失敗しました (401 Unauthorized)。GitHub の認証が期限切れまたは取り消された可能性があります。\n\n今すぐ再認証しますか？認証完了後に自動的に同期が再開されます。</string>
+    <string name="github_auth_relogin_and_sync">再認証して同期</string>
+    <string name="github_reauth_success">GitHub 認証が正常に更新されました！</string>
+    <string name="github_reauth_button">GitHub Webで再ログイン</string>
+    <string name="github_update_auth_title">リポジトリ認証の更新</string>
+    <string name="github_update_auth_confirm_msg">ノート「%1$s」はすでに端末に存在します。現在の認証でTokenを更新しますか？</string>
 </resources>

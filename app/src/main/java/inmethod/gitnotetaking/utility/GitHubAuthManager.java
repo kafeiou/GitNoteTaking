@@ -102,11 +102,55 @@ public class GitHubAuthManager {
         return instance;
     }
 
+    public static final String STATE_CREATE_NEW = "create_new";
+    public static final String STATE_PREFIX_REAUTH = "reauth_";
+
+    public interface TokenCallback {
+        void onSuccess(String accessToken);
+        void onError(String errorMessage);
+    }
+
+    public static String buildReauthState(int repoId) {
+        return STATE_PREFIX_REAUTH + repoId;
+    }
+
+    public static boolean isReauthState(String state) {
+        if (state == null || !state.startsWith(STATE_PREFIX_REAUTH)) {
+            return false;
+        }
+        String idPart = state.substring(STATE_PREFIX_REAUTH.length()).trim();
+        try {
+            Integer.parseInt(idPart);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    public static int parseRepoIdFromState(String state) {
+        if (isReauthState(state)) {
+            try {
+                return Integer.parseInt(state.substring(STATE_PREFIX_REAUTH.length()).trim());
+            } catch (NumberFormatException e) {
+                Log.e(TAG, "Failed to parse repo id from state: " + state, e);
+            }
+        }
+        return -1;
+    }
+
     public void startOAuthWebFlow(Activity activity) {
+        startOAuthWebFlow(activity, STATE_CREATE_NEW);
+    }
+
+    public void startOAuthWebFlow(Activity activity, String state) {
+        if (state == null || state.trim().isEmpty()) {
+            state = STATE_CREATE_NEW;
+        }
         String authUrl = "https://github.com/login/oauth/authorize" +
                 "?client_id=" + GITHUB_CLIENT_ID +
                 "&scope=" + Uri.encode("repo read:user") +
-                "&redirect_uri=" + Uri.encode(GITHUB_REDIRECT_URI);
+                "&redirect_uri=" + Uri.encode(GITHUB_REDIRECT_URI) +
+                "&state=" + Uri.encode(state);
         try {
             CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder().build();
             customTabsIntent.launchUrl(activity, Uri.parse(authUrl));
@@ -114,6 +158,48 @@ public class GitHubAuthManager {
             Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(authUrl));
             activity.startActivity(browserIntent);
         }
+    }
+
+    public void exchangeCodeForAccessTokenOnly(String code, TokenCallback callback) {
+        new Thread(() -> {
+            try {
+                URL url = new URL("https://github.com/login/oauth/access_token");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Accept", "application/json");
+                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                conn.setDoOutput(true);
+                conn.setConnectTimeout(15000);
+                conn.setReadTimeout(15000);
+
+                String postData = "client_id=" + URLEncoder.encode(GITHUB_CLIENT_ID, "UTF-8") +
+                        "&client_secret=" + URLEncoder.encode(GITHUB_CLIENT_SECRET, "UTF-8") +
+                        "&code=" + URLEncoder.encode(code, "UTF-8") +
+                        "&redirect_uri=" + URLEncoder.encode(GITHUB_REDIRECT_URI, "UTF-8");
+
+                try (OutputStream os = conn.getOutputStream()) {
+                    os.write(postData.getBytes(StandardCharsets.UTF_8));
+                    os.flush();
+                }
+
+                int responseCode = conn.getResponseCode();
+                InputStream is = (responseCode >= 200 && responseCode < 300) ? conn.getInputStream() : conn.getErrorStream();
+                String response = readStream(is);
+                conn.disconnect();
+
+                JSONObject json = new JSONObject(response);
+                if (json.has("access_token")) {
+                    String accessToken = json.getString("access_token");
+                    mainHandler.post(() -> callback.onSuccess(accessToken));
+                } else {
+                    String error = json.optString("error_description", json.optString("error", "Failed to obtain access token"));
+                    mainHandler.post(() -> callback.onError(error));
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to exchange OAuth code", e);
+                mainHandler.post(() -> callback.onError(e.getMessage()));
+            }
+        }).start();
     }
 
     public void exchangeCodeForToken(String code, GitHubAuthCallback callback) {

@@ -21,6 +21,7 @@ import java.util.List;
 
 import inmethod.gitnotetaking.db.RemoteGit;
 import inmethod.gitnotetaking.db.RemoteGitDAO;
+import inmethod.gitnotetaking.utility.GitHubAuthManager;
 import inmethod.gitnotetaking.utility.MyGitUtility;
 
 public class ModifyRemoteGitActivity extends AppCompatActivity {
@@ -33,6 +34,7 @@ public class ModifyRemoteGitActivity extends AppCompatActivity {
     private EditText editAuthorName = null;
     private EditText editAuthorEmail = null;
     private Spinner spinnerRemoteBranch = null;
+    private Button btnGitHubReauth = null;
     private Activity activity;
     private ArrayAdapter<String> adapter = null;
     @Override
@@ -51,11 +53,26 @@ public class ModifyRemoteGitActivity extends AppCompatActivity {
         editAuthorName = (EditText) findViewById(R.id.editAuthorName);
         editAuthorEmail = (EditText) findViewById(R.id.editAuthorEmail);
         spinnerRemoteBranch = (Spinner) findViewById(R.id.spinnerBranch);
+        btnGitHubReauth = (Button) findViewById(R.id.btnGitHubReauth);
         String[] items = new String[]{"master"};
         adapter = new ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, items);
         spinnerRemoteBranch.setAdapter(adapter);
 
-
+        if (sRemoteURL != null && sRemoteURL.contains("github.com")) {
+            btnGitHubReauth.setVisibility(View.VISIBLE);
+            btnGitHubReauth.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    RemoteGitDAO aRemoteGitDAO = new RemoteGitDAO(activity);
+                    RemoteGit aValue = aRemoteGitDAO.getByURL(sRemoteURL);
+                    if (aValue != null) {
+                        GitHubAuthManager.getInstance().startOAuthWebFlow(activity, GitHubAuthManager.buildReauthState((int) aValue.getId()));
+                        finish();
+                    }
+                    aRemoteGitDAO.close();
+                }
+            });
+        }
 
         Button buttonOK = (Button) findViewById(R.id.buttonOK);
 

@@ -94,6 +94,7 @@ public class MyGitUtility {
     public static final int GIT_STATUS_PUSH_FAIL = -1;
     public static final int GIT_STATUS_CLONING = -3;
     public static final int GIT_STATUS_PULLING = -4;
+    public static final int GIT_STATUS_AUTH_FAILED = -5;
     public static final int PULL_RESULT_FAILED = 0;
     public static final int PULL_RESULT_UP_TO_DATE = 1;
     public static final int PULL_RESULT_UPDATED = 2;
@@ -153,6 +154,48 @@ public class MyGitUtility {
         return bGitLock;
     }
 
+    public static boolean checkGitHubAuthFailure(String sRemoteUrl, String uid, String pwd) {
+        if (pwd == null || pwd.trim().isEmpty()) {
+            return true;
+        }
+        try {
+            URL url = new URL("https://api.github.com/user");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Authorization", "Bearer " + pwd.trim());
+            conn.setRequestProperty("Accept", "application/vnd.github+json");
+            conn.setRequestProperty("User-Agent", "InMethodGitNoteTaking-Android");
+            conn.setConnectTimeout(6000);
+            conn.setReadTimeout(6000);
+            int code = conn.getResponseCode();
+            conn.disconnect();
+            if (code == 401 || code == 403) {
+                return true;
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "checkGitHubAuthFailure API check: " + e.getMessage());
+        }
+
+        try {
+            org.eclipse.jgit.api.Git.lsRemoteRepository()
+                    .setRemote(sRemoteUrl)
+                    .setCredentialsProvider(new org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider(uid, pwd))
+                    .call();
+            return false;
+        } catch (org.eclipse.jgit.api.errors.TransportException te) {
+            String msg = te.getMessage() != null ? te.getMessage().toLowerCase() : "";
+            if (msg.contains("not authorized") || msg.contains("401") || msg.contains("authentication failed")) {
+                return true;
+            }
+        } catch (Exception e) {
+            String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+            if (msg.contains("not authorized") || msg.contains("401")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean push(Context context, String sRemoteUrl) {
         RemoteGitDAO aRemoteGitDAO = new RemoteGitDAO(context);
         RemoteGit aRemoteGit = aRemoteGitDAO.getByURL(sRemoteUrl);
@@ -174,6 +217,12 @@ public class MyGitUtility {
             bIsRemoteRepositoryExist = aGitUtil.checkRemoteRepository(aRemoteGit.getUid(), aRemoteGit.getPwd());
             if (!bIsRemoteRepositoryExist) {
                 Log.e(TAG, "check remote url failed");
+                if (sRemoteUrl.contains("github.com") && checkGitHubAuthFailure(sRemoteUrl, aRemoteGit.getUid(), aRemoteGit.getPwd())) {
+                    Log.e(TAG, "GitHub auth failed for " + sRemoteUrl);
+                    aRemoteGit.setStatus(MyGitUtility.GIT_STATUS_AUTH_FAILED);
+                } else {
+                    aRemoteGit.setStatus(MyGitUtility.GIT_STATUS_PUSH_FAIL);
+                }
                 aRemoteGitDAO.update(aRemoteGit);
                 setGitLock(false);
                 if (aGitUtil != null) aGitUtil.close();
@@ -193,7 +242,11 @@ public class MyGitUtility {
                     return true;
                 } else {
                     if (MyApplication.isNetworkConnected()) {
-                        aRemoteGit.setStatus(MyGitUtility.GIT_STATUS_PUSH_FAIL);
+                        if (sRemoteUrl.contains("github.com") && checkGitHubAuthFailure(sRemoteUrl, aRemoteGit.getUid(), aRemoteGit.getPwd())) {
+                            aRemoteGit.setStatus(MyGitUtility.GIT_STATUS_AUTH_FAILED);
+                        } else {
+                            aRemoteGit.setStatus(MyGitUtility.GIT_STATUS_PUSH_FAIL);
+                        }
                     }
                     aRemoteGitDAO.update(aRemoteGit);
                     Log.d(TAG, "push failed!");
@@ -504,6 +557,9 @@ public class MyGitUtility {
             aGitUtil.setContentMergeStrategyOURS();
             bIsRemoteRepositoryExist = aGitUtil.checkRemoteRepository(sUserName, sUserPassword);
             if (!bIsRemoteRepositoryExist) {
+                if (sRemoteUrl.contains("github.com") && checkGitHubAuthFailure(sRemoteUrl, sUserName, sUserPassword)) {
+                    aRemoteGit.setStatus(GIT_STATUS_AUTH_FAILED);
+                }
                 aRemoteGitDAO.update(aRemoteGit);
                 Log.e(TAG, "check remote url failed");
                 setGitLock(false);

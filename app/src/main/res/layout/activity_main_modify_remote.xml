@@ -97,6 +97,18 @@
             app:layout_constraintStart_toEndOf="@+id/textPassword"
             app:layout_constraintTop_toBottomOf="@+id/editUserAccount" />
 
+        <Button
+            android:id="@+id/btnGitHubReauth"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:text="@string/github_reauth_button"
+            android:visibility="gone"
+            tools:visibility="visible"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/editUserPassword" />
+
         <EditText
             android:id="@+id/editLocalGitName"
             android:layout_width="140dp"
@@ -105,7 +117,8 @@
             android:layout_marginTop="8dp"
             android:textSize="14dp"
             app:layout_constraintStart_toEndOf="@+id/textNickName"
-            app:layout_constraintTop_toBottomOf="@+id/editUserPassword" />
+            app:layout_constraintTop_toBottomOf="@+id/btnGitHubReauth"
+            app:layout_goneMarginTop="8dp" />
 
         <TextView
             android:id="@+id/textTitle"
@@ -142,7 +155,8 @@
             android:gravity="center|left"
             android:text="@string/tv_git_nick_name"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editUserPassword" />
+            app:layout_constraintTop_toBottomOf="@+id/btnGitHubReauth"
+            app:layout_goneMarginTop="8dp" />
 
         <TextView
             android:id="@+id/textPassword"

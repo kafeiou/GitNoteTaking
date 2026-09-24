@@ -237,4 +237,13 @@
     <string name="attach_sheet_no_app">No application found to open this file.</string>
     <string name="attach_sheet_download_success">Saved to Downloads: %1$s</string>
     <string name="attach_sheet_file_not_found">Attachment file does not exist.</string>
+
+    <!-- GitHub Auth Renewal strings -->
+    <string name="github_auth_expired_title">GitHub Authorization Expired</string>
+    <string name="github_auth_expired_msg">Sync failed for \"%1$s\" (401 Unauthorized). The GitHub authorization may have expired or been revoked.\n\nWould you like to re-authorize now? Sync will automatically resume after authorization.</string>
+    <string name="github_auth_relogin_and_sync">Re-authorize &amp; Sync</string>
+    <string name="github_reauth_success">GitHub authorization updated successfully!</string>
+    <string name="github_reauth_button">Re-login with GitHub Web</string>
+    <string name="github_update_auth_title">Update Repository Authorization</string>
+    <string name="github_update_auth_confirm_msg">Note \"%1$s\" already exists on this device. Update its token with the current authorization?</string>
 </resources>

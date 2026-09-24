@@ -80,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
     AlertDialog.Builder waitBuilder = null;
     AlertDialog waitDialog;
     private String currentLanguageSetting = null;
+    private static String sPendingPushRemoteUrl = null;
 
 
     public void showError(Exception ex)
@@ -339,7 +340,14 @@ public class MainActivity extends AppCompatActivity {
                                                     if (success) {
                                                         Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pushing_success), Toast.LENGTH_SHORT).show();
                                                     } else {
-                                                        Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pushing_failed), Toast.LENGTH_SHORT).show();
+                                                        RemoteGitDAO dao = new RemoteGitDAO(activity);
+                                                        RemoteGit r = dao.getByURL(sRemoteUrl);
+                                                        dao.close();
+                                                        if (r != null && r.getStatus() == MyGitUtility.GIT_STATUS_AUTH_FAILED) {
+                                                            showAuthFailedDialog(r);
+                                                        } else {
+                                                            Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pushing_failed), Toast.LENGTH_SHORT).show();
+                                                        }
                                                     }
                                                 }
                                             });
@@ -377,7 +385,14 @@ public class MainActivity extends AppCompatActivity {
                                                     if (success) {
                                                         Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pulling_success), Toast.LENGTH_SHORT).show();
                                                     } else {
-                                                        Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pulling_failed), Toast.LENGTH_SHORT).show();
+                                                        RemoteGitDAO dao = new RemoteGitDAO(activity);
+                                                        RemoteGit r = dao.getByURL(sRemoteUrl);
+                                                        dao.close();
+                                                        if (r != null && r.getStatus() == MyGitUtility.GIT_STATUS_AUTH_FAILED) {
+                                                            showAuthFailedDialog(r);
+                                                        } else {
+                                                            Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pulling_failed), Toast.LENGTH_SHORT).show();
+                                                        }
                                                     }
                                                 }
                                             });
@@ -529,7 +544,14 @@ public class MainActivity extends AppCompatActivity {
                                                     if (finalPushSuccess) {
                                                         Toast.makeText(activity, getString(R.string.toast_auto_commit_push_success), Toast.LENGTH_LONG).show();
                                                     } else {
-                                                        Toast.makeText(activity, getString(R.string.toast_auto_commit_success) + " (" + getString(R.string.pushing_failed) + ")", Toast.LENGTH_LONG).show();
+                                                        RemoteGitDAO dao = new RemoteGitDAO(activity);
+                                                        RemoteGit r = dao.getByURL(sRemoteUrl);
+                                                        dao.close();
+                                                        if (r != null && r.getStatus() == MyGitUtility.GIT_STATUS_AUTH_FAILED) {
+                                                            showAuthFailedDialog(r);
+                                                        } else {
+                                                            Toast.makeText(activity, getString(R.string.toast_auto_commit_success) + " (" + getString(R.string.pushing_failed) + ")", Toast.LENGTH_LONG).show();
+                                                        }
                                                     }
                                                 }
                                             });
@@ -668,26 +690,119 @@ public class MainActivity extends AppCompatActivity {
             String error = uri.getQueryParameter("error");
             if (error != null) {
                 Toast.makeText(activity, R.string.github_oauth_cancelled, Toast.LENGTH_SHORT).show();
+                sPendingPushRemoteUrl = null;
                 return;
             }
             String code = uri.getQueryParameter("code");
+            String state = uri.getQueryParameter("state");
             if (code != null && !code.isEmpty()) {
                 showWaitDialog();
-                GitHubAuthManager.getInstance().exchangeCodeForToken(code, new GitHubAuthManager.GitHubAuthCallback() {
-                    @Override
-                    public void onSuccess(String username, String accessToken, List<GitHubRepo> noteRepos, int totalReposCount) {
-                        dismissWaitDialog();
-                        showGitHubRepoSelectionDialog(username, accessToken, noteRepos, totalReposCount);
-                    }
+                if (GitHubAuthManager.isReauthState(state)) {
+                    final int repoId = GitHubAuthManager.parseRepoIdFromState(state);
+                    GitHubAuthManager.getInstance().exchangeCodeForAccessTokenOnly(code, new GitHubAuthManager.TokenCallback() {
+                        @Override
+                        public void onSuccess(String accessToken) {
+                            dismissWaitDialog();
+                            RemoteGitDAO dao = new RemoteGitDAO(activity);
+                            RemoteGit target = dao.get((long) repoId);
+                            if (target != null) {
+                                target.setPwd(accessToken);
+                                target.setStatus(MyGitUtility.GIT_STATUS_SUCCESS);
+                                dao.update(target);
+                                dao.close();
+                                Toast.makeText(activity, R.string.github_reauth_success, Toast.LENGTH_SHORT).show();
+                                reloadRepositoryList();
 
-                    @Override
-                    public void onError(String errorMessage) {
-                        dismissWaitDialog();
-                        Toast.makeText(activity, getString(R.string.github_auth_failed) + errorMessage, Toast.LENGTH_LONG).show();
-                    }
-                });
+                                final String pendingUrl = sPendingPushRemoteUrl;
+                                sPendingPushRemoteUrl = null;
+                                if (pendingUrl != null) {
+                                    executeAutoRetryPush(pendingUrl);
+                                }
+                            } else {
+                                dao.close();
+                                sPendingPushRemoteUrl = null;
+                                Toast.makeText(activity, R.string.main_notes_not_found, Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onError(String errorMessage) {
+                            dismissWaitDialog();
+                            sPendingPushRemoteUrl = null;
+                            Toast.makeText(activity, getString(R.string.github_auth_failed) + errorMessage, Toast.LENGTH_LONG).show();
+                        }
+                    });
+                } else {
+                    GitHubAuthManager.getInstance().exchangeCodeForToken(code, new GitHubAuthManager.GitHubAuthCallback() {
+                        @Override
+                        public void onSuccess(String username, String accessToken, List<GitHubRepo> noteRepos, int totalReposCount) {
+                            dismissWaitDialog();
+                            showGitHubRepoSelectionDialog(username, accessToken, noteRepos, totalReposCount);
+                        }
+
+                        @Override
+                        public void onError(String errorMessage) {
+                            dismissWaitDialog();
+                            Toast.makeText(activity, getString(R.string.github_auth_failed) + errorMessage, Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
             }
         }
+    }
+
+    private void showAuthFailedDialog(final RemoteGit repo) {
+        if (isFinishing() || isDestroyed()) return;
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.github_auth_expired_title)
+                .setMessage(getString(R.string.github_auth_expired_msg, repo.getNickname()))
+                .setPositiveButton(R.string.github_auth_relogin_and_sync, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        sPendingPushRemoteUrl = repo.getUrl();
+                        GitHubAuthManager.getInstance().startOAuthWebFlow(activity, GitHubAuthManager.buildReauthState((int) repo.getId()));
+                    }
+                })
+                .setNegativeButton(R.string.dialog_cancel, null)
+                .show();
+    }
+
+    private void executeAutoRetryPush(final String remoteUrl) {
+        if (!MyApplication.isNetworkConnected()) {
+            Toast.makeText(activity, "No Network", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        showWaitDialog();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    final boolean success = MyGitUtility.push(MyApplication.getAppContext(), remoteUrl);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            dismissWaitDialog();
+                            reloadRepositoryList();
+                            if (success) {
+                                Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pushing_success), Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pushing_failed), Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    Log.e(TAG, "Auto retry push failed for " + remoteUrl, e);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            dismissWaitDialog();
+                            reloadRepositoryList();
+                            Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pushing_failed), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
+        }).start();
     }
 
     @Override
@@ -1030,7 +1145,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public boolean isEnabled(int position) {
-                return !isDownloaded[position];
+                return true;
             }
 
             @Override
@@ -1056,8 +1171,8 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 if (isDownloaded[position]) {
-                    tvName.setTextColor(0xFF888888);
-                    tvDesc.setTextColor(0xFF666666);
+                    tvName.setTextColor(ContextCompat.getColor(activity, R.color.text_primary));
+                    tvDesc.setTextColor(ContextCompat.getColor(activity, R.color.text_secondary));
                 } else {
                     tvName.setTextColor(ContextCompat.getColor(activity, R.color.text_primary));
                     tvDesc.setTextColor(ContextCompat.getColor(activity, R.color.text_secondary));
@@ -1078,7 +1193,39 @@ public class MainActivity extends AppCompatActivity {
                 .setAdapter(repoAdapter, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (!isDownloaded[which]) {
+                        if (isDownloaded[which]) {
+                            final GitHubRepo selectedRepo = noteRepos.get(which);
+                            new AlertDialog.Builder(activity)
+                                    .setTitle(R.string.github_update_auth_title)
+                                    .setMessage(getString(R.string.github_update_auth_confirm_msg, selectedRepo.getName()))
+                                    .setPositiveButton(R.string.dialog_ok, new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface d, int whichBtn) {
+                                            RemoteGitDAO dao = new RemoteGitDAO(MyApplication.getAppContext());
+                                            RemoteGit target = dao.getByURL(selectedRepo.getCloneUrl());
+                                            if (target == null && selectedRepo.getCloneUrl().endsWith(".git")) {
+                                                target = dao.getByURL(selectedRepo.getCloneUrl().substring(0, selectedRepo.getCloneUrl().length() - 4));
+                                            }
+                                            if (target == null) {
+                                                target = dao.getByURL(selectedRepo.getCloneUrl() + ".git");
+                                            }
+                                            if (target != null) {
+                                                target.setUid(username);
+                                                target.setPwd(token);
+                                                target.setStatus(MyGitUtility.GIT_STATUS_SUCCESS);
+                                                dao.update(target);
+                                                dao.close();
+                                                Toast.makeText(activity, R.string.github_reauth_success, Toast.LENGTH_SHORT).show();
+                                                reloadRepositoryList();
+                                            } else {
+                                                dao.close();
+                                                Toast.makeText(activity, R.string.main_notes_not_found, Toast.LENGTH_SHORT).show();
+                                            }
+                                        }
+                                    })
+                                    .setNegativeButton(R.string.dialog_cancel, null)
+                                    .show();
+                        } else {
                             GitHubRepo selectedRepo = noteRepos.get(which);
                             cloneSelectedGitHubRepo(username, token, selectedRepo);
                         }

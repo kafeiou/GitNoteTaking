@@ -237,4 +237,13 @@
     <string name="attach_sheet_no_app">找不到可開啟此檔案的應用程式</string>
     <string name="attach_sheet_download_success">已另存至 Downloads 資料夾：%1$s</string>
     <string name="attach_sheet_file_not_found">附件檔案不存在</string>
+
+    <!-- GitHub Auth Renewal strings -->
+    <string name="github_auth_expired_title">GitHub 授權已失效</string>
+    <string name="github_auth_expired_msg">筆記「%1$s」同步失敗（401 Unauthorized）。可能是 GitHub 網頁授權已過期或被撤銷。\n\n是否立即透過網頁重新授權？系統將在授權完成後自動接續完成同步，確保修改不遺失。</string>
+    <string name="github_auth_relogin_and_sync">重新授權並同步</string>
+    <string name="github_reauth_success">GitHub 授權更新成功！</string>
+    <string name="github_reauth_button">透過 GitHub 網頁重新登入</string>
+    <string name="github_update_auth_title">更新儲存庫授權</string>
+    <string name="github_update_auth_confirm_msg">筆記「%1$s」已存在於手機中。是否使用當前授權更新其 Token？</string>
 </resources>
