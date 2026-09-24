@@ -24,3 +24,4 @@ records/
 *.log
 *.csv
 **/baselineProfiles/
+app/release/output-metadata.json
