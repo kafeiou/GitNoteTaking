@@ -10,4 +10,5 @@
     <color name="card_bg">#FFFFFF</color>
     <color name="card_stroke">#CCCCCC</color>
     <color name="list_item_bg">#FFFFFF</color>
+    <color name="drag_handle_color">#D1D5DB</color>
 </resources>

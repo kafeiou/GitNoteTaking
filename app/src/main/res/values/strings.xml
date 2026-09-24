@@ -225,4 +225,16 @@
     <string name="diff_status_latest_commit">Latest Commit Changes (HEAD~1 vs HEAD)</string>
     <string name="diff_stats_summary">+%1$d added, -%2$d deleted</string>
     <string name="diff_line_near">📍 Near line %1$d</string>
+
+    <!-- Attachment Bottom Sheet strings -->
+    <string name="attach_sheet_size">Size: %1$s</string>
+    <string name="attach_sheet_type">Type: %1$s</string>
+    <string name="attach_sheet_modified">Modified: %1$s</string>
+    <string name="attach_sheet_open">Open File</string>
+    <string name="attach_sheet_download">Save to Downloads</string>
+    <string name="attach_sheet_delete">Delete Attachment</string>
+    <string name="attach_sheet_close">Close</string>
+    <string name="attach_sheet_no_app">No application found to open this file.</string>
+    <string name="attach_sheet_download_success">Saved to Downloads: %1$s</string>
+    <string name="attach_sheet_file_not_found">Attachment file does not exist.</string>
 </resources>

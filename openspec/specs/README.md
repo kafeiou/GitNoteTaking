@@ -13,5 +13,6 @@
 | **markdown-viewing** | Markdown 離線視覺化預覽、Mermaid 向量圖表、雙向連結跳轉、滿版排版優化規範 | [markdown-viewing/spec.md](markdown-viewing/spec.md) |
 | **pdf-viewing** | App 內原生 PDF 離線預覽、手勢縮放、密碼保護檔案解鎖與外部閱讀器轉發規格 | [pdf-viewing/spec.md](pdf-viewing/spec.md) |
 | **theme-adaptation** | 全 App 原生介面 DayNight 主動跟隨與偏好設定深淺色主題切換規範 | [theme-adaptation/spec.md](theme-adaptation/spec.md) |
+| **attachment-details** | 筆記附件底部抽屜卡片、中繼資料顯示、PDF/外部開啟、儲存至下載與本地 Git 刪除提交規格 | [attachment-details/spec.md](attachment-details/spec.md) |
 
 

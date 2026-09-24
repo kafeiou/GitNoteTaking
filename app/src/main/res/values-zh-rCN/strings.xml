@@ -225,4 +225,16 @@
     <string name="diff_status_latest_commit">最新提交的变更 (HEAD~1 ⇄ HEAD)</string>
     <string name="diff_stats_summary">🟢 +%1$d 行新增   🔴 -%2$d 行删除</string>
     <string name="diff_line_near">📍 第 %1$d 行附近</string>
+
+    <!-- Attachment Bottom Sheet strings -->
+    <string name="attach_sheet_size">大小：%1$s</string>
+    <string name="attach_sheet_type">格式：%1$s</string>
+    <string name="attach_sheet_modified">修改时间：%1$s</string>
+    <string name="attach_sheet_open">打开文件</string>
+    <string name="attach_sheet_download">另存到下载 (Downloads)</string>
+    <string name="attach_sheet_delete">删除附件</string>
+    <string name="attach_sheet_close">关闭</string>
+    <string name="attach_sheet_no_app">找不到可打开此文件的应用程序</string>
+    <string name="attach_sheet_download_success">已另存至 Downloads 文件夹：%1$s</string>
+    <string name="attach_sheet_file_not_found">附件文件不存在</string>
 </resources>

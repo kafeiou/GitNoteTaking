@@ -10,7 +10,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.icu.text.SimpleDateFormat;
+import java.text.SimpleDateFormat;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -34,13 +34,17 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.text.format.Formatter;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import org.json.JSONObject;
 
@@ -70,6 +74,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 import inmethod.gitnotetaking.utility.MyGitUtility;
@@ -289,161 +294,20 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                             aTV.setLayoutParams(lp);
                             final Uri filuri = Uri.fromFile(file);
                             String sMimeType = getMimeType(filuri, activity);
-                            if (sMimeType == null) {
-                                aTV.setCompoundDrawablesWithIntrinsicBounds(R.drawable.unknown24, 0, 0, 0);
-                                aTV.setText(MyApplication.getAppContext().getText(R.string.attachment).toString() + iFileCount);
-                            } else {
-                                sMimeType = sMimeType.toLowerCase();
-                                if (sMimeType.contains("image")) {
-                                    aTV.setCompoundDrawablesWithIntrinsicBounds(R.drawable.image24, 0, 0, 0);
-                                    aTV.setText(MyApplication.getAppContext().getText(R.string.attachment).toString() + iFileCount);
-                                } else if (sMimeType.contains("plain")) {
-                                    aTV.setCompoundDrawablesWithIntrinsicBounds(R.drawable.txt24, 0, 0, 0);
-                                    aTV.setText(MyApplication.getAppContext().getText(R.string.attachment).toString() + iFileCount);
-                                } else if (sMimeType.contains("excel")) {
-                                    aTV.setCompoundDrawablesWithIntrinsicBounds(R.drawable.xls24, 0, 0, 0);
-                                    aTV.setText(MyApplication.getAppContext().getText(R.string.attachment).toString() + iFileCount);
-                                } else if (sMimeType.contains("word")) {
-                                    aTV.setCompoundDrawablesWithIntrinsicBounds(R.drawable.doc24, 0, 0, 0);
-                                    aTV.setText(MyApplication.getAppContext().getText(R.string.attachment).toString() + iFileCount);
-                                } else if (sMimeType.contains("pdf")) {
-                                    aTV.setCompoundDrawablesWithIntrinsicBounds(R.drawable.pdf24, 0, 0, 0);
-                                    aTV.setText(MyApplication.getAppContext().getText(R.string.attachment).toString() + iFileCount);
-                                } else if (sMimeType.contains("powerpoint")) {
-                                    aTV.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ppt24, 0, 0, 0);
-                                    aTV.setText(MyApplication.getAppContext().getText(R.string.attachment).toString() + iFileCount);
-                                } else if (sMimeType.contains("presentation")) {
-                                    aTV.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ppt24, 0, 0, 0);
-                                    aTV.setText(MyApplication.getAppContext().getText(R.string.attachment).toString() + iFileCount);
-                                } else {
-                                    aTV.setCompoundDrawablesWithIntrinsicBounds(R.drawable.unknown24, 0, 0, 0);
-                                    aTV.setText(MyApplication.getAppContext().getText(R.string.attachment).toString() + iFileCount);
-                                }
-                            }
+                            aTV.setCompoundDrawablesWithIntrinsicBounds(getAttachmentIconResByFileName(file.getName(), sMimeType), 0, 0, 0);
+                            aTV.setText(MyApplication.getAppContext().getText(R.string.attachment).toString() + iFileCount);
 
                             aTV.setTextSize(iTextSize);
                             aTV.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View view) {
-                                    if (file.getName().toLowerCase().endsWith(".pdf")) {
-                                        Intent intent = new Intent(ViewFileActivity.this, ViewPdfActivity.class);
-                                        intent.putExtra("FILE_PATH", file.getAbsolutePath());
-                                        startActivity(intent);
-                                    } else {
-                                        Log.d(TAG, "filuri=" + filuri.toString());
-                                        Intent intent = new Intent();
-                                        intent.setAction(android.content.Intent.ACTION_VIEW);
-                                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                        intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                        intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                                        String authority = activity.getPackageName() + ".fileprovider";
-                                        Uri filuri = FileProvider.getUriForFile(activity, authority, file);
-                                        intent.setDataAndType(filuri, getMimeType(filuri, activity));
-                                        try {
-                                            startActivity(intent);
-                                        } catch (ActivityNotFoundException e) {
-                                        }
-                                    }
+                                    showAttachmentBottomSheet(file, aTV);
                                 }
                             });
                             aTV.setOnLongClickListener(new View.OnLongClickListener() {
                                 @Override
                                 public boolean onLongClick(View view) {
-                                    PopupMenu popup = new PopupMenu(ViewFileActivity.this, view);
-
-                                    popup.getMenuInflater()
-                                            .inflate(R.menu.lognclick_popup_menu_viewfile, popup.getMenu());
-                                    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                                        public boolean onMenuItemClick(MenuItem item) {
-                                            int id = item.getItemId();
-                                            if (id == R.id.ViewFileDelete) {
-
-                                                final String sFileName;
-                                                try {
-                                                    sFileName = file.getCanonicalPath().toString().substring(MyGitUtility.getLocalGitDirectory(activity, sGitRemoteUrl).length());
-                                                } catch (IOException e) {
-                                                    e.printStackTrace();
-                                                    return false;
-                                                }
-                                                new AlertDialog.Builder(activity)
-                                                        .setTitle(getResources().getString(R.string.view_title_remove_attach))
-                                                        .setMessage(sFileName)
-                                                        .setCancelable(true)
-                                                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                                            public void onClick(DialogInterface dialog, int whichButton) {
-                                                                try {
-                                                                    file.getCanonicalFile().delete();
-
-                                                                    new Thread(new Runnable() {
-                                                                        @Override
-                                                                        public void run() {
-                                                                            Log.d(TAG,"commit when file be deleted");
-
-                                                                            if (MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, MyApplication.getAppContext().getString(R.string.view_file_delete_attachment_file_commit) + "\n" + sFileName))
-                                                                                MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl);
-                                                                            else {
-
-                                                                            }
-                                                                        }
-                                                                    }).start();
-                                                                    layoutAttachment.removeView(aTV);
-                                                                } catch (IOException e) {
-                                                                    e.printStackTrace();
-                                                                }
-
-                                                            }
-                                                        })
-                                                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                                            public void onClick(DialogInterface dialog, int which) {
-                                                                // finish();
-                                                            }
-                                                        })
-                                                        .show();
-
-                                            }
-                                            else if( id== R.id.ViewFileDownload){
-                                                try {
-                                                    File aDest = new File( Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)+"/"+ file.getName());
-                                                    if( !aDest.exists()) {
-                                                        try (FileOutputStream aFOS = new FileOutputStream(aDest)) {
-                                                            Files.copy(file.toPath(), aFOS);
-                                                        }catch(Exception ee){
-                                                            runOnUiThread(new Runnable() {
-                                                                @Override
-                                                                public void run() {
-                                                                    Toast.makeText(MyApplication.getAppContext(), MyApplication.getAppContext().getText(R.string.download_file_exists)+"\n"+file.getName(), Toast.LENGTH_SHORT).show();
-                                                                }
-                                                            });
-                                                            ee.printStackTrace();
-                                                        }
-                                                        if( aDest.exists()) {
-                                                            runOnUiThread(new Runnable() {
-                                                                @Override
-                                                                public void run() {
-                                                                    Toast.makeText(MyApplication.getAppContext(), MyApplication.getAppContext().getText(R.string.download_success)+"\n"+file.getName(), Toast.LENGTH_SHORT).show();
-                                                                }
-                                                            });
-                                                        }
-                                                    }else{
-                                                        runOnUiThread(new Runnable() {
-                                                            @Override
-                                                            public void run() {
-                                                                Toast.makeText(MyApplication.getAppContext(), MyApplication.getAppContext().getText(R.string.download_file_exists)+"\n"+file.getName(), Toast.LENGTH_SHORT).show();
-                                                            }
-                                                        });
-
-                                                    }
-                                                } catch (Exception e) {
-                                                    e.printStackTrace();
-//                                throw new RuntimeException(e);
-                                                }
-
-                                            }
-                                            return true;
-                                        }
-                                    });
-
-                                    popup.show();
+                                    showAttachmentBottomSheet(file, aTV);
                                     return true;
                                 }
                             });
@@ -463,6 +327,203 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
         }
 
 
+    }
+
+    public static int getAttachmentIconResByFileName(String fileName, String mimeType) {
+        if (mimeType != null && !mimeType.isEmpty()) {
+            int icon = getAttachmentIconRes(mimeType);
+            if (icon != R.drawable.unknown24) {
+                return icon;
+            }
+        }
+        if (fileName != null) {
+            String lower = fileName.toLowerCase(Locale.ROOT);
+            if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".gif") || lower.endsWith(".webp") || lower.endsWith(".bmp")) {
+                return R.drawable.image24;
+            } else if (lower.endsWith(".txt") || lower.endsWith(".md") || lower.endsWith(".log")) {
+                return R.drawable.txt24;
+            } else if (lower.endsWith(".xls") || lower.endsWith(".xlsx") || lower.endsWith(".csv")) {
+                return R.drawable.xls24;
+            } else if (lower.endsWith(".doc") || lower.endsWith(".docx")) {
+                return R.drawable.doc24;
+            } else if (lower.endsWith(".pdf")) {
+                return R.drawable.pdf24;
+            } else if (lower.endsWith(".ppt") || lower.endsWith(".pptx")) {
+                return R.drawable.ppt24;
+            }
+        }
+        return R.drawable.unknown24;
+    }
+
+    public static int getAttachmentIconRes(String mimeType) {
+        if (mimeType == null) return R.drawable.unknown24;
+        String lower = mimeType.toLowerCase(Locale.ROOT);
+        if (lower.contains("image")) {
+            return R.drawable.image24;
+        } else if (lower.contains("plain")) {
+            return R.drawable.txt24;
+        } else if (lower.contains("excel") || lower.contains("spreadsheet") || lower.contains("sheet")) {
+            return R.drawable.xls24;
+        } else if (lower.contains("powerpoint") || lower.contains("presentation")) {
+            return R.drawable.ppt24;
+        } else if (lower.contains("word") || lower.contains("wordprocessingml") || lower.contains("msword")) {
+            return R.drawable.doc24;
+        } else if (lower.contains("pdf")) {
+            return R.drawable.pdf24;
+        } else {
+            return R.drawable.unknown24;
+        }
+    }
+
+    public static String getAttachmentTypeDisplay(String fileName, String mimeType) {
+        if (mimeType != null && !mimeType.trim().isEmpty()) {
+            return mimeType.trim();
+        }
+        if (fileName != null) {
+            int dotIdx = fileName.lastIndexOf('.');
+            if (dotIdx >= 0 && dotIdx < fileName.length() - 1) {
+                return fileName.substring(dotIdx + 1).toUpperCase(Locale.ROOT);
+            }
+        }
+        return "UNKNOWN";
+    }
+
+    public static String getAttachmentDeleteCommitMessage(String fileName) {
+        return "User deleted attachment: " + fileName;
+    }
+
+    private void showAttachmentBottomSheet(final File attachFile, final TextView aTV) {
+        if (attachFile == null || !attachFile.exists()) {
+            Toast.makeText(this, R.string.attach_sheet_file_not_found, Toast.LENGTH_SHORT).show();
+            if (layoutAttachment != null && aTV != null) {
+                layoutAttachment.removeView(aTV);
+                if (layoutAttachment.getChildCount() == 0 && scrollAttachment != null) {
+                    scrollAttachment.setVisibility(View.GONE);
+                }
+            }
+            return;
+        }
+
+        final BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this, R.style.CustomBottomSheetDialogTheme);
+        View sheetView = getLayoutInflater().inflate(R.layout.dialog_attachment_bottom_sheet, null);
+        bottomSheetDialog.setContentView(sheetView);
+
+        View bottomSheetInternal = bottomSheetDialog.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+        if (bottomSheetInternal != null) {
+            bottomSheetInternal.setBackgroundResource(R.color.card_bg);
+        }
+
+        ImageView ivIcon = sheetView.findViewById(R.id.ivAttachIcon);
+        TextView tvName = sheetView.findViewById(R.id.tvAttachFileName);
+        TextView tvSize = sheetView.findViewById(R.id.tvAttachSize);
+        TextView tvType = sheetView.findViewById(R.id.tvAttachType);
+        TextView tvModified = sheetView.findViewById(R.id.tvAttachModified);
+        Button btnOpen = sheetView.findViewById(R.id.btnOpenAttachment);
+        Button btnDownload = sheetView.findViewById(R.id.btnDownloadAttachment);
+        Button btnDelete = sheetView.findViewById(R.id.btnDeleteAttachment);
+
+        tvName.setText(attachFile.getName());
+
+        Uri fileUri = Uri.fromFile(attachFile);
+        String sMimeType = getMimeType(fileUri, this);
+        ivIcon.setImageResource(getAttachmentIconResByFileName(attachFile.getName(), sMimeType));
+
+        String sizeFormatted = Formatter.formatFileSize(this, attachFile.length());
+        tvSize.setText(getString(R.string.attach_sheet_size, sizeFormatted));
+
+        String typeDisplay = getAttachmentTypeDisplay(attachFile.getName(), sMimeType);
+        tvType.setText(getString(R.string.attach_sheet_type, typeDisplay));
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+        String modifiedFormatted = sdf.format(new Date(attachFile.lastModified()));
+        tvModified.setText(getString(R.string.attach_sheet_modified, modifiedFormatted));
+
+        btnOpen.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                bottomSheetDialog.dismiss();
+                if (attachFile.getName().toLowerCase(Locale.ROOT).endsWith(".pdf")) {
+                    Intent intent = new Intent(ViewFileActivity.this, ViewPdfActivity.class);
+                    intent.putExtra("FILE_PATH", attachFile.getAbsolutePath());
+                    startActivity(intent);
+                } else {
+                    Intent intent = new Intent();
+                    intent.setAction(Intent.ACTION_VIEW);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                    String authority = activity.getPackageName() + ".fileprovider";
+                    Uri contentUri = FileProvider.getUriForFile(activity, authority, attachFile);
+                    intent.setDataAndType(contentUri, getMimeType(contentUri, activity));
+                    try {
+                        startActivity(intent);
+                    } catch (ActivityNotFoundException e) {
+                        Toast.makeText(activity, R.string.attach_sheet_no_app, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
+
+        btnDownload.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                    File dest = new File(downloadDir, attachFile.getName());
+                    if (dest.exists()) {
+                        Toast.makeText(activity, getString(R.string.download_file_exists) + "\n" + attachFile.getName(), Toast.LENGTH_SHORT).show();
+                    } else {
+                        try (FileOutputStream fos = new FileOutputStream(dest)) {
+                            Files.copy(attachFile.toPath(), fos);
+                        }
+                        if (dest.exists()) {
+                            Toast.makeText(activity, getString(R.string.attach_sheet_download_success, attachFile.getName()), Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(activity, getString(R.string.download_file_exists) + "\n" + attachFile.getName(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+        btnDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(activity)
+                        .setTitle(R.string.view_title_remove_attach)
+                        .setMessage(attachFile.getName())
+                        .setCancelable(true)
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                try {
+                                    attachFile.getCanonicalFile().delete();
+                                    new Thread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Log.d(TAG, "commit when attachment deleted");
+                                            String commitMsg = getAttachmentDeleteCommitMessage(attachFile.getName());
+                                            MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, commitMsg);
+                                        }
+                                    }).start();
+                                    if (layoutAttachment != null && aTV != null) {
+                                        layoutAttachment.removeView(aTV);
+                                        if (layoutAttachment.getChildCount() == 0 && scrollAttachment != null) {
+                                            scrollAttachment.setVisibility(View.GONE);
+                                        }
+                                    }
+                                    bottomSheetDialog.dismiss();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            }
+        });
+
+        bottomSheetDialog.show();
     }
 
     private void disable() {

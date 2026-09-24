@@ -225,4 +225,16 @@
     <string name="diff_status_latest_commit">最新コミットの変更 (HEAD~1 ⇄ HEAD)</string>
     <string name="diff_stats_summary">🟢 +%1$d 行追加   🔴 -%2$d 行削除</string>
     <string name="diff_line_near">📍 %1$d 行目付近</string>
+
+    <!-- Attachment Bottom Sheet strings -->
+    <string name="attach_sheet_size">サイズ：%1$s</string>
+    <string name="attach_sheet_type">形式：%1$s</string>
+    <string name="attach_sheet_modified">更新日時：%1$s</string>
+    <string name="attach_sheet_open">ファイルを開く</string>
+    <string name="attach_sheet_download">ダウンロードに保存</string>
+    <string name="attach_sheet_delete">添付ファイルを削除</string>
+    <string name="attach_sheet_close">閉じる</string>
+    <string name="attach_sheet_no_app">このファイルを開くことができるアプリが見つかりません</string>
+    <string name="attach_sheet_download_success">ダウンロードフォルダに保存しました：%1$s</string>
+    <string name="attach_sheet_file_not_found">添付ファイルが存在しません</string>
 </resources>

@@ -17,6 +17,7 @@
         <item name="android:actionOverflowMenuStyle">@style/CustomActionOverflowMenuStyle</item>
         <item name="listPopupWindowStyle">@style/CustomListPopupWindowStyle</item>
         <item name="android:listPopupWindowStyle">@style/CustomListPopupWindowStyle</item>
+        <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialogTheme</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -26,6 +27,7 @@
         <item name="android:colorBackground">@color/window_bg</item>
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="bottomSheetDialogTheme">@style/CustomBottomSheetDialogTheme</item>
         <item name="popupMenuStyle">@style/CustomPopupMenuStyle</item>
         <item name="android:popupMenuStyle">@style/CustomPopupMenuStyle</item>
         <item name="actionOverflowMenuStyle">@style/CustomActionOverflowMenuStyle</item>
@@ -65,6 +67,15 @@
         <item name="android:popupMenuStyle">@style/CustomPopupMenuStyle</item>
         <item name="listPopupWindowStyle">@style/CustomListPopupWindowStyle</item>
         <item name="android:listPopupWindowStyle">@style/CustomListPopupWindowStyle</item>
+    </style>
+
+    <style name="CustomBottomSheetDialogTheme" parent="Theme.MaterialComponents.DayNight.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/CustomBottomSheetStyle</item>
+    </style>
+
+    <style name="CustomBottomSheetStyle" parent="Widget.MaterialComponents.BottomSheet.Modal">
+        <item name="android:background">@color/card_bg</item>
+        <item name="backgroundTint">@color/card_bg</item>
     </style>
 
 </resources>
