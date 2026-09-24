@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.010] - 2026-09-24
+
+### 🚀 New Features & Enhancements
+
+#### 1. GitHub OAuth 授權過期智慧攔截與 401 自動復原機制 (GitHub OAuth Expiry & 401 Recovery)
+- **401 Unauthorized 精準辨識**：在同步（Push / Pull）遭遇 GitHub 遠端回傳 401 未授權錯誤時，自動識別為 `GIT_STATUS_AUTH_FAILED`，阻擋無效 Toast，改為彈出專屬「GitHub 授權已失效」說明對話框，清楚告知可能為 8 小時授權過期。
+- **原地一鍵重新登入並自動續推**：對話框提供【重新登入並同步】按鈕，使用者於 Chrome Custom Tabs 完成授權回跳 App 後，系統自動更新資料庫認證資訊，並在背景自動接續執行原本中斷的 Push 操作，推送成功後通知使用者，本地修改 100% 零遺失。
+- **建立筆記清單解鎖已下載 Repo**：在 GitHub 建立筆記清單中解除已下載儲存庫限制，支援一鍵點擊更新該筆記授權。
+
+#### 2. 修改遠端筆記支援「透過 GitHub 網頁重新登入授權」 (Re-authenticate in Modify Remote)
+- **修改設定介面一鍵換證**：在「修改遠端倉庫」（`ModifyRemoteGitActivity`）中，若遠端為 GitHub，主動提供【透過 GitHub 網頁重新登入授權】按鈕，無需手動複製貼上任何 Token。
+- **單一任務生命週期保護**：將主畫面 `launchMode` 設為 `singleTask`，確保 OAuth 網頁授權重定向回跳時乾淨俐落返回原畫面，無重複 Activity 實例堆疊問題。
+
+#### 3. 新增多語系 FAQ 文件 (Multi-Language FAQ Documentation)
+- **多語系排錯手冊**：於專案 `docs/` 目錄建立 4 國語系 FAQ 文件（`docs/FAQ.md`、`docs/FAQ_zh-CN.md`、`docs/FAQ_en.md`、`docs/FAQ_ja.md`）。
+- **完整設定指南**：詳述 GitHub 官方 8 小時 Token 過期成因、App 內斷點保護機制，以及 OAuth App 管理者如何關閉「Expire user authorization tokens」實現永久授權，並提供 Personal Access Token 替代方案。
+
 ## [4.009] - 2026-08-31
 
 ### 🚀 New Features & Enhancements

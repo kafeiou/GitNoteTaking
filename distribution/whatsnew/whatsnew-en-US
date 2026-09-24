@@ -1,7 +1,6 @@
-• Bidirectional Auto-sync on Entry: Auto-commits and pushes local changes upon opening notes, with customizable cooldown (default: 60s).
-• Plain Text Git Diff: Compare current edits with HEAD commit for .txt/.md/.html with color-coded Unified Diff.
-• HTML Visual Preview: Render .html/.htm notes via WebView with seamless "Edit ⇄ Preview" toggle.
-• GitHub Repo Prefix: Filter repos with custom prefix (default: note) or leave blank for all repos.
-• App Version & Support: View version in Settings, email feedback to william@kafeiou.pw, view Privacy Policy.
-• Markdown & PDF: GFM preview, Mermaid charts, [[WikiLinks]], native PDF viewer with zoom & unlock.
-• DayNight Theme, Temp Files Exclude (.gitignore), Zero-permission Backup & JGit 7.7.1.
+• GitHub OAuth Auto-recovery: Detects 401 on sync, one-tap re-auth and auto-resumes unpushed notes.
+• One-tap Re-auth: Added "Re-authenticate with GitHub Web" in Modify Remote.
+• Update Cloned Repos: Tap downloaded repos in GitHub dialog to refresh auth.
+• Auto-sync on Entry: Auto-commits and pushes local changes upon opening notes.
+• Plain Text Git Diff & HTML: Color-coded Unified Diff and HTML note preview.
+• Markdown & PDF: GFM, Mermaid, [[WikiLinks]], native PDF with zoom & unlock.
