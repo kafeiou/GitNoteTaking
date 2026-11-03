@@ -100,6 +100,110 @@ public class MyGitUtility {
     public static final int PULL_RESULT_UPDATED = 2;
     public static boolean bGitLock = false;
 
+    public interface SyncProgressListener {
+        void onProgress(String statusText);
+    }
+
+    private static final java.util.concurrent.ConcurrentHashMap<String, String> sCloneProgressMap = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public static String getCloneProgress(String sRemoteUrl) {
+        if (sRemoteUrl == null) return "";
+        String p = sCloneProgressMap.get(sRemoteUrl);
+        return p != null ? p : "";
+    }
+
+    private static void notifyCloneProgress(String sRemoteUrl, SyncProgressListener listener, String text) {
+        if (sRemoteUrl != null && text != null) {
+            sCloneProgressMap.put(sRemoteUrl, text);
+        }
+        if (listener != null && text != null) {
+            listener.onProgress(text);
+        }
+    }
+
+    public static long calculateDirectoryBytes(File dir) {
+        if (dir == null || !dir.exists()) return 0L;
+        if (dir.isFile()) return dir.length();
+        long sum = 0L;
+        File[] children = dir.listFiles();
+        if (children != null) {
+            for (File child : children) {
+                sum += calculateDirectoryBytes(child);
+            }
+        }
+        return sum;
+    }
+
+    public static String formatCloneTaskProgress(Context context, String taskTitle, int completedWork, int totalWork, long downloadedBytes) {
+        String safeTitle = taskTitle != null ? taskTitle.toLowerCase( java.util.Locale.ROOT) : "";
+        if (totalWork <= 0) {
+            return context != null ? context.getString(R.string.sync_progress_preparing) : "Preparing repository sync...";
+        }
+        int safeCompleted = Math.max(0, Math.min(completedWork, totalWork));
+        int percent = (int) ((safeCompleted * 100L) / totalWork);
+        if (safeTitle.contains("receiving") || safeTitle.contains("接收")) {
+            if (context != null) {
+                return context.getString(R.string.sync_progress_receiving, percent, safeCompleted, totalWork);
+            }
+            return String.format(java.util.Locale.US, "Downloading note data... %d%% (%d/%d)", percent, safeCompleted, totalWork);
+        } else if (safeTitle.contains("resolving") || safeTitle.contains("解析")) {
+            if (context != null) {
+                return context.getString(R.string.sync_progress_resolving, percent, safeCompleted, totalWork);
+            }
+            return String.format(java.util.Locale.US, "Resolving data deltas... %d%% (%d/%d)", percent, safeCompleted, totalWork);
+        } else if (safeTitle.contains("checking out") || safeTitle.contains("updating") || safeTitle.contains("檢出")) {
+            if (context != null) {
+                return context.getString(R.string.sync_progress_checking_out, percent, safeCompleted, totalWork);
+            }
+            return String.format(java.util.Locale.US, "Writing note files... %d%% (%d/%d)", percent, safeCompleted, totalWork);
+        } else {
+            return context != null ? context.getString(R.string.sync_progress_preparing) : "Preparing repository sync...";
+        }
+    }
+
+    public static String formatDateRestoreProgress(Context context, int completedFiles, int totalFiles) {
+        if (totalFiles <= 0) {
+            return context != null ? context.getString(R.string.sync_progress_preparing) : "Preparing repository sync...";
+        }
+        int safeCompleted = Math.max(0, Math.min(completedFiles, totalFiles));
+        int percent = (int) ((safeCompleted * 100L) / totalFiles);
+        if (context != null) {
+            return context.getString(R.string.sync_progress_restoring_dates, percent, safeCompleted, totalFiles);
+        }
+        return String.format(java.util.Locale.US, "Restoring file dates... %d%% (%d/%d)", percent, safeCompleted, totalFiles);
+    }
+
+
+    public static boolean cleanDirectoryForClone(File dir) {
+        if (dir == null || !dir.exists()) {
+            return true;
+        }
+        try {
+            FileUtils.delete(dir, FileUtils.RECURSIVE | FileUtils.RETRY | FileUtils.SKIP_MISSING);
+        } catch (Exception e) {
+            Log.w(TAG, "FileUtils.delete failed in cleanDirectoryForClone, falling back to manual recursive delete: " + e.getMessage());
+        }
+        if (dir.exists()) {
+            deleteFileOrDirRecursively(dir);
+        }
+        return !dir.exists() || (dir.isDirectory() && (dir.list() == null || dir.list().length == 0));
+    }
+
+    private static void deleteFileOrDirRecursively(File file) {
+        if (file == null || !file.exists()) return;
+        try {
+            file.setWritable(true);
+        } catch (Exception ignored) {}
+        if (file.isDirectory()) {
+            File[] children = file.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    deleteFileOrDirRecursively(child);
+                }
+            }
+        }
+        file.delete();
+    }
 
     public static boolean deleteLocalGitRepository(Context context, String sRemoteUrl) {
         String sLocalDirectory = getLocalGitDirectory(context, sRemoteUrl);
@@ -115,16 +219,9 @@ public class MyGitUtility {
                     aGitUtil.close();
                 }
             } catch (Exception ee) {
-                Log.w(TAG, "GitUtil remove failed, falling back to FileUtils: " + ee.getMessage());
+                Log.w(TAG, "GitUtil remove failed, falling back to cleanDirectoryForClone: " + ee.getMessage());
             }
-            try {
-                if (localDir.exists()) {
-                    FileUtils.delete(localDir, FileUtils.RECURSIVE | FileUtils.RETRY | FileUtils.SKIP_MISSING);
-                }
-                return true;
-            } catch (Exception ee) {
-                Log.e(TAG, "FileUtils delete failed: " + ee.getMessage(), ee);
-            }
+            return cleanDirectoryForClone(localDir);
         }
         return false;
     }
@@ -135,10 +232,24 @@ public class MyGitUtility {
         RemoteGit aRemoteGit = aRemoteGitDAO.getByURL(sRemoteUrl);
         aRemoteGitDAO.close();
         if (aRemoteGit == null) return null;
+        if (sRemoteUrl != null && sRemoteUrl.toLowerCase().contains("github.com") && MyApplication.isNetworkConnected()) {
+            if (aRemoteGit.isWebOAuth() || aRemoteGit.getStatus() == GIT_STATUS_AUTH_FAILED) {
+                if (checkGitHubAuthFailure(sRemoteUrl, aRemoteGit.getUid(), aRemoteGit.getPwd())) {
+                    aRemoteGit.setStatus(GIT_STATUS_AUTH_FAILED);
+                    RemoteGitDAO updateDao = new RemoteGitDAO(context);
+                    updateDao.update(aRemoteGit);
+                    updateDao.close();
+                    return null;
+                }
+            }
+        }
         List<String> aReturn = null;
         try {
             aGitUtil = new GitUtil(sRemoteUrl, null);
             aReturn = aGitUtil.getRemoteBranches(aRemoteGit.getUid(),aRemoteGit.getPwd());
+            if ((aReturn == null || aReturn.isEmpty()) && sRemoteUrl != null && sRemoteUrl.toLowerCase().contains("github.com")) {
+                checkAndMarkGitHubAuthFailure(context, sRemoteUrl);
+            }
             if (aGitUtil != null) aGitUtil.close();
         } catch (Exception ee) {
             ee.printStackTrace();
@@ -172,6 +283,9 @@ public class MyGitUtility {
             if (code == 401 || code == 403) {
                 return true;
             }
+            if (code == 200) {
+                return false;
+            }
         } catch (Exception e) {
             Log.d(TAG, "checkGitHubAuthFailure API check: " + e.getMessage());
         }
@@ -194,6 +308,28 @@ public class MyGitUtility {
             }
         }
         return false;
+    }
+
+    public static boolean checkAndMarkGitHubAuthFailure(Context context, String sRemoteUrl) {
+        if (sRemoteUrl == null || !sRemoteUrl.toLowerCase().contains("github.com")) {
+            return false;
+        }
+        if (!MyApplication.isNetworkConnected()) {
+            return false;
+        }
+        RemoteGitDAO dao = new RemoteGitDAO(context);
+        RemoteGit repo = dao.getByURL(sRemoteUrl);
+        if (repo == null) {
+            dao.close();
+            return false;
+        }
+        boolean failed = checkGitHubAuthFailure(sRemoteUrl, repo.getUid(), repo.getPwd());
+        if (failed) {
+            repo.setStatus(GIT_STATUS_AUTH_FAILED);
+            dao.update(repo);
+        }
+        dao.close();
+        return failed;
     }
 
     public static boolean push(Context context, String sRemoteUrl) {
@@ -542,13 +678,29 @@ public class MyGitUtility {
     public static int pullWithResult(Context context, String sRemoteUrl) {
         RemoteGitDAO aRemoteGitDAO = new RemoteGitDAO(context);
         RemoteGit aRemoteGit = aRemoteGitDAO.getByURL(sRemoteUrl);
-        if (aRemoteGit == null) return PULL_RESULT_FAILED;
+        if (aRemoteGit == null) {
+            aRemoteGitDAO.close();
+            return PULL_RESULT_FAILED;
+        }
+        long prevStatus = aRemoteGit.getStatus();
+        long fallbackStatus = (prevStatus == GIT_STATUS_PULLING) ? GIT_STATUS_SUCCESS : prevStatus;
         setGitLock(true);
 
         String sUserName = aRemoteGit.getUid();
+        String sUserPassword = aRemoteGit.getPwd();
+        if (sRemoteUrl != null && sRemoteUrl.toLowerCase().contains("github.com") && (aRemoteGit.isWebOAuth() || prevStatus == GIT_STATUS_AUTH_FAILED)) {
+            if (checkGitHubAuthFailure(sRemoteUrl, sUserName, sUserPassword)) {
+                aRemoteGit.setStatus(GIT_STATUS_AUTH_FAILED);
+                aRemoteGitDAO.update(aRemoteGit);
+                aRemoteGitDAO.close();
+                setGitLock(false);
+                Log.e(TAG, "Proactive GitHub auth check failed (401) for " + sRemoteUrl);
+                return PULL_RESULT_FAILED;
+            }
+        }
+
         aRemoteGit.setStatus(GIT_STATUS_PULLING);
         aRemoteGitDAO.update(aRemoteGit);
-        String sUserPassword = aRemoteGit.getPwd();
         String sLocalDirectory = getLocalGitDirectory(context, sRemoteUrl);
         boolean bIsRemoteRepositoryExist = false;
         GitUtil aGitUtil;
@@ -559,8 +711,11 @@ public class MyGitUtility {
             if (!bIsRemoteRepositoryExist) {
                 if (sRemoteUrl.contains("github.com") && checkGitHubAuthFailure(sRemoteUrl, sUserName, sUserPassword)) {
                     aRemoteGit.setStatus(GIT_STATUS_AUTH_FAILED);
+                } else {
+                    aRemoteGit.setStatus(fallbackStatus);
                 }
                 aRemoteGitDAO.update(aRemoteGit);
+                aRemoteGitDAO.close();
                 Log.e(TAG, "check remote url failed");
                 setGitLock(false);
                 if (aGitUtil != null) aGitUtil.close();
@@ -580,6 +735,7 @@ public class MyGitUtility {
                     syncFileTimestampsAsync(context, sLocalDirectory, sRemoteUrl, sUserPassword);
                     aRemoteGit.setStatus(GIT_STATUS_SUCCESS);
                     aRemoteGitDAO.update(aRemoteGit);
+                    aRemoteGitDAO.close();
                     setGitLock(false);
 
                     ObjectId newHead = null;
@@ -592,7 +748,13 @@ public class MyGitUtility {
                     return hasNewCommits ? PULL_RESULT_UPDATED : PULL_RESULT_UP_TO_DATE;
                   } else {
                       aGitUtil.reset(ResetCommand.ResetType.MIXED, PreferenceManager.getDefaultSharedPreferences(context).getString("GitRemoteName", "master"));
+                      if (sRemoteUrl.contains("github.com") && checkGitHubAuthFailure(sRemoteUrl, sUserName, sUserPassword)) {
+                          aRemoteGit.setStatus(GIT_STATUS_AUTH_FAILED);
+                      } else {
+                          aRemoteGit.setStatus(fallbackStatus);
+                      }
                       aRemoteGitDAO.update(aRemoteGit);
+                      aRemoteGitDAO.close();
                       Log.d(TAG, "pull failed!");
                       setGitLock(false);
                       if (aGitUtil != null) aGitUtil.close();
@@ -600,14 +762,18 @@ public class MyGitUtility {
                   }
                 }catch(LockFailedException lockfail){
                     lockfail.printStackTrace();
+                    aRemoteGit.setStatus(fallbackStatus);
                     aRemoteGitDAO.update(aRemoteGit);
+                    aRemoteGitDAO.close();
                     Log.d(TAG, "pull failed!");
                     setGitLock(false);
                     FileUtility.deleteLockFile(aGitUtil);
                     if (aGitUtil != null) aGitUtil.close();
                     return PULL_RESULT_FAILED;
                 }catch(JGitInternalException aJGitInternalException){
+                        aRemoteGit.setStatus(fallbackStatus);
                         aRemoteGitDAO.update(aRemoteGit);
+                        aRemoteGitDAO.close();
                         Log.d(TAG, "pull failed!");
                         setGitLock(false);
                         FileUtility.deleteLockFile(aGitUtil);
@@ -622,13 +788,16 @@ public class MyGitUtility {
                         Log.e(TAG,"reset exception");
                         resetEx.printStackTrace();
                     }
+                    aRemoteGit.setStatus(fallbackStatus);
                     aRemoteGitDAO.update(aRemoteGit);
+                    aRemoteGitDAO.close();
                     Log.d(TAG, "pull failed!");
                     setGitLock(false);
                     if (aGitUtil != null) aGitUtil.close();
                     return PULL_RESULT_FAILED;
                 }
             }
+            aRemoteGit.setStatus(fallbackStatus);
             aRemoteGitDAO.update(aRemoteGit);
             setGitLock(false);
             if (aGitUtil != null) aGitUtil.close();
@@ -638,12 +807,87 @@ public class MyGitUtility {
 
         } catch (Exception e) {
             e.printStackTrace();
+            aRemoteGit.setStatus(fallbackStatus);
+            aRemoteGitDAO.update(aRemoteGit);
+            aRemoteGitDAO.close();
+            setGitLock(false);
         }
         return PULL_RESULT_FAILED;
     }
 
 
     public static boolean cloneGit(Context context, String sRemoteUrl, String sRemoteName, String sUserName, String sUserPassword) {
+        return cloneGit(context, sRemoteUrl, sRemoteName, sUserName, sUserPassword, null);
+    }
+
+    private static boolean executeShallowCloneWithProgress(final Context context, final String sRemoteUrl, final String sLocalDirectory, String sUserName, String sUserPassword, final SyncProgressListener listener) {
+        final File localDirFile = new File(sLocalDirectory);
+        final File gitDirFile = new File(localDirFile, ".git");
+        org.eclipse.jgit.lib.ProgressMonitor monitor = new org.eclipse.jgit.lib.EmptyProgressMonitor() {
+            private String currentTaskTitle = "";
+            private int currentTotalWork = 0;
+            private int currentCompleted = 0;
+            private long lastUiUpdateMs = 0L;
+
+            @Override
+            public void beginTask(String title, int totalWork) {
+                currentTaskTitle = title != null ? title : "";
+                currentTotalWork = totalWork;
+                currentCompleted = 0;
+                emitProgress(true);
+            }
+
+            @Override
+            public void update(int completed) {
+                currentCompleted += completed;
+                emitProgress(false);
+            }
+
+            @Override
+            public void endTask() {
+                if (currentTotalWork > 0) {
+                    currentCompleted = currentTotalWork;
+                    emitProgress(true);
+                }
+            }
+
+            private void emitProgress(boolean force) {
+                long now = System.currentTimeMillis();
+                if (!force && (now - lastUiUpdateMs < 150L)) {
+                    return;
+                }
+                lastUiUpdateMs = now;
+                long bytes = 0L;
+                String lower = currentTaskTitle.toLowerCase(java.util.Locale.ROOT);
+                if (lower.contains("receiving") || lower.contains("接收")) {
+                    File packDir = new File(gitDirFile, "objects/pack");
+                    bytes = packDir.exists() ? calculateDirectoryBytes(packDir) : calculateDirectoryBytes(gitDirFile);
+                }
+                String text = formatCloneTaskProgress(context, currentTaskTitle, currentCompleted, currentTotalWork, bytes);
+                notifyCloneProgress(sRemoteUrl, listener, text);
+            }
+        };
+
+        try {
+            cleanDirectoryForClone(localDirFile);
+            org.eclipse.jgit.api.CloneCommand cloneCmd = Git.cloneRepository()
+                    .setURI(sRemoteUrl)
+                    .setDirectory(localDirFile)
+                    .setDepth(1)
+                    .setProgressMonitor(monitor);
+            if (sUserName != null && !sUserName.isEmpty() && sUserPassword != null && !sUserPassword.isEmpty()) {
+                cloneCmd.setCredentialsProvider(new org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider(sUserName, sUserPassword));
+            }
+            try (Git cloned = cloneCmd.call()) {
+                return cloned != null && gitDirFile.exists();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "executeShallowCloneWithProgress failed: " + e.getMessage(), e);
+            return false;
+        }
+    }
+
+    public static boolean cloneGit(Context context, String sRemoteUrl, String sRemoteName, String sUserName, String sUserPassword, SyncProgressListener listener) {
 
         // 檢查本機是否已有
         if (checkLocalGitRepository(context, sRemoteUrl)) {
@@ -670,14 +914,24 @@ public class MyGitUtility {
             Log.d(TAG, "Remote repository exists ? " + bIsRemoteRepositoryExist);
             if (bIsRemoteRepositoryExist) {
                 Log.d(TAG, "try to clone remote repository if local repository is not exists \n");
-                if (aGitUtil.clone(sUserName, sUserPassword,1)) {
+                if (context != null) {
+                    notifyCloneProgress(sRemoteUrl, listener, context.getString(R.string.sync_progress_preparing));
+                }
+                boolean clonedOk = executeShallowCloneWithProgress(context, sRemoteUrl, sLocalDirectory, sUserName, sUserPassword, listener);
+                if (!clonedOk) {
+                    cleanDirectoryForClone(new File(sLocalDirectory));
+                    clonedOk = aGitUtil.clone(sUserName, sUserPassword, 1);
+                }
+                if (clonedOk) {
                     Log.d(TAG, "clone finished!");
-                    syncFileTimestampsAsync(context, sLocalDirectory, sRemoteUrl, sUserPassword);
+                    syncFileTimestampsWithGit(sLocalDirectory);
+                    sCloneProgressMap.remove(sRemoteUrl);
                     setGitLock(false);
                     if (aGitUtil != null) aGitUtil.close();
                     return true;
                 } else {
                     Log.d(TAG, "clone failed!");
+                    sCloneProgressMap.remove(sRemoteUrl);
                     setGitLock(false);
                     if (aGitUtil != null) aGitUtil.close();
                     return false;
@@ -700,7 +954,110 @@ public class MyGitUtility {
         return false;
     }
 
+    public static boolean restoreFileDatesByCommitDepth(final Context context, final String sRemoteUrl, int commitDepth, final SyncProgressListener listener) {
+        if (sRemoteUrl == null || sRemoteUrl.isEmpty()) return false;
+        String sLocalDirectory = getLocalGitDirectory(context, sRemoteUrl);
+        if (sLocalDirectory == null || sLocalDirectory.isEmpty()) return false;
+        File localDirFile = new File(sLocalDirectory);
+        File gitDirFile = new File(localDirFile, ".git");
+        if (!gitDirFile.exists()) return false;
+
+        int safeDepth = Math.max(1, commitDepth);
+        RemoteGitDAO dao = new RemoteGitDAO(context);
+        RemoteGit repo = dao.getByURL(sRemoteUrl);
+        dao.close();
+        if (repo == null) return false;
+
+        String sUserName = repo.getUid();
+        String sUserPassword = repo.getPwd();
+
+        setGitLock(true);
+        try {
+            if (sRemoteUrl.indexOf("local") == -1 && MyApplication.isNetworkConnected()) {
+                if (sRemoteUrl.toLowerCase().contains("github.com") && (repo.isWebOAuth() || repo.getStatus() == GIT_STATUS_AUTH_FAILED)) {
+                    if (checkGitHubAuthFailure(sRemoteUrl, sUserName, sUserPassword)) {
+                        repo.setStatus(GIT_STATUS_AUTH_FAILED);
+                        RemoteGitDAO updateDao = new RemoteGitDAO(context);
+                        updateDao.update(repo);
+                        updateDao.close();
+                        setGitLock(false);
+                        return false;
+                    }
+                }
+                if (context != null) {
+                    notifyCloneProgress(sRemoteUrl, listener, context.getString(R.string.sync_progress_preparing));
+                }
+                org.eclipse.jgit.lib.ProgressMonitor monitor = new org.eclipse.jgit.lib.EmptyProgressMonitor() {
+                    private String currentTaskTitle = "";
+                    private int currentTotalWork = 0;
+                    private int currentCompleted = 0;
+                    private long lastUiUpdateMs = 0L;
+
+                    @Override
+                    public void beginTask(String title, int totalWork) {
+                        currentTaskTitle = title != null ? title : "";
+                        currentTotalWork = totalWork;
+                        currentCompleted = 0;
+                        emitProgress(true);
+                    }
+
+                    @Override
+                    public void update(int completed) {
+                        currentCompleted += completed;
+                        emitProgress(false);
+                    }
+
+                    @Override
+                    public void endTask() {
+                        if (currentTotalWork > 0) {
+                            currentCompleted = currentTotalWork;
+                            emitProgress(true);
+                        }
+                    }
+
+                    private void emitProgress(boolean force) {
+                        long now = System.currentTimeMillis();
+                        if (!force && (now - lastUiUpdateMs < 150L)) {
+                            return;
+                        }
+                        lastUiUpdateMs = now;
+                        String text = formatCloneTaskProgress(context, currentTaskTitle, currentCompleted, currentTotalWork, 0L);
+                        notifyCloneProgress(sRemoteUrl, listener, text);
+                    }
+                };
+
+                try (Git git = Git.open(localDirFile)) {
+                    org.eclipse.jgit.api.FetchCommand fetchCmd = git.fetch()
+                            .setRemote("origin")
+                            .setDepth(safeDepth)
+                            .setProgressMonitor(monitor);
+                    if (sUserName != null && !sUserName.isEmpty() && sUserPassword != null && !sUserPassword.isEmpty()) {
+                        fetchCmd.setCredentialsProvider(new org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider(sUserName, sUserPassword));
+                    }
+                    fetchCmd.call();
+                }
+            }
+
+            syncFileTimestampsWithGit(context, sLocalDirectory, safeDepth, sRemoteUrl, listener);
+            sCloneProgressMap.remove(sRemoteUrl);
+            setGitLock(false);
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "restoreFileDatesByCommitDepth failed: " + e.getMessage(), e);
+            if (sRemoteUrl.toLowerCase().contains("github.com")) {
+                checkAndMarkGitHubAuthFailure(context, sRemoteUrl);
+            }
+            sCloneProgressMap.remove(sRemoteUrl);
+            setGitLock(false);
+            return false;
+        }
+    }
+
     public static void syncFileTimestampsWithGit(String sLocalDirectory) {
+        syncFileTimestampsWithGit(null, sLocalDirectory, Integer.MAX_VALUE, null, null);
+    }
+
+    public static void syncFileTimestampsWithGit(Context context, String sLocalDirectory, int maxCommits, String sRemoteUrl, SyncProgressListener listener) {
         if (sLocalDirectory == null || sLocalDirectory.isEmpty()) return;
         File gitDir = new File(sLocalDirectory, ".git");
         if (!gitDir.exists()) return;
@@ -729,27 +1086,40 @@ public class MyGitUtility {
 
             if (filesToUpdate.isEmpty()) return;
 
-            // Iterate through commits from newest to oldest
+            int totalFiles = filesToUpdate.size();
+            int initialRemaining = totalFiles;
+            if (listener != null) {
+                notifyCloneProgress(sRemoteUrl, listener, formatDateRestoreProgress(context, 0, totalFiles));
+            }
+
+            // Iterate through commits from newest to oldest up to maxCommits
+            int commitCount = 0;
+            int safeMaxCommits = Math.max(1, maxCommits);
             RevCommit commit;
             while ((commit = revWalk.next()) != null && !filesToUpdate.isEmpty()) {
+                commitCount++;
                 long commitTimeMs = ((long) commit.getCommitTime()) * 1000L;
-                if (commit.getParentCount() == 0) {
-                    // Initial commit
-                    try (TreeWalk initWalk = new TreeWalk(repository)) {
-                        initWalk.addTree(commit.getTree());
-                        initWalk.setRecursive(true);
-                        while (initWalk.next()) {
-                            String path = initWalk.getPathString();
-                            File f = filesToUpdate.remove(path);
-                            if (f != null) {
-                                f.setLastModified(commitTimeMs);
-                            }
-                        }
+                RevCommit parent = null;
+                if (commit.getParentCount() > 0 && commitCount < safeMaxCommits) {
+                    try {
+                        parent = revWalk.parseCommit(commit.getParent(0).getId());
+                    } catch (Exception missingParent) {
+                        parent = null; // Reached shallow boundary where parent commit object is not downloaded
+                    }
+                }
+
+                if (parent == null) {
+                    // Initial commit or shallow boundary commit or reached maxCommits limit
+                    for (File f : filesToUpdate.values()) {
+                        f.setLastModified(commitTimeMs);
+                    }
+                    filesToUpdate.clear();
+                    if (listener != null) {
+                        notifyCloneProgress(sRemoteUrl, listener, formatDateRestoreProgress(context, totalFiles, totalFiles));
                     }
                     break;
                 }
 
-                RevCommit parent = revWalk.parseCommit(commit.getParent(0).getId());
                 try (TreeWalk diffWalk = new TreeWalk(repository)) {
                     diffWalk.addTree(parent.getTree());
                     diffWalk.addTree(commit.getTree());
@@ -763,8 +1133,12 @@ public class MyGitUtility {
                         }
                     }
                 }
+                if (listener != null) {
+                    int updatedFiles = initialRemaining - filesToUpdate.size();
+                    notifyCloneProgress(sRemoteUrl, listener, formatDateRestoreProgress(context, updatedFiles, totalFiles));
+                }
             }
-            Log.d(TAG, "File timestamps synced with Git commit history for " + sLocalDirectory);
+            Log.d(TAG, "File timestamps synced with Git commit history (" + commitCount + " commits walked) for " + sLocalDirectory);
         } catch (Exception e) {
             Log.e(TAG, "Failed to sync file timestamps with git", e);
         }
@@ -772,21 +1146,15 @@ public class MyGitUtility {
 
     public static void syncFileTimestampsAsync(final Context context, final String sLocalDirectory, final String sRemoteUrl, final String token) {
         if (sLocalDirectory == null || sLocalDirectory.isEmpty()) return;
-        // 1. Fast local sync with HEAD commit time (~2ms)
+        // Fast local sync with local commit history
         syncFileTimestampsWithGit(sLocalDirectory);
-
-        // 2. Background async sync via GitHub GraphQL API with Commit hash marker
-        if (sRemoteUrl != null && sRemoteUrl.contains("github.com") && token != null && !token.isEmpty()) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    syncFileTimestampsFromGitHubApi(sLocalDirectory, sRemoteUrl, token);
-                }
-            }).start();
-        }
     }
 
     public static void syncFileTimestampsFromGitHubApi(String sLocalDirectory, String sRemoteUrl, String token) {
+        syncFileTimestampsFromGitHubApi(MyApplication.getAppContext(), sLocalDirectory, sRemoteUrl, token, null);
+    }
+
+    public static void syncFileTimestampsFromGitHubApi(Context context, String sLocalDirectory, String sRemoteUrl, String token, SyncProgressListener listener) {
         if (sRemoteUrl == null || !sRemoteUrl.contains("github.com") || sLocalDirectory == null || token == null || token.isEmpty()) return;
         try {
             File gitDir = new File(sLocalDirectory, ".git");
@@ -830,11 +1198,15 @@ public class MyGitUtility {
             collectFiles(workingDir, allFiles);
             if (allFiles.isEmpty()) return;
 
-            // Batch files in chunks of 100 to minimize HTTP round-trips
-            int chunkSize = 100;
-            for (int i = 0; i < allFiles.size(); i += chunkSize) {
-                List<File> chunk = allFiles.subList(i, Math.min(i + chunkSize, allFiles.size()));
+            // Batch files in chunks of 50 to provide responsive progress updates and minimize HTTP round-trips
+            int totalFiles = allFiles.size();
+            notifyCloneProgress(sRemoteUrl, listener, formatDateRestoreProgress(context, 0, totalFiles));
+            int chunkSize = 50;
+            for (int i = 0; i < totalFiles; i += chunkSize) {
+                int endIdx = Math.min(i + chunkSize, totalFiles);
+                List<File> chunk = allFiles.subList(i, endIdx);
                 syncChunkViaGraphQL(owner, repoName, workingDir, chunk, token);
+                notifyCloneProgress(sRemoteUrl, listener, formatDateRestoreProgress(context, endIdx, totalFiles));
             }
 
             if (!currentHeadSha.isEmpty()) {

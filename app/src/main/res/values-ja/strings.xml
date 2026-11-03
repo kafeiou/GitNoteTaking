@@ -246,4 +246,17 @@
     <string name="github_reauth_button">GitHub Webで再ログイン</string>
     <string name="github_update_auth_title">リポジトリ認証の更新</string>
     <string name="github_update_auth_confirm_msg">ノート「%1$s」はすでに端末に存在します。現在の認証でTokenを更新しますか？</string>
+    <string name="main_notes_auth_expired">(認証期限切れ)</string>
+
+    <!-- Real-time Clone & Sync Progress strings -->
+    <string name="sync_progress_preparing">同期の準備中...</string>
+    <string name="sync_progress_receiving">ノートデータをダウンロード中... %1$d%% (%2$d/%3$d)</string>
+    <string name="sync_progress_resolving">データ差分を解析中... %1$d%% (%2$d/%3$d)</string>
+    <string name="sync_progress_checking_out">ノートファイルを書き込み中... %1$d%% (%2$d/%3$d)</string>
+    <string name="sync_progress_restoring_dates">ファイルの日時を復元中... %1$d%% (%2$d/%3$d)</string>
+    <string name="main_notes_sync_file_dates">ファイルの実際の日時を更新</string>
+    <string name="dialog_sync_file_dates_title">ファイルの実際の日時を更新</string>
+    <string name="dialog_sync_file_dates_msg">ローカル同期は軽量な浅い複製 (depth = 1) を使用しているため、サーバーから直近のコミット履歴を取得して各ファイルの最終更新日時を復元します。\n\n⚠️ 注意：コミット数が多い場合、パフォーマンスが低下し処理に時間がかかることがあります。\n\n取得する直近のコミット数：</string>
+    <string name="toast_sync_file_dates_success">ファイルの日時を更新しました！</string>
+    <string name="toast_sync_file_dates_failed">ファイル日時の更新に失敗しました</string>
 </resources>

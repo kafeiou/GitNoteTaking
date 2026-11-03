@@ -246,4 +246,17 @@
     <string name="github_reauth_button">Re-login with GitHub Web</string>
     <string name="github_update_auth_title">Update Repository Authorization</string>
     <string name="github_update_auth_confirm_msg">Note \"%1$s\" already exists on this device. Update its token with the current authorization?</string>
+    <string name="main_notes_auth_expired">(Auth Expired)</string>
+
+    <!-- Real-time Clone & Sync Progress strings -->
+    <string name="sync_progress_preparing">Preparing repository sync...</string>
+    <string name="sync_progress_receiving">Downloading note data... %1$d%% (%2$d/%3$d)</string>
+    <string name="sync_progress_resolving">Resolving data deltas... %1$d%% (%2$d/%3$d)</string>
+    <string name="sync_progress_checking_out">Writing note files... %1$d%% (%2$d/%3$d)</string>
+    <string name="sync_progress_restoring_dates">Restoring file dates... %1$d%% (%2$d/%3$d)</string>
+    <string name="main_notes_sync_file_dates">Restore True File Dates</string>
+    <string name="dialog_sync_file_dates_title">Restore True File Dates</string>
+    <string name="dialog_sync_file_dates_msg">Because local sync uses shallow depth (depth = 1), the system will fetch the most recent commits from the remote repository to compare and restore each file\'s true last-modified date.\n\n⚠️ Note: Fetching a large number of commits may degrade performance and take longer to complete.\n\nNumber of recent commits to check:</string>
+    <string name="toast_sync_file_dates_success">File dates updated successfully!</string>
+    <string name="toast_sync_file_dates_failed">Failed to update file dates</string>
 </resources>

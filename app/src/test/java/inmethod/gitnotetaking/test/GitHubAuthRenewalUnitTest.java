@@ -8,6 +8,9 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 
+import inmethod.gitnotetaking.db.MyDbHelper;
+import inmethod.gitnotetaking.db.RemoteGit;
+import inmethod.gitnotetaking.db.RemoteGitDAO;
 import inmethod.gitnotetaking.utility.GitHubAuthManager;
 import inmethod.gitnotetaking.utility.MyGitUtility;
 
@@ -115,7 +118,18 @@ public class GitHubAuthRenewalUnitTest {
                 "github_reauth_success",
                 "github_reauth_button",
                 "github_update_auth_title",
-                "github_update_auth_confirm_msg"
+                "github_update_auth_confirm_msg",
+                "main_notes_auth_expired",
+                "sync_progress_preparing",
+                "sync_progress_receiving",
+                "sync_progress_resolving",
+                "sync_progress_checking_out",
+                "sync_progress_restoring_dates",
+                "main_notes_sync_file_dates",
+                "dialog_sync_file_dates_title",
+                "dialog_sync_file_dates_msg",
+                "toast_sync_file_dates_success",
+                "toast_sync_file_dates_failed"
         );
 
         for (String relPath : localePaths) {
@@ -175,5 +189,121 @@ public class GitHubAuthRenewalUnitTest {
         String manifestContent = new String(Files.readAllBytes(manifestFile.toPath()), StandardCharsets.UTF_8);
         assertTrue("MainActivity launchMode 應為 singleTask 確保 OAuth Callback 重定向安全",
                 manifestContent.contains("android:launchMode=\"singleTask\""));
+    }
+
+    /**
+     * 6. 測試 Release R8 模糊化最佳化與 ProGuard 規則配置
+     */
+    @Test
+    public void testR8ObfuscationAndProguardRules() throws Exception {
+        File root = getProjectRootDir();
+
+        File buildGradleFile = new File(root, "app/build.gradle");
+        assertTrue("app/build.gradle 必須存在", buildGradleFile.exists());
+        String gradleContent = new String(Files.readAllBytes(buildGradleFile.toPath()), StandardCharsets.UTF_8);
+        assertTrue("Release 必須啟用 minifyEnabled true", gradleContent.contains("minifyEnabled true"));
+        assertTrue("Release 必須啟用 shrinkResources true", gradleContent.contains("shrinkResources true"));
+
+        File proguardFile = new File(root, "app/proguard-rules.pro");
+        assertTrue("app/proguard-rules.pro 必須存在", proguardFile.exists());
+        String proguardContent = new String(Files.readAllBytes(proguardFile.toPath()), StandardCharsets.UTF_8);
+        assertFalse("ProGuard 不得包含 -dontobfuscate 以符合 Google Play DEX 模糊化規範",
+                proguardContent.contains("-dontobfuscate"));
+        assertTrue("ProGuard 必須保留 JGit TranslationBundle 子類別",
+                proguardContent.contains("org.eclipse.jgit.nls.TranslationBundle"));
+    }
+
+    /**
+     * 7. 測試資料庫 v3 認證類型標記 (AUTH_TYPE) 與智慧推斷邏輯
+     */
+    @Test
+    public void testDatabaseAuthTypeModelAndInference() {
+        assertEquals(3, MyDbHelper.Companion.getVERSION());
+        assertEquals("AUTH_TYPE", RemoteGitDAO.Companion.getAUTH_TYPE_COLUMN());
+        assertTrue(RemoteGitDAO.Companion.getCREATE_TABLE().contains("AUTH_TYPE TEXT NOT NULL DEFAULT 'PASSWORD'"));
+
+        assertEquals("PASSWORD", RemoteGit.AUTH_TYPE_PASSWORD);
+        assertEquals("WEB_OAUTH", RemoteGit.AUTH_TYPE_WEB_OAUTH);
+
+        // GitHub Web OAuth Token (ghu_... 或一般 OAuth 權杖) 應推斷為 WEB_OAUTH
+        assertEquals(RemoteGit.AUTH_TYPE_WEB_OAUTH,
+                RemoteGit.inferAuthType("https://github.com/user/notes.git", "ghu_1234567890abcdef"));
+        assertEquals(RemoteGit.AUTH_TYPE_WEB_OAUTH,
+                RemoteGit.inferAuthType("https://github.com/user/notes.git", "gho_abcdef123456"));
+
+        // GitHub PAT (ghp_ / github_pat_) 應推斷為 PASSWORD
+        assertEquals(RemoteGit.AUTH_TYPE_PASSWORD,
+                RemoteGit.inferAuthType("https://github.com/user/notes.git", "ghp_classicToken123"));
+        assertEquals(RemoteGit.AUTH_TYPE_PASSWORD,
+                RemoteGit.inferAuthType("https://github.com/user/notes.git", "github_pat_fineGrainedToken456"));
+
+        // 非 GitHub URL 或空密碼應推斷為 PASSWORD
+        assertEquals(RemoteGit.AUTH_TYPE_PASSWORD,
+                RemoteGit.inferAuthType("https://gitlab.com/user/notes.git", "glpat-12345"));
+        assertEquals(RemoteGit.AUTH_TYPE_PASSWORD,
+                RemoteGit.inferAuthType("https://github.com/user/notes.git", ""));
+        assertEquals(RemoteGit.AUTH_TYPE_PASSWORD,
+                RemoteGit.inferAuthType(null, null));
+
+        // RemoteGit 實體方法驗證
+        RemoteGit webRepo = new RemoteGit();
+        webRepo.setUrl("https://github.com/user/notes.git");
+        webRepo.setAuth_type(RemoteGit.AUTH_TYPE_WEB_OAUTH);
+        assertTrue(webRepo.isWebOAuth());
+
+        RemoteGit patRepo = new RemoteGit();
+        patRepo.setUrl("https://github.com/user/notes.git");
+        patRepo.setAuth_type(RemoteGit.AUTH_TYPE_PASSWORD);
+        assertFalse(patRepo.isWebOAuth());
+    }
+
+    /**
+     * 8. 測試首次同步 (Clone depth=1) 階段進度與檔案真實日期還原進度格式化
+     */
+    @Test
+    public void testCloneProgressAndDateRestoreFormatting() {
+        // 前置準備階段 (totalWork <= 0)
+        assertEquals("Preparing repository sync...",
+                MyGitUtility.formatCloneTaskProgress(null, "remote: Counting objects", 0, 0, 0L));
+
+        // 階段 1: Receiving objects (不顯示 0B 容量，僅顯示精確百分比與物件進度)
+        long tenMb = 10L * 1024L * 1024L;
+        String recvMsg = MyGitUtility.formatCloneTaskProgress(null, "Receiving objects", 210, 500, tenMb);
+        assertEquals("Downloading note data... 42% (210/500)", recvMsg);
+
+        // 階段 2: Resolving deltas
+        String resolveMsg = MyGitUtility.formatCloneTaskProgress(null, "Resolving deltas", 90, 120, 0L);
+        assertEquals("Resolving data deltas... 75% (90/120)", resolveMsg);
+
+        // 階段 3: Checking out files
+        String checkoutMsg = MyGitUtility.formatCloneTaskProgress(null, "Checking out files", 280, 350, 0L);
+        assertEquals("Writing note files... 80% (280/350)", checkoutMsg);
+
+        // 階段 4: 還原檔案真實日期
+        String dateMsg0 = MyGitUtility.formatDateRestoreProgress(null, 0, 350);
+        assertEquals("Restoring file dates... 0% (0/350)", dateMsg0);
+        String dateMsgMid = MyGitUtility.formatDateRestoreProgress(null, 200, 350);
+        assertEquals("Restoring file dates... 57% (200/350)", dateMsgMid);
+        String dateMsgDone = MyGitUtility.formatDateRestoreProgress(null, 350, 350);
+        assertEquals("Restoring file dates... 100% (350/350)", dateMsgDone);
+    }
+
+    /**
+     * 9. 測試重新 Clone 前清理殘留非空目錄 (無 .git 子目錄時仍能完整清除)
+     */
+    @Test
+    public void testCleanDirectoryForCloneRemovesLeftoverNonGitFiles() throws Exception {
+        File tempDir = Files.createTempDirectory("test_leftover_notes_").toFile();
+        File subDir = new File(tempDir, "subfolder");
+        assertTrue(subDir.mkdirs());
+        File leftoverNote = new File(subDir, "note1.md");
+        Files.write(leftoverNote.toPath(), "residual content".getBytes(StandardCharsets.UTF_8));
+        leftoverNote.setReadOnly();
+
+        assertTrue("清理前目錄應存在且非空", tempDir.exists() && subDir.exists() && leftoverNote.exists());
+        boolean cleaned = MyGitUtility.cleanDirectoryForClone(tempDir);
+        assertTrue("cleanDirectoryForClone 應回傳 true", cleaned);
+        assertFalse("清理後目標目錄應已完全移除，防止 JGit 拋出 already exists and is not an empty directory",
+                tempDir.exists());
     }
 }

@@ -82,6 +82,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 
+import inmethod.gitnotetaking.db.RemoteGit;
+import inmethod.gitnotetaking.db.RemoteGitDAO;
+import inmethod.gitnotetaking.utility.GitHubAuthManager;
 import inmethod.gitnotetaking.utility.MyGitUtility;
 import inmethod.gitnotetaking.view.FileExplorerListAdapter;
 
@@ -108,7 +111,32 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
     private static String sSearchText = "";
     PickiT pickiT;
     EditText aEditTextSearch;
+    private boolean bHasPromptedAuthInSession = false;
+    private AlertDialog mAuthDialog = null;
+    private static java.lang.ref.WeakReference<FileExplorerActivity> sActiveInstance = new java.lang.ref.WeakReference<>(null);
+    private static final java.util.Set<String> sForceAuthPromptUrls = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private static final java.util.Map<String, Long> sLastSyncTimeMap = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public static void onReauthSyncCompleted(String remoteUrl) {
+        if (remoteUrl != null) {
+            sLastSyncTimeMap.put(remoteUrl, System.currentTimeMillis());
+            sForceAuthPromptUrls.remove(remoteUrl);
+        }
+    }
+
+    public static void notifyAuthFailedFromChild(final String remoteUrl) {
+        if (remoteUrl == null) return;
+        sForceAuthPromptUrls.add(remoteUrl);
+        final FileExplorerActivity active = sActiveInstance.get();
+        if (active != null && !active.isFinishing() && !active.isDestroyed() && remoteUrl.equals(active.sGitRemoteUrl)) {
+            active.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    active.checkAndPromptIfAuthFailed(true);
+                }
+            });
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -176,7 +204,37 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
             }
         });
         getDirFromRoot(m_curDir);
+        sActiveInstance = new java.lang.ref.WeakReference<>(this);
+        if (sGitRemoteUrl != null && sForceAuthPromptUrls.remove(sGitRemoteUrl)) {
+            bHasPromptedAuthInSession = false;
+        }
         triggerGitSync(false);
+    }
+
+    private void checkAndPromptIfAuthFailed(boolean forcePrompt) {
+        if (isFinishing() || isDestroyed() || sGitRemoteUrl == null) return;
+        if (!forcePrompt && bHasPromptedAuthInSession) return;
+        if (mAuthDialog != null && mAuthDialog.isShowing()) return;
+
+        RemoteGitDAO dao = new RemoteGitDAO(activity);
+        final RemoteGit r = dao.getByURL(sGitRemoteUrl);
+        dao.close();
+        if (r != null && r.getStatus() == MyGitUtility.GIT_STATUS_AUTH_FAILED) {
+            bHasPromptedAuthInSession = true;
+            sForceAuthPromptUrls.remove(sGitRemoteUrl);
+            mAuthDialog = new AlertDialog.Builder(activity)
+                    .setTitle(R.string.github_auth_expired_title)
+                    .setMessage(getString(R.string.github_auth_expired_msg, r.getNickname()))
+                    .setPositiveButton(R.string.github_auth_relogin_and_sync, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            MainActivity.setPendingReauthContext(r.getUrl(), sGitRootDir, sGitName, true);
+                            GitHubAuthManager.getInstance().startOAuthWebFlow(activity, GitHubAuthManager.buildReauthState((int) r.getId()));
+                        }
+                    })
+                    .setNegativeButton(R.string.dialog_cancel, null)
+                    .show();
+        }
     }
 
     private void triggerGitSync(boolean isManual) {
@@ -196,6 +254,16 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
             Long lastTime = sLastSyncTimeMap.get(sGitRemoteUrl);
             if (lastTime != null && cooldownMs > 0 && (System.currentTimeMillis() - lastTime < cooldownMs)) {
                 Log.d(TAG, "Skipping background auto-sync (cooldown active: " + (System.currentTimeMillis() - lastTime) + "ms / " + cooldownMs + "ms)");
+                if (!bHasPromptedAuthInSession && MyApplication.isNetworkConnected()) {
+                    new Thread(() -> {
+                        RemoteGit r = MyGitUtility.getRemoteGit(activity, sGitRemoteUrl);
+                        if (r != null && (r.isWebOAuth() || sGitRemoteUrl.toLowerCase().contains("github.com"))) {
+                            if (r.getStatus() == MyGitUtility.GIT_STATUS_AUTH_FAILED || MyGitUtility.checkAndMarkGitHubAuthFailure(activity, sGitRemoteUrl)) {
+                                runOnUiThread(() -> checkAndPromptIfAuthFailed(false));
+                            }
+                        }
+                    }).start();
+                }
                 return;
             }
         }
@@ -212,13 +280,17 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
                     hadAutoCommit = MyGitUtility.autoCommitIfDirtyWithMessage(activity, sGitRemoteUrl, "Auto-commit: " + timestamp);
                 }
 
-                // 步驟 2：執行安全 Pull
+                // 步驟 2：執行安全 Pull（內部會主動檢查 GitHub 網頁認證 Token 是否 401 過期）
                 int pullResult = MyGitUtility.pullWithResult(activity, sGitRemoteUrl);
                 final boolean wasAutoCommitted = hadAutoCommit;
+                final RemoteGit afterPullRepo = MyGitUtility.getRemoteGit(activity, sGitRemoteUrl);
+                final boolean isAuthFailed = (afterPullRepo != null && afterPullRepo.getStatus() == MyGitUtility.GIT_STATUS_AUTH_FAILED);
 
                 runOnUiThread(() -> {
                     if (!isFinishing()) {
-                        if (pullResult == MyGitUtility.PULL_RESULT_UPDATED) {
+                        if (isAuthFailed) {
+                            checkAndPromptIfAuthFailed(isManual);
+                        } else if (pullResult == MyGitUtility.PULL_RESULT_UPDATED) {
                             Toast.makeText(activity, getString(R.string.toast_pull_updated), Toast.LENGTH_SHORT).show();
                             getDirFromRoot(m_curDir);
                         } else if (isManual) {
@@ -254,7 +326,10 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
                     if (needPush && MyApplication.isNetworkConnected()) {
                         try {
                             Log.d(TAG, "Auto-pushing changes after entry sync for: " + sGitRemoteUrl);
-                            MyGitUtility.push(activity, sGitRemoteUrl);
+                            boolean pushOk = MyGitUtility.push(activity, sGitRemoteUrl);
+                            if (!pushOk) {
+                                runOnUiThread(() -> checkAndPromptIfAuthFailed(true));
+                            }
                         } catch (Exception e) {
                             Log.w(TAG, "Auto-push failed for: " + sGitRemoteUrl, e);
                         }
@@ -313,7 +388,7 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
                     @Override
                     public void run() {
                         if (MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, MyApplication.getAppContext().getString(R.string.view_file_delete_attachment_file_commit) + sDeleteFilesName)) {
-                            MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl);
+                            if (!MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl)) { runOnUiThread(() -> checkAndPromptIfAuthFailed(true)); }
                         }
                     }
                 }).start();
@@ -789,7 +864,7 @@ Log.d(TAG,"m_item name = "+m_item.get(position)+",position number = "+ position+
                                     String commitMsg = "<" + newFileName + ">";
                                     boolean bCommit = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, commitMsg);
                                     if (sGitRemoteUrl.indexOf("local") == -1 && bCommit) {
-                                        MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl);
+                                        if (!MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl)) { runOnUiThread(() -> checkAndPromptIfAuthFailed(true)); }
                                     }
                                 } catch (Exception ee) {
                                     ee.printStackTrace();
@@ -976,7 +1051,7 @@ Log.d(TAG,"m_item name = "+m_item.get(position)+",position number = "+ position+
 
                                     boolean bCommit = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, MyApplication.getAppContext().getString(R.string.view_file_add_attachment_file_commit) + sDestFileNameString);
                                     if (sGitRemoteUrl.indexOf("local") == -1 && bCommit) {
-                                        MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl);
+                                        if (!MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl)) { runOnUiThread(() -> checkAndPromptIfAuthFailed(true)); }
                                     }
                                 } catch (Exception e) {
                                     e.printStackTrace();

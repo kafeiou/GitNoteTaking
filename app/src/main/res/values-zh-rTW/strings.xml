@@ -246,4 +246,17 @@
     <string name="github_reauth_button">透過 GitHub 網頁重新登入</string>
     <string name="github_update_auth_title">更新儲存庫授權</string>
     <string name="github_update_auth_confirm_msg">筆記「%1$s」已存在於手機中。是否使用當前授權更新其 Token？</string>
+    <string name="main_notes_auth_expired">(授權已過期)</string>
+
+    <!-- Real-time Clone & Sync Progress strings -->
+    <string name="sync_progress_preparing">正在準備同步資料...</string>
+    <string name="sync_progress_receiving">正在下載筆記資料... %1$d%% (%2$d/%3$d)</string>
+    <string name="sync_progress_resolving">正在解析資料差異... %1$d%% (%2$d/%3$d)</string>
+    <string name="sync_progress_checking_out">正在寫入筆記檔案... %1$d%% (%2$d/%3$d)</string>
+    <string name="sync_progress_restoring_dates">正在還原檔案真實日期... %1$d%% (%2$d/%3$d)</string>
+    <string name="main_notes_sync_file_dates">更新檔案真實日期</string>
+    <string name="dialog_sync_file_dates_title">更新檔案真實日期</string>
+    <string name="dialog_sync_file_dates_msg">由於本機採用輕量化淺層同步 (depth = 1)，系統將從遠端擷取最近的 Commit 歷史紀錄以比對並還原各檔案的真實最後修改日期。\n\n⚠️ 注意：若 Commit 數量較多，可能會因歷史資料量龐大而造成效能不彰、耗時較長。\n\n請輸入要回溯比對的 Commit 數量：</string>
+    <string name="toast_sync_file_dates_success">檔案真實日期更新完成！</string>
+    <string name="toast_sync_file_dates_failed">更新檔案真實日期失敗</string>
 </resources>

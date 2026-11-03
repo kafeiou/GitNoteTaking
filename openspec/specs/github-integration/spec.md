@@ -60,11 +60,15 @@ flowchart TD
 - **THEN** 系統以 `depth = 1` 完成 Clone，完成 GraphQL 時間校正後直接在主畫面顯示
 
 ### Requirement: GraphQL 單次批次 Commit 時間同步
-在淺層下載（`depth = 1`）的前提下，系統 MUST 透過 GitHub GraphQL API 批次查詢每個檔案在遠端之真實最後 Commit 時間（`committedDate`），並將時間寫入本機檔案 `setLastModified(epochMilli)`。所有時間同步作業 MUST 在進度對話框關閉前 100% 完成。
+在淺層下載（`depth = 1`）的前提下，首次拉取（Clone）與日常同步（Pull）MUST 僅執行快速的本地 `HEAD` 時間初始化以確保極速同步體驗；當使用者需要還原歷史真實修改時間時，系統 MUST 在主畫面長按選單提供【更新檔案真實日期】功能，先彈出效能影響提醒與可自訂回溯 Commit 數量輸入框（預設 `300` 筆），確認後透過 JGit `fetch(depth = N)` 與本地 Commit Tree Diff 比對更新各檔案 `setLastModified(epochMilli)`，並於等待對話框即時顯示進度百分比與完成數量。
 
 #### Scenario: 筆記檔案時間校正
 - **WHEN** GitHub 筆記 Clone 完成
-- **THEN** 系統發送單次 GraphQL 請求取得各檔案最後 Commit 時間並更新檔案屬性
+- **THEN** 系統先以 `depth = 1` 最新 Commit 時間快速完成初始化並顯示於主畫面
+
+#### Scenario: 長按選單手動觸發自訂 Commit 數量之檔案真實日期更新
+- **WHEN** 使用者在主畫面長按遠端筆記並點選「更新檔案真實日期」，確認效能提醒並輸入回溯 Commit 數量（預設 300）
+- **THEN** 系統擷取最近 N 筆 Commit 並由新到舊比對檔案異動以更新真實修改日期，期間於等待對話框即時顯示處理進度，完成後關閉對話框並提示成功
 
 ### Requirement: 本地端歷史紀錄瘦身 (Purge to Depth = 1) (實驗中)
 系統 MUST 在「設定（Settings）」最下方提供【歷史紀錄瘦身 (保留單一版本) (實驗中)】功能。使用者點擊並確認後，系統 MUST 在本地離線建立 Orphan Root Commit，將本機歷史紀錄重置為單一版本（`depth = 1`）並執行垃圾回收（GC），釋放手機磁碟空間。執行過程 MUST 具備確認對話框與請稍候進度對話框防呆機制。
@@ -169,3 +173,83 @@ flowchart TD
 #### Scenario: 提供 4 國語系 FAQ 說明文件
 - **WHEN** 開發者或使用者查閱專案說明
 - **THEN** 能在 `docs/FAQ.md`、`docs/FAQ_zh-CN.md`、`docs/FAQ_en.md` 與 `docs/FAQ_ja.md` 取得完整排錯說明與 OAuth App 永不過期之設定指引
+
+### Requirement: 資料庫明確記錄 GitHub 網頁認證類型與無損遷移
+系統 MUST 在本地 SQLite `REMOTE_GIT` 資料表中維護 `AUTH_TYPE` 欄位，明確區分該儲存庫是否透過「GitHub 網頁認證（`WEB_OAUTH`）」或「一般密碼/個人存取權杖（`PASSWORD`）」建立；於資料庫版本升級時 MUST 採用 `ALTER TABLE` 無損升級，並自動將既有非 PAT 之 GitHub 儲存庫標記為 `WEB_OAUTH`。
+
+#### Scenario: 資料庫升級自動保留資料並標記既有網頁認證儲存庫
+- **WHEN** 使用者將 App 更新至包含資料庫 v3 之版本並啟動應用程式
+- **THEN** 系統透過 `ALTER TABLE` 新增 `AUTH_TYPE` 欄位而不刪除任何既有儲存庫紀錄，並將既有 `github.com` 且非 `ghp_` / `github_pat_` 開頭之儲存庫自動標記為 `WEB_OAUTH`
+
+#### Scenario: 透過網頁 OAuth 建立或重新授權時標記為 WEB_OAUTH
+- **WHEN** 使用者透過 GitHub 網頁 OAuth 建立新筆記或重新取得授權
+- **THEN** 系統將該筆 `RemoteGit` 紀錄的 `auth_type` 設為 `WEB_OAUTH` 並寫入資料庫
+
+### Requirement: 進入筆記與編輯存檔時主動檢查網頁認證過期並引導重獲授權
+當使用者點擊進入筆記目錄（`FileExplorerActivity`）或於筆記內編輯存檔觸發同步時，系統 MUST 主動檢查該儲存庫是否為 GitHub 網頁認證且 Token 已過期（401 Unauthorized）；若已過期，系統 MUST 立即在當前畫面彈出對話框主動告知並引導重新取得網頁認證，且於授權完成後自動返回原筆記目錄完成同步。
+
+```mermaid
+flowchart TD
+    A[使用者點擊進入筆記目錄 FileExplorerActivity] --> B{是否為 GitHub 儲存庫?}
+    B -->|否| C[載入本地目錄列表]
+    B -->|是| D[背景主動檢查 GitHub API Token 有效性與遠端同步]
+    D --> E{Token 是否 401 過期?}
+    E -->|未過期 200 OK| F[正常執行 Pull / Push 雙向同步]
+    E -->|已過期 401| G[更新 DB 狀態為 GIT_STATUS_AUTH_FAILED]
+    G --> H{本瀏覽會話是否已點選稍後且無新修改?}
+    H -->|是| I[不重複彈窗打擾，允許離線閱讀]
+    H -->|否，首次進入或剛存檔修改| J[在當前畫面主動彈出「GitHub 授權已失效」對話框]
+    J --> K{使用者選擇}
+    K -->|取消 / 稍後| L[標記本會話已提示，保留本地修改]
+    K -->|重新登入並同步| M[記錄原目錄上下文並開啟 GitHub 網頁 OAuth]
+    M --> N[授權成功回跳更新 Token 與 WEB_OAUTH 標記]
+    N --> O[自動返回原 FileExplorerActivity 並完成同步刷新]
+```
+
+#### Scenario: 點擊進入已過期的網頁認證筆記時主動彈窗
+- **WHEN** 使用者在主畫面點擊進入一個使用 GitHub 網頁認證（`WEB_OAUTH`）的筆記目錄，且該 Token 已過期（回傳 401）
+- **THEN** 系統即使在 Public 儲存庫或自動同步冷卻期間，仍主動偵測出 401 過期並在 `FileExplorerActivity` 彈出「GitHub 授權已失效」對話框引導重新授權
+
+#### Scenario: 點選稍後閱讀文章不重複打擾、存檔修改時再次提醒
+- **WHEN** 使用者在進入筆記目錄時對過期對話框點選「取消」，接著點開文章僅閱讀後按返回回到目錄
+- **THEN** 系統在同一次目錄瀏覽會話中不再重複彈窗；但若使用者編輯文章並存檔（觸發推送失敗）或退回主畫面重新進入該筆記，系統立即再次彈出重新授權提醒
+
+#### Scenario: 在筆記目錄完成重新授權後自動回到原目錄
+- **WHEN** 使用者在 `FileExplorerActivity` 的過期提醒視窗中點擊【重新登入並同步】並完成網頁授權
+- **THEN** 系統自動更新 Token、執行同步，並自動跳轉回原本正在瀏覽的 `FileExplorerActivity` 目錄畫面
+
+### Requirement: 主畫面清單顯示授權過期狀態提示
+當儲存庫狀態為 `GIT_STATUS_AUTH_FAILED` (-5) 時，主畫面（`MainActivity` / `GitList`）MUST 以醒目警告色標示該儲存庫為授權已過期狀態。
+
+#### Scenario: 主畫面標示授權過期之筆記
+- **WHEN** 某個 GitHub 筆記被偵測到認證過期（狀態碼 `-5`）且使用者查看主畫面清單
+- **THEN** 該筆記項目以醒目顏色顯示名稱並附加「(授權已過期)」提示文字
+
+### Requirement: 首次同步 (Clone) 與檔案真實日期還原即時進度回報
+系統在執行首次下載（Clone `depth = 1`）與手動更新檔案真實日期時，MUST 移除固定計時輪播文字，改透過 JGit `ProgressMonitor` 與 Commit 比對回呼，即時於等待對話框（及主畫面複製中狀態）呈現真實同步進度：
+1. **下載資料階段 (`Receiving objects`)**：顯示進度百分比與物件進度（`已完成/總物件數`），不顯示不準確之 `0 B` 容量。
+2. **解析差異階段 (`Resolving deltas`)**：顯示進度百分比與完成數量（`已完成/總數`）。
+3. **寫入檔案階段 (`Checking out files`)**：顯示進度百分比與檔案數量（`已完成/總檔案數`）。
+4. **真實日期還原階段 (`SyncFileDates`)**：於長按選單觸發時，顯示比對最近 N 筆 Commit 還原檔案真實修改日期之進度百分比與檔案數量（`已完成/總檔案數`）。
+
+```mermaid
+flowchart TD
+    A[開始首次同步 Clone depth=1] --> B[顯示等待對話框: 正在準備同步資料...]
+    B --> C[JGit CloneCommand 掛載自訂 ProgressMonitor]
+    C --> D["階段 1 (Receiving objects):<br/>正在下載筆記資料... X% (completed/total)"]
+    D --> E["階段 2 (Resolving deltas):<br/>正在解析資料差異... X% (completed/total)"]
+    E --> F["階段 3 (Checking out files):<br/>正在寫入筆記檔案... X% (completed/total)"]
+    F --> G[完成本地 HEAD 時間快速初始化並關閉對話框]
+    G --> H[使用者於主畫面長按選單點選「更新檔案真實日期」]
+    H --> I["彈出效能提醒與回溯 Commit 數量輸入框 (預設 300)"]
+    I --> J["JGit fetch(depth=N) + 逐筆 Commit Tree Diff 比對:<br/>正在還原檔案真實日期... X% (updated/totalFiles)"]
+    J --> K[完成真實日期還原並彈出完成提示]
+```
+
+#### Scenario: 首次同步大容量儲存庫時即時顯示下載物件進度
+- **WHEN** 使用者首次下載包含大量筆記與附件的遠端儲存庫
+- **THEN** 等待對話框即時更新顯示目前下載百分比與已接收物件數（例如 `正在下載筆記資料... 42% (210/500)`），不再以固定秒數盲目輪播文字或顯示 `0 B`
+
+#### Scenario: 長按觸發檔案真實日期還原時顯示即時進度
+- **WHEN** 使用者於主畫面長按選單點選「更新檔案真實日期」並確認回溯 Commit 數量（預設 300）
+- **THEN** 等待對話框即時顯示遠端歷史拉取進度與「正在還原檔案真實日期... X% (已處理檔案數/總檔案數)」，直到全數還原完畢才關閉對話框

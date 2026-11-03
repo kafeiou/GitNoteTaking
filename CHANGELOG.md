@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.011] - 2026-11-03
+
+### 🚀 New Features & Enhancements
+
+#### 1. 初次同步即時進度顯示與按需回溯檔案真實日期 (Real-Time Clone Progress & On-Demand File Date Restoration)
+- **JGit `ProgressMonitor` 即時進度回報**：移除初次下載時的靜態 10 秒輪播文字，改為即時回報 Git 階段、物件數量與完成百分比（如 `正在下載筆記資料... 42% (210/500)`、`正在解析資料差異...`、`正在寫入筆記檔案...`），並同步更新主畫面列表狀態列。
+- **長按選單新增「更新檔案真實日期」**：初次拉取維持 `depth = 1` 極速完成；主畫面長按筆記選單新增「更新檔案真實日期」功能，執行前提示大量 Commit 可能的效能影響，並支援自訂回溯 Commit 數量（預設 300 筆），透過 `git.fetch().setDepth(N)` 與差異樹比對精準還原各檔案最後修改時間。
+- **Clone 前殘留目錄智慧清理 (`cleanDirectoryForClone`)**：修復刪除筆記後若本地殘留非 `.git` 檔案時重新拉取發生 `Destination path already exists and is not an empty directory` 的問題。
+
+#### 2. GitHub 網頁授權 (Web OAuth) 主動過期偵測與全流程無縫重登 (Proactive GitHub Web OAuth Expiry Check)
+- **資料庫無損升級 (DB v3 `AUTH_TYPE`)**：於 `REMOTE_GIT` 資料表新增 `AUTH_TYPE` 欄位，精準區分 `WEB_OAUTH`（8 小時過期）與 `PAT` / `OTHER`。
+- **全流程主動 401 攔截与自動返回**：進入筆記（`FileExplorerActivity`）、新增/編輯/刪除檔案（`ViewFileActivity` / `FileExplorerActivity`）及主畫面長按選單（Push、Pull、自動 Commit、更新檔案真實日期、清理暫存檔案、顯示所有遠端分支）皆主動偵測 401 授權過期，一鍵網頁重登後自動同步並返回原筆記目錄。
+- **自動帶入 GitHub 預設作者資訊**：透過 GitHub OAuth 登入或已有儲存庫作者設定時，自動補齊預設 `GitAuthorName` 與 `GitAuthorEmail`，避免重複彈出首次使用設定提示。
+
+#### 3. R8 程式碼最佳化與混淆 (R8 Minification, Resource Shrinking & Obfuscation)
+- **Release 建置最佳化**：啟用 `minifyEnabled true`、`shrinkResources true` 與完整 R8 程式碼混淆規則，解決 Google Play Console DEX 程式碼模糊化警告並縮減 APK/AAB 體積。
+
 ## [4.010] - 2026-09-24
 
 ### 🚀 New Features & Enhancements

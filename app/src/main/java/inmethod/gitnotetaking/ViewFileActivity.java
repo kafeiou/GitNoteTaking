@@ -846,7 +846,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                                             if (bCommitStatus) {
                                                 if (sGitRemoteUrl.indexOf("local") == -1) {
                                                     if (bCommitStatus) {
-                                                        MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl);
+                                                        pushAndHandleAuthFailure();
                                                     }
                                                 }
 
@@ -886,7 +886,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                             if (bCommitStatus) {
                                 if (sGitRemoteUrl.indexOf("local") == -1) {
                                     if (bCommitStatus) {
-                                        MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl);
+                                        pushAndHandleAuthFailure();
                                     }
                                 }
 
@@ -999,7 +999,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                                         boolean bCommitStatus = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, commitMsg);
                                         if (bCommitStatus) {
                                             if (sGitRemoteUrl.indexOf("local") == -1) {
-                                                MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl);
+                                                pushAndHandleAuthFailure();
                                             }
                                         }
 
@@ -1036,7 +1036,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                             Thread.sleep(100);
                             if (bCommitStatus) {
                                 if (sGitRemoteUrl.indexOf("local") == -1) {
-                                    MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl);
+                                    pushAndHandleAuthFailure();
                                 }
                             }
                         } catch (InterruptedException e) {
@@ -1155,7 +1155,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
 
                                                     bCommit = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, MyApplication.getAppContext().getString(R.string.view_file_add_attachment_file_commit) + "\n" + sDestFileNameString);
                                                     if (sGitRemoteUrl.indexOf("local") == -1 && bCommit)
-                                                        MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl);
+                                                        pushAndHandleAuthFailure();
 
                                                 }
                                             }).start();
@@ -1284,7 +1284,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
 
                                         boolean bCommit = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, MyApplication.getAppContext().getString(R.string.view_file_add_attachment_file_commit) + "\n" + sDestFileNameString);
                                         if (sGitRemoteUrl.indexOf("local") == -1 && bCommit)
-                                            MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl);
+                                            pushAndHandleAuthFailure();
 
                                     } catch (Exception e) {
                                         e.printStackTrace();
@@ -1309,6 +1309,33 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
 
     @Override
     public void PickiTonMultipleCompleteListener(ArrayList<String> arrayList, boolean b, String s) {
+    }
+
+    private void pushAndHandleAuthFailure() {
+        boolean pushOk = MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl);
+        if (!pushOk) {
+            final inmethod.gitnotetaking.db.RemoteGit r = MyGitUtility.getRemoteGit(MyApplication.getAppContext(), sGitRemoteUrl);
+            if (r != null && r.getStatus() == MyGitUtility.GIT_STATUS_AUTH_FAILED) {
+                FileExplorerActivity.notifyAuthFailedFromChild(sGitRemoteUrl);
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    new AlertDialog.Builder(ViewFileActivity.this)
+                            .setTitle(R.string.github_auth_expired_title)
+                            .setMessage(getString(R.string.github_auth_expired_msg, r.getNickname()))
+                            .setPositiveButton(R.string.github_auth_relogin_and_sync, (dialog, which) -> {
+                                String localDir = MyGitUtility.getLocalGitDirectory(activity, sGitRemoteUrl);
+                                MainActivity.setPendingReauthContext(r.getUrl(), localDir, r.getNickname(), true);
+                                inmethod.gitnotetaking.utility.GitHubAuthManager.getInstance().startOAuthWebFlow(
+                                        ViewFileActivity.this,
+                                        inmethod.gitnotetaking.utility.GitHubAuthManager.buildReauthState((int) r.getId())
+                                );
+                                finish();
+                            })
+                            .setNegativeButton(R.string.dialog_cancel, null)
+                            .show();
+                });
+            }
+        }
 
     }
 

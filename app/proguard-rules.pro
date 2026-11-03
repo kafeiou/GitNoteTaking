@@ -5,29 +5,45 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Preserve line number information for debugging stack traces in Play Console
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+-keepattributes Signature,InnerClasses,EnclosingMethod,*Annotation*
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
--dontskipnonpubliclibraryclasses
--dontobfuscate
--forceprocessing
 -optimizationpasses 5
 
+# Keep Android Activity classes referenced in AndroidManifest
 -keep class * extends android.app.Activity
+
+# Keep JavaScriptInterface methods if any are used in WebView
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+# Keep database model and DAO classes
+-keep class inmethod.gitnotetaking.db.** { *; }
+
+# Keep JGit TranslationBundle subclasses and fields (loaded via reflection)
+-keep class * extends org.eclipse.jgit.nls.TranslationBundle {
+    *;
+}
+-keepclassmembers enum org.eclipse.jgit.** {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+# Suppress warnings from optional desktop/server references in JGit and local JARs
+-dontwarn org.eclipse.jgit.**
+-dontwarn inmethod.**
+-dontwarn java.lang.management.**
+-dontwarn org.ietf.jgss.**
+-dontwarn javax.**
+-dontwarn jakarta.**
+-dontwarn org.apache.**
+-dontwarn org.slf4j.**
+
+# Strip debug/verbose logs in release builds
 -assumenosideeffects class android.util.Log {
     public static *** d(...);
     public static *** v(...);
-    public static *** e(...);
-    public static *** i(...);
 }

@@ -104,8 +104,12 @@ public class ModifyRemoteGitActivity extends AppCompatActivity {
 
                     if (aValue != null) {
                         try {
+                            String oldPwd = aValue.getPwd();
                             aValue.setUid(sUid);
                             aValue.setPwd(sPwd);
+                            if (oldPwd == null || !oldPwd.equals(sPwd)) {
+                                aValue.setAuth_type(RemoteGit.inferAuthType(sRemoteURL, sPwd));
+                            }
                             aValue.setNickname(sNick);
                             aValue.setAuthor_name(sAuthorName);
                             aValue.setAuthor_email(sAuthorEmail);

@@ -81,6 +81,24 @@ public class MainActivity extends AppCompatActivity {
     AlertDialog waitDialog;
     private String currentLanguageSetting = null;
     private static String sPendingPushRemoteUrl = null;
+    private static String sPendingExplorerRootDir = null;
+    private static String sPendingExplorerGitName = null;
+    private static boolean sPendingReturnToExplorer = false;
+    private String mLastGitHubAuthType = RemoteGit.AUTH_TYPE_WEB_OAUTH;
+
+    public static void setPendingReauthContext(String remoteUrl, String explorerRootDir, String explorerGitName, boolean returnToExplorer) {
+        sPendingPushRemoteUrl = remoteUrl;
+        sPendingExplorerRootDir = explorerRootDir;
+        sPendingExplorerGitName = explorerGitName;
+        sPendingReturnToExplorer = returnToExplorer;
+    }
+
+    private static void clearPendingReauthContext() {
+        sPendingPushRemoteUrl = null;
+        sPendingExplorerRootDir = null;
+        sPendingExplorerGitName = null;
+        sPendingReturnToExplorer = false;
+    }
 
 
     public void showError(Exception ex)
@@ -151,32 +169,27 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void startLoadingMessageCycle() {
-        stopLoadingMessageCycle();
-        loadingMsgIndex = 0;
-        final int[] msgResIds = new int[]{
-                R.string.tv_please_wait,
-                R.string.tv_fetching_github_dates,
-                R.string.tv_syncing_timestamps
-        };
-        TextView tv = waitDialog != null ? waitDialog.findViewById(R.id.tv_loading_msg) : null;
-        if (tv != null) {
-            tv.setText(msgResIds[0]);
-        }
-        loadingMsgRunnable = new Runnable() {
+    private void updateWaitDialogMessage(final String message) {
+        if (message == null || message.isEmpty()) return;
+        runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if (waitDialog != null && waitDialog.isShowing()) {
-                    TextView tvMsg = waitDialog.findViewById(R.id.tv_loading_msg);
-                    if (tvMsg != null) {
-                        loadingMsgIndex = (loadingMsgIndex + 1) % msgResIds.length;
-                        tvMsg.setText(msgResIds[loadingMsgIndex]);
+                    TextView tv = waitDialog.findViewById(R.id.tv_loading_msg);
+                    if (tv != null) {
+                        tv.setText(message);
                     }
-                    loadingMsgHandler.postDelayed(this, 10000);
                 }
             }
-        };
-        loadingMsgHandler.postDelayed(loadingMsgRunnable, 10000);
+        });
+    }
+
+    private void startLoadingMessageCycle() {
+        stopLoadingMessageCycle();
+        TextView tv = waitDialog != null ? waitDialog.findViewById(R.id.tv_loading_msg) : null;
+        if (tv != null) {
+            tv.setText(R.string.tv_please_wait);
+        }
     }
 
     private void stopLoadingMessageCycle() {
@@ -267,6 +280,9 @@ public class MainActivity extends AppCompatActivity {
                             popup.getMenu().getItem(i).setVisible(false);
                         }
                         if (popup.getMenu().getItem(i).getItemId() == R.id.Pull) {
+                            popup.getMenu().getItem(i).setVisible(false);
+                        }
+                        if (popup.getMenu().getItem(i).getItemId() == R.id.SyncFileDates) {
                             popup.getMenu().getItem(i).setVisible(false);
                         }
                     }
@@ -472,12 +488,20 @@ public class MainActivity extends AppCompatActivity {
                             container.addView(txtUrl);
 
                             List<String> aBranchesList = MyGitUtility.fetchGitBranches(activity, sRemoteUrl);
-                            for (String sBranch : aBranchesList) {
-                                i++;
-
-                                sListMessages = sListMessages + "\n" + sBranch;
-                                if (i == 50) break;
-
+                            if (aBranchesList == null || aBranchesList.isEmpty()) {
+                                RemoteGit r = MyGitUtility.getRemoteGit(activity, sRemoteUrl);
+                                if (r != null && r.getStatus() == MyGitUtility.GIT_STATUS_AUTH_FAILED) {
+                                    reloadRepositoryList();
+                                    showAuthFailedDialog(r);
+                                    return true;
+                                }
+                            }
+                            if (aBranchesList != null) {
+                                for (String sBranch : aBranchesList) {
+                                    i++;
+                                    sListMessages = sListMessages + "\n" + sBranch;
+                                    if (i == 50) break;
+                                }
                             }
                             txtUrl.setText(sListMessages.trim());
                             dialogbuilder.setView(container).setPositiveButton(getString(R.string.dialog_ok), null);
@@ -610,6 +634,10 @@ public class MainActivity extends AppCompatActivity {
                                             public void run() {
                                                 dismissWaitDialog();
                                                 reloadRepositoryList();
+                                                RemoteGit r = MyGitUtility.getRemoteGit(activity, sRemoteUrl);
+                                                if (r != null && r.getStatus() == MyGitUtility.GIT_STATUS_AUTH_FAILED) {
+                                                    showAuthFailedDialog(r);
+                                                }
                                                 if (cleanedCount > 0) {
                                                     Toast.makeText(activity, String.format(getString(R.string.toast_clean_temp_files_success), cleanedCount), Toast.LENGTH_LONG).show();
                                                 } else {
@@ -630,6 +658,61 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                 }
                             }).start();
+                        } else if (id == R.id.SyncFileDates) {
+                            final EditText inputCommits = new EditText(activity);
+                            inputCommits.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+                            inputCommits.setText("300");
+                            inputCommits.setSelection(inputCommits.getText().length());
+                            int pad = (int) (20 * getResources().getDisplayMetrics().density);
+                            FrameLayout inputContainer = new FrameLayout(activity);
+                            inputContainer.setPadding(pad, pad / 2, pad, 0);
+                            inputContainer.addView(inputCommits);
+
+                            new AlertDialog.Builder(activity)
+                                    .setTitle(R.string.dialog_sync_file_dates_title)
+                                    .setMessage(R.string.dialog_sync_file_dates_msg)
+                                    .setView(inputContainer)
+                                    .setPositiveButton(R.string.dialog_ok, new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            String raw = inputCommits.getText().toString().trim();
+                                            int parsedDepth = 300;
+                                            try {
+                                                parsedDepth = Integer.parseInt(raw);
+                                            } catch (NumberFormatException ignored) {}
+                                            final int commitDepth = Math.max(1, parsedDepth);
+
+                                            showWaitDialog();
+                                            new Thread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    final boolean ok = MyGitUtility.restoreFileDatesByCommitDepth(activity, sRemoteUrl, commitDepth, new MyGitUtility.SyncProgressListener() {
+                                                        @Override
+                                                        public void onProgress(String statusText) {
+                                                            updateWaitDialogMessage(statusText);
+                                                        }
+                                                    });
+                                                    runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            dismissWaitDialog();
+                                                            reloadRepositoryList();
+                                                            if (!ok) {
+                                                                RemoteGit r = MyGitUtility.getRemoteGit(activity, sRemoteUrl);
+                                                                if (r != null && r.getStatus() == MyGitUtility.GIT_STATUS_AUTH_FAILED) {
+                                                                    showAuthFailedDialog(r);
+                                                                    return;
+                                                                }
+                                                            }
+                                                            Toast.makeText(activity, ok ? R.string.toast_sync_file_dates_success : R.string.toast_sync_file_dates_failed, Toast.LENGTH_SHORT).show();
+                                                        }
+                                                    });
+                                                }
+                                            }).start();
+                                        }
+                                    })
+                                    .setNegativeButton(R.string.dialog_cancel, null)
+                                    .show();
                         }
                         return true;
                     }
@@ -638,23 +721,35 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-    }
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+        String sGitAuthorName = prefs.getString("GitAuthorName", null);
+        String sGitAuthorEmail = prefs.getString("GitAuthorEmail", null);
 
-    private void reloadRepositoryList() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                adapter.clear();
-                ArrayList<RemoteGit> aList = MyGitUtility.getRemoteGitList(activity);
-                for (final RemoteGit a : aList) {
-                    adapter.addData(new GitList(a.getNickname(), a.getUrl(), (int) a.getStatus(), a.getBranch()));
+        if (sGitAuthorName == null || sGitAuthorName.trim().isEmpty() || sGitAuthorEmail == null || sGitAuthorEmail.trim().isEmpty()) {
+            ArrayList<RemoteGit> existingRepos = MyGitUtility.getRemoteGitList(activity);
+            if (existingRepos != null) {
+                for (RemoteGit r : existingRepos) {
+                    String candidateName = (r.getAuthor_name() != null && !r.getAuthor_name().trim().isEmpty()) ? r.getAuthor_name().trim() : r.getUid();
+                    String candidateEmail = (r.getAuthor_email() != null && !r.getAuthor_email().trim().isEmpty()) ? r.getAuthor_email().trim()
+                            : (candidateName != null && !candidateName.trim().isEmpty() ? candidateName.trim() + "@users.noreply.github.com" : null);
+                    if (candidateName != null && !candidateName.isEmpty() && candidateEmail != null && !candidateEmail.isEmpty()) {
+                        SharedPreferences.Editor editor = prefs.edit();
+                        if (sGitAuthorName == null || sGitAuthorName.trim().isEmpty()) {
+                            sGitAuthorName = candidateName;
+                            editor.putString("GitAuthorName", sGitAuthorName);
+                        }
+                        if (sGitAuthorEmail == null || sGitAuthorEmail.trim().isEmpty()) {
+                            sGitAuthorEmail = candidateEmail;
+                            editor.putString("GitAuthorEmail", sGitAuthorEmail);
+                        }
+                        editor.apply();
+                        break;
+                    }
                 }
             }
-        });
-        String sGitAuthorName = PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorName", null);
-        String sGitAuthorEmail = PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorEmail", null);
+        }
 
-        if (sGitAuthorName == null || sGitAuthorName.equals("") || sGitAuthorEmail == null || sGitAuthorEmail.equals("")) {
+        if (sGitAuthorName == null || sGitAuthorName.trim().isEmpty() || sGitAuthorEmail == null || sGitAuthorEmail.trim().isEmpty()) {
             final AlertDialog.Builder MyAlertDialog = new AlertDialog.Builder(activity);
             MyAlertDialog.setTitle(getResources().getString(R.string.tv_title_first_time));
             MyAlertDialog.setMessage(getResources().getString(R.string.tv_first_time));
@@ -670,6 +765,21 @@ public class MainActivity extends AppCompatActivity {
         }
 
         handleGitHubOAuthCallback(getIntent());
+    }
+
+    private void reloadRepositoryList() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (adapter != null) {
+                    adapter.clear();
+                    ArrayList<RemoteGit> aList = MyGitUtility.getRemoteGitList(activity);
+                    for (final RemoteGit a : aList) {
+                        adapter.addData(new GitList(a.getNickname(), a.getUrl(), (int) a.getStatus(), a.getBranch()));
+                    }
+                }
+            }
+        });
     }
 
     @Override
@@ -690,7 +800,7 @@ public class MainActivity extends AppCompatActivity {
             String error = uri.getQueryParameter("error");
             if (error != null) {
                 Toast.makeText(activity, R.string.github_oauth_cancelled, Toast.LENGTH_SHORT).show();
-                sPendingPushRemoteUrl = null;
+                clearPendingReauthContext();
                 return;
             }
             String code = uri.getQueryParameter("code");
@@ -707,20 +817,27 @@ public class MainActivity extends AppCompatActivity {
                             RemoteGit target = dao.get((long) repoId);
                             if (target != null) {
                                 target.setPwd(accessToken);
+                                target.setAuth_type(RemoteGit.AUTH_TYPE_WEB_OAUTH);
                                 target.setStatus(MyGitUtility.GIT_STATUS_SUCCESS);
                                 dao.update(target);
                                 dao.close();
                                 Toast.makeText(activity, R.string.github_reauth_success, Toast.LENGTH_SHORT).show();
                                 reloadRepositoryList();
 
-                                final String pendingUrl = sPendingPushRemoteUrl;
-                                sPendingPushRemoteUrl = null;
-                                if (pendingUrl != null) {
+                                final String pendingUrl = sPendingPushRemoteUrl != null ? sPendingPushRemoteUrl : target.getUrl();
+                                final boolean returnToExplorer = sPendingReturnToExplorer;
+                                final String explorerRootDir = sPendingExplorerRootDir != null ? sPendingExplorerRootDir : MyGitUtility.getLocalGitDirectory(activity, target.getUrl());
+                                final String explorerGitName = sPendingExplorerGitName != null ? sPendingExplorerGitName : target.getNickname();
+                                clearPendingReauthContext();
+
+                                if (returnToExplorer) {
+                                    executeAutoSyncAndReturnToExplorer(pendingUrl, explorerRootDir, explorerGitName);
+                                } else if (pendingUrl != null) {
                                     executeAutoRetryPush(pendingUrl);
                                 }
                             } else {
                                 dao.close();
-                                sPendingPushRemoteUrl = null;
+                                clearPendingReauthContext();
                                 Toast.makeText(activity, R.string.main_notes_not_found, Toast.LENGTH_SHORT).show();
                             }
                         }
@@ -728,7 +845,7 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onError(String errorMessage) {
                             dismissWaitDialog();
-                            sPendingPushRemoteUrl = null;
+                            clearPendingReauthContext();
                             Toast.makeText(activity, getString(R.string.github_auth_failed) + errorMessage, Toast.LENGTH_LONG).show();
                         }
                     });
@@ -737,6 +854,7 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onSuccess(String username, String accessToken, List<GitHubRepo> noteRepos, int totalReposCount) {
                             dismissWaitDialog();
+                            mLastGitHubAuthType = RemoteGit.AUTH_TYPE_WEB_OAUTH;
                             showGitHubRepoSelectionDialog(username, accessToken, noteRepos, totalReposCount);
                         }
 
@@ -759,12 +877,70 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton(R.string.github_auth_relogin_and_sync, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        sPendingPushRemoteUrl = repo.getUrl();
+                        setPendingReauthContext(repo.getUrl(), null, null, false);
                         GitHubAuthManager.getInstance().startOAuthWebFlow(activity, GitHubAuthManager.buildReauthState((int) repo.getId()));
                     }
                 })
                 .setNegativeButton(R.string.dialog_cancel, null)
                 .show();
+    }
+
+    private void executeAutoSyncAndReturnToExplorer(final String remoteUrl, final String rootDir, final String gitName) {
+        if (!MyApplication.isNetworkConnected()) {
+            Intent intent = new Intent(MainActivity.this, FileExplorerActivity.class);
+            intent.putExtra("GIT_ROOT_DIR", rootDir);
+            intent.putExtra("GIT_NAME", gitName);
+            intent.putExtra("GIT_REMOTE_URL", remoteUrl);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+            return;
+        }
+        showWaitDialog();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (MyGitUtility.isWorkingTreeDirty(MyApplication.getAppContext(), remoteUrl)) {
+                        String timestamp = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(new java.util.Date());
+                        MyGitUtility.autoCommitIfDirtyWithMessage(MyApplication.getAppContext(), remoteUrl, "Auto-commit: " + timestamp);
+                    }
+                    MyGitUtility.pullWithResult(MyApplication.getAppContext(), remoteUrl);
+                    final boolean pushOk = MyGitUtility.push(MyApplication.getAppContext(), remoteUrl);
+                    FileExplorerActivity.onReauthSyncCompleted(remoteUrl);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            dismissWaitDialog();
+                            reloadRepositoryList();
+                            if (pushOk) {
+                                Toast.makeText(activity, MyApplication.getAppContext().getText(R.string.pushing_success), Toast.LENGTH_SHORT).show();
+                            }
+                            Intent intent = new Intent(MainActivity.this, FileExplorerActivity.class);
+                            intent.putExtra("GIT_ROOT_DIR", rootDir);
+                            intent.putExtra("GIT_NAME", gitName);
+                            intent.putExtra("GIT_REMOTE_URL", remoteUrl);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            startActivity(intent);
+                        }
+                    });
+                } catch (Exception e) {
+                    Log.e(TAG, "Auto sync after reauth failed for " + remoteUrl, e);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            dismissWaitDialog();
+                            reloadRepositoryList();
+                            Intent intent = new Intent(MainActivity.this, FileExplorerActivity.class);
+                            intent.putExtra("GIT_ROOT_DIR", rootDir);
+                            intent.putExtra("GIT_NAME", gitName);
+                            intent.putExtra("GIT_REMOTE_URL", remoteUrl);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            startActivity(intent);
+                        }
+                    });
+                }
+            }
+        }).start();
     }
 
     private void executeAutoRetryPush(final String remoteUrl) {
@@ -868,6 +1044,16 @@ public class MainActivity extends AppCompatActivity {
                                 });
                                 break;
                             }
+                        }
+                        if (bCloning) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (adapter != null) {
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                }
+                            });
                         }
                     }
                     if (bCloning) {
@@ -1036,6 +1222,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                         dialog.dismiss();
                         showWaitDialog();
+                        mLastGitHubAuthType = RemoteGit.inferAuthType("https://github.com", token);
                         GitHubAuthManager.getInstance().loadUserDataAndRepos(token, new GitHubAuthManager.GitHubAuthCallback() {
                             @Override
                             public void onSuccess(String username, String accessToken, List<GitHubRepo> noteRepos, int totalReposCount) {
@@ -1074,6 +1261,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void showGitHubRepoSelectionDialog(final String username, final String token, final List<GitHubRepo> noteRepos, int totalReposCount) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MyApplication.getAppContext());
+        if (username != null && !username.trim().isEmpty()) {
+            String curName = sp.getString("GitAuthorName", null);
+            String curEmail = sp.getString("GitAuthorEmail", null);
+            if (curName == null || curName.trim().isEmpty() || curEmail == null || curEmail.trim().isEmpty()) {
+                SharedPreferences.Editor editor = sp.edit();
+                if (curName == null || curName.trim().isEmpty()) {
+                    editor.putString("GitAuthorName", username.trim());
+                }
+                if (curEmail == null || curEmail.trim().isEmpty()) {
+                    editor.putString("GitAuthorEmail", username.trim() + "@users.noreply.github.com");
+                }
+                editor.apply();
+            }
+        }
         final String prefix = sp.getString("GitHubRepoPrefix", "note").trim();
 
         if (noteRepos == null || noteRepos.isEmpty()) {
@@ -1212,6 +1413,7 @@ public class MainActivity extends AppCompatActivity {
                                             if (target != null) {
                                                 target.setUid(username);
                                                 target.setPwd(token);
+                                                target.setAuth_type(mLastGitHubAuthType);
                                                 target.setStatus(MyGitUtility.GIT_STATUS_SUCCESS);
                                                 dao.update(target);
                                                 dao.close();
@@ -1246,10 +1448,7 @@ public class MainActivity extends AppCompatActivity {
                 final String sNick = repo.getName();
 
                 try {
-                    if (MyGitUtility.checkLocalGitRepository(activity, sUrl)) {
-                        String sLocalDirectory = MyGitUtility.getLocalGitDirectory(activity, sUrl);
-                        FileUtils.delete(new File(sLocalDirectory), FileUtils.RECURSIVE);
-                    }
+                    MyGitUtility.deleteLocalGitRepository(activity, sUrl);
 
                     RemoteGit aValue = new RemoteGit();
                     aValue.setId(0);
@@ -1262,6 +1461,7 @@ public class MainActivity extends AppCompatActivity {
                     aValue.setStatus(MyGitUtility.GIT_STATUS_CLONING);
                     aValue.setAuthor_name(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorName", username));
                     aValue.setAuthor_email(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitAuthorEmail", username + "@users.noreply.github.com"));
+                    aValue.setAuth_type(mLastGitHubAuthType);
 
                     RemoteGitDAO aRemoteGitDAO = new RemoteGitDAO(MyApplication.getAppContext());
                     RemoteGit existing = aRemoteGitDAO.getByURL(sUrl);
@@ -1271,7 +1471,12 @@ public class MainActivity extends AppCompatActivity {
                     aRemoteGitDAO.insert(aValue);
                     aRemoteGitDAO.close();
 
-                    boolean bSuccess = MyGitUtility.cloneGit(MyApplication.getAppContext(), sUrl, sRemoteName, username, token);
+                    boolean bSuccess = MyGitUtility.cloneGit(MyApplication.getAppContext(), sUrl, sRemoteName, username, token, new MyGitUtility.SyncProgressListener() {
+                        @Override
+                        public void onProgress(String statusText) {
+                            updateWaitDialogMessage(statusText);
+                        }
+                    });
 
                     RemoteGitDAO updateDao = new RemoteGitDAO(MyApplication.getAppContext());
                     RemoteGit g = updateDao.getByURL(sUrl);

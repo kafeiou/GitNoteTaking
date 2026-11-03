@@ -74,10 +74,7 @@ public class CloneGitActivity extends AppCompatActivity {
 
                 if (aValue == null) {
                     try {
-                        if (MyGitUtility.checkLocalGitRepository(activity, sUrl)) {
-                            String sLocalDirectory = MyGitUtility.getLocalGitDirectory(activity, sUrl);
-                            FileUtils.delete(new File(sLocalDirectory),FileUtils.RECURSIVE);
-                        }
+                        MyGitUtility.deleteLocalGitRepository(activity, sUrl);
 
 
                             AlertDialog.Builder builder = new AlertDialog.Builder(activity);

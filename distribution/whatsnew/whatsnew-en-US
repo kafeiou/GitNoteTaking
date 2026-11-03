@@ -1,6 +1,4 @@
-• GitHub OAuth Auto-recovery: Detects 401 on sync, one-tap re-auth and auto-resumes unpushed notes.
-• One-tap Re-auth: Added "Re-authenticate with GitHub Web" in Modify Remote.
-• Update Cloned Repos: Tap downloaded repos in GitHub dialog to refresh auth.
-• Auto-sync on Entry: Auto-commits and pushes local changes upon opening notes.
-• Plain Text Git Diff & HTML: Color-coded Unified Diff and HTML note preview.
-• Markdown & PDF: GFM, Mermaid, [[WikiLinks]], native PDF with zoom & unlock.
+• Real-Time Sync Progress: Displays live download stages, percentages, and object counts during initial clone.
+• Restore True File Dates: Added "Update True File Dates" to the long-press menu with customizable commit depth (default 300) to restore accurate file modification timestamps while keeping initial clone fast.
+• Proactive GitHub Web OAuth Check: Automatically detects expired tokens (401) when opening/saving notes or using long-press actions, with one-tap re-login and auto-sync.
+• Fixed re-clone directory cleanup and enabled R8 optimization.

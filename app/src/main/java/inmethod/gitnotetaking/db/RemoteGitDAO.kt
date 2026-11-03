@@ -28,6 +28,7 @@ class RemoteGitDAO(context: Context) {
         val BRANCH_COLUMN = "BRANCH"
         var AUTHOR_NAME = "AUTHOR_NAME"
         var AUTHOR_EMAIL = "AUTHOR_EMAIL"
+        val AUTH_TYPE_COLUMN = "AUTH_TYPE"
 
         // 使用上面宣告的變數建立表格的SQL敘述
         val CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " (" +
@@ -36,11 +37,12 @@ class RemoteGitDAO(context: Context) {
                 URL_COLUMN + " TEXT NOT NULL , " +
                 UID_COLUMN + " TEXT NOT NULL, " +
                 PWD_COLUMN + " TEXT NOT NULL, " +
-                NICKNAME_COLUMN + " TEXT NOT NULL, "+
+                NICKNAME_COLUMN + " TEXT NOT NULL, " +
                 STATUS_COLUMN + " INTEGER DEFAULT 0," +
-                BRANCH_COLUMN +" TEXT NOT NULL, " +
-                AUTHOR_NAME +" TEXT NOT NULL, " +
-                AUTHOR_EMAIL + " TEXT NOT NULL) ";
+                BRANCH_COLUMN + " TEXT NOT NULL, " +
+                AUTHOR_NAME + " TEXT NOT NULL, " +
+                AUTHOR_EMAIL + " TEXT NOT NULL, " +
+                AUTH_TYPE_COLUMN + " TEXT NOT NULL DEFAULT '" + RemoteGit.AUTH_TYPE_PASSWORD + "') "
     }
 
     // 資料庫物件
@@ -70,7 +72,7 @@ class RemoteGitDAO(context: Context) {
             if (cursor.moveToNext()) {
                 result = cursor.getInt(0)
             }
-
+            cursor.close()
             return result
         }
 
@@ -81,132 +83,87 @@ class RemoteGitDAO(context: Context) {
 
     // 新增參數指定的物件
     fun insert(item: RemoteGit): RemoteGit {
-        // 建立準備新增資料的ContentValues物件
         val cv = ContentValues()
-
-        // 加入ContentValues物件包裝的新增資料
         itemToContentValues(item, cv)
-
-        // 新增一筆資料並取得編號
-        // 第一個參數是表格名稱
-        // 第二個參數是沒有指定欄位值的預設值
-        // 第三個參數是包裝新增資料的ContentValues物件
         val id = db.insert(TABLE_NAME, null, cv)
-
-        // 設定編號
         item.id = id
-        // 回傳結果
         return item
     }
 
     // 修改參數指定的物件
     fun update(item: RemoteGit): Boolean {
-        // 建立準備修改資料的ContentValues物件
         val cv = ContentValues()
-
-        // 加入ContentValues物件包裝的修改資料
         itemToContentValues(item, cv)
-
-        // 設定修改資料的條件為編號
-        // 格式為「欄位名稱＝資料」
         val where = KEY_ID + "=" + item.id
-
-        // 執行修改資料並回傳修改的資料數量是否成功
         return db.update(TABLE_NAME, cv, where, null) > 0
     }
 
     fun updateByRemoteUrl(item: RemoteGit): Boolean {
-        // 建立準備修改資料的ContentValues物件
         val cv = ContentValues()
-
-        // 加入ContentValues物件包裝的修改資料
         itemToContentValues(item, cv)
-
-        // 設定修改資料的條件為編號
-        // 格式為「欄位名稱＝資料」
-        val where =  URL_COLUMN + "='" + item.url+"'"
-
-        // 執行修改資料並回傳修改的資料數量是否成功
+        val where = URL_COLUMN + "='" + item.url + "'"
         return db.update(TABLE_NAME, cv, where, null) > 0
     }
 
 
-    private fun itemToContentValues(item : RemoteGit, cv : ContentValues) {
-        // 第一個參數是欄位名稱， 第二個參數是欄位的資料
+    private fun itemToContentValues(item: RemoteGit, cv: ContentValues) {
         cv.put(REMOTE_NAME_COLUMN, item.remoteName)
         cv.put(URL_COLUMN, item.url)
         cv.put(UID_COLUMN, item.uid)
-        cv.put(PWD_COLUMN,item.pwd)
-        cv.put(NICKNAME_COLUMN,item.nickname)
-        cv.put(STATUS_COLUMN,item.status)
-        cv.put(BRANCH_COLUMN,item.branch)
-        cv.put(AUTHOR_NAME,item.author_name)
-        cv.put(AUTHOR_EMAIL,item.author_email)
+        cv.put(PWD_COLUMN, item.pwd)
+        cv.put(NICKNAME_COLUMN, item.nickname)
+        cv.put(STATUS_COLUMN, item.status)
+        cv.put(BRANCH_COLUMN, item.branch)
+        cv.put(AUTHOR_NAME, item.author_name)
+        cv.put(AUTHOR_EMAIL, item.author_email)
+        val authType = if (item.auth_type.isNotBlank()) item.auth_type else RemoteGit.inferAuthType(item.url, item.pwd)
+        cv.put(AUTH_TYPE_COLUMN, authType)
     }
 
     // 刪除參數指定編號的資料
     fun delete(id: Long): Boolean {
-        // 設定條件為編號，格式為「欄位名稱=資料」
         val where = KEY_ID + "=" + id
-        // 刪除指定編號資料並回傳刪除是否成功
         return db.delete(TABLE_NAME, where, null) > 0
     }
 
 
     // 刪除參數指定編號的資料
     fun delete(sRemoteUrl: String): Boolean {
-        // 設定條件為編號，格式為「欄位名稱=資料」
-        val where = URL_COLUMN + "='" + sRemoteUrl+"'"
-        // 刪除指定編號資料並回傳刪除是否成功
+        val where = URL_COLUMN + "='" + sRemoteUrl + "'"
         return db.delete(TABLE_NAME, where, null) > 0
     }
 
     // 取得指定編號的資料物件
     operator fun get(id: Long): RemoteGit? {
-        // 準備回傳結果用的物件
         var item: RemoteGit? = null
-        // 使用編號為查詢條件
         val where = KEY_ID + "=" + id
-        // 執行查詢
         val result = db.query(
                 TABLE_NAME, null, where, null, null, null, null, null)
 
-        // 如果有查詢結果
         if (result.moveToFirst()) {
-            // 讀取包裝一筆資料的物件
             item = getRecord(result)
         }
 
-        // 關閉Cursor物件
         result.close()
-        // 回傳結果
         return item
     }
 
-     fun getByURL(url: String): RemoteGit? {
-        // 準備回傳結果用的物件
+    fun getByURL(url: String): RemoteGit? {
         var item: RemoteGit? = null
-        // 使用編號為查詢條件
-        val where = URL_COLUMN + " = '" +url+"'"
-        // 執行查詢
+        val where = URL_COLUMN + " = '" + url + "'"
         val result = db.query(
                 TABLE_NAME, null, where, null, null, null, null, null)
 
-        // 如果有查詢結果
         if (result.moveToFirst()) {
-            // 讀取包裝一筆資料的物件
             item = getRecord(result)
         }
 
-        // 關閉Cursor物件
         result.close()
-        // 回傳結果
         return item
     }
 
     // 把Cursor目前的資料包裝為物件
     fun getRecord(cursor: Cursor): RemoteGit {
-        // 準備回傳結果用的物件
         val result = RemoteGit()
         result.id = cursor.getLong(0)
         result.remoteName = cursor.getString(1)
@@ -218,7 +175,12 @@ class RemoteGitDAO(context: Context) {
         result.branch = cursor.getString(7)
         result.author_name = cursor.getString(8)
         result.author_email = cursor.getString(9)
-        // 回傳結果
+        val authTypeIdx = cursor.getColumnIndex(AUTH_TYPE_COLUMN)
+        if (authTypeIdx >= 0 && !cursor.isNull(authTypeIdx)) {
+            result.auth_type = cursor.getString(authTypeIdx)
+        } else {
+            result.auth_type = RemoteGit.inferAuthType(result.url, result.pwd)
+        }
         return result
     }
 
