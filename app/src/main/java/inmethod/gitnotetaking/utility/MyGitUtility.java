@@ -102,6 +102,9 @@ public class MyGitUtility {
 
     public interface SyncProgressListener {
         void onProgress(String statusText);
+        default boolean isCancelled() {
+            return false;
+        }
     }
 
     private static final java.util.concurrent.ConcurrentHashMap<String, String> sCloneProgressMap = new java.util.concurrent.ConcurrentHashMap<>();
@@ -349,6 +352,7 @@ public class MyGitUtility {
         boolean bIsRemoteRepositoryExist = false;
         GitUtil aGitUtil=null;
         try {
+            repairShallowRepositoryIfNeeded(sLocalDirectory);
             aGitUtil = new GitUtil(sRemoteUrl, sLocalDirectory);
             bIsRemoteRepositoryExist = aGitUtil.checkRemoteRepository(aRemoteGit.getUid(), aRemoteGit.getPwd());
             if (!bIsRemoteRepositoryExist) {
@@ -705,6 +709,7 @@ public class MyGitUtility {
         boolean bIsRemoteRepositoryExist = false;
         GitUtil aGitUtil;
         try {
+            repairShallowRepositoryIfNeeded(sLocalDirectory);
             aGitUtil = new GitUtil(sRemoteUrl, sLocalDirectory);
             aGitUtil.setContentMergeStrategyOURS();
             bIsRemoteRepositoryExist = aGitUtil.checkRemoteRepository(sUserName, sUserPassword);
@@ -962,6 +967,8 @@ public class MyGitUtility {
         File gitDirFile = new File(localDirFile, ".git");
         if (!gitDirFile.exists()) return false;
 
+        repairShallowRepositoryIfNeeded(sLocalDirectory);
+
         int safeDepth = Math.max(1, commitDepth);
         RemoteGitDAO dao = new RemoteGitDAO(context);
         RemoteGit repo = dao.getByURL(sRemoteUrl);
@@ -970,6 +977,8 @@ public class MyGitUtility {
 
         String sUserName = repo.getUid();
         String sUserPassword = repo.getPwd();
+        File shallowFile = new File(gitDirFile, "shallow");
+        File shallowBakFile = new File(gitDirFile, "shallow.bak");
 
         setGitLock(true);
         try {
@@ -983,6 +992,9 @@ public class MyGitUtility {
                         setGitLock(false);
                         return false;
                     }
+                }
+                if (shallowFile.exists()) {
+                    copyFileBytes(shallowFile, shallowBakFile);
                 }
                 if (context != null) {
                     notifyCloneProgress(sRemoteUrl, listener, context.getString(R.string.sync_progress_preparing));
@@ -1015,6 +1027,11 @@ public class MyGitUtility {
                         }
                     }
 
+                    @Override
+                    public boolean isCancelled() {
+                        return listener != null && listener.isCancelled();
+                    }
+
                     private void emitProgress(boolean force) {
                         long now = System.currentTimeMillis();
                         if (!force && (now - lastUiUpdateMs < 150L)) {
@@ -1036,6 +1053,9 @@ public class MyGitUtility {
                     }
                     fetchCmd.call();
                 }
+                if (shallowBakFile.exists()) {
+                    shallowBakFile.delete();
+                }
             }
 
             syncFileTimestampsWithGit(context, sLocalDirectory, safeDepth, sRemoteUrl, listener);
@@ -1044,13 +1064,179 @@ public class MyGitUtility {
             return true;
         } catch (Exception e) {
             Log.e(TAG, "restoreFileDatesByCommitDepth failed: " + e.getMessage(), e);
-            if (sRemoteUrl.toLowerCase().contains("github.com")) {
+            repairShallowRepositoryIfNeeded(sLocalDirectory);
+            if (sRemoteUrl.toLowerCase().contains("github.com") && (listener == null || !listener.isCancelled())) {
                 checkAndMarkGitHubAuthFailure(context, sRemoteUrl);
             }
             sCloneProgressMap.remove(sRemoteUrl);
             setGitLock(false);
             return false;
         }
+    }
+
+    private static void copyFileBytes(File src, File dst) {
+        if (src == null || !src.exists() || dst == null) return;
+        try (FileInputStream fis = new FileInputStream(src);
+             FileOutputStream fos = new FileOutputStream(dst, false)) {
+            byte[] buf = new byte[4096];
+            int len;
+            while ((len = fis.read(buf)) > 0) {
+                fos.write(buf, 0, len);
+            }
+            fos.flush();
+        } catch (Exception ignored) {}
+    }
+
+    public static boolean repairShallowRepositoryIfNeeded(String sLocalDirectory) {
+        if (sLocalDirectory == null || sLocalDirectory.trim().isEmpty()) return false;
+        File localDir = new File(sLocalDirectory);
+        File gitDir = new File(localDir, ".git");
+        if (!gitDir.exists() || !gitDir.isDirectory()) return false;
+
+        boolean repaired = false;
+        try {
+            File shallowLock = new File(gitDir, "shallow.lock");
+            if (shallowLock.exists()) {
+                shallowLock.delete();
+                repaired = true;
+            }
+            File indexLock = new File(gitDir, "index.lock");
+            if (indexLock.exists()) {
+                indexLock.delete();
+                repaired = true;
+            }
+            File headLock = new File(gitDir, "HEAD.lock");
+            if (headLock.exists()) {
+                headLock.delete();
+                repaired = true;
+            }
+
+            File shallowFile = new File(gitDir, "shallow");
+            File shallowBakFile = new File(gitDir, "shallow.bak");
+            if (shallowBakFile.exists()) {
+                copyFileBytes(shallowBakFile, shallowFile);
+                shallowBakFile.delete();
+                repaired = true;
+            }
+
+            try (Repository repository = new FileRepositoryBuilder().setGitDir(gitDir).build()) {
+                org.eclipse.jgit.lib.ObjectDatabase objDb = repository.getObjectDatabase();
+                ObjectId headId = repository.resolve(Constants.HEAD);
+                if (headId == null || !objDb.has(headId)) {
+                    return repaired;
+                }
+
+                java.util.Set<String> trueShallowBoundaries = new java.util.LinkedHashSet<>();
+                java.util.Set<ObjectId> visited = new java.util.HashSet<>();
+                java.util.ArrayDeque<ObjectId> queue = new java.util.ArrayDeque<>();
+                queue.add(headId);
+
+                while (!queue.isEmpty()) {
+                    ObjectId current = queue.poll();
+                    if (!visited.add(current)) continue;
+                    if (!objDb.has(current)) continue;
+
+                    List<ObjectId> rawParents = readRawCommitParents(objDb, current);
+                    for (ObjectId parentId : rawParents) {
+                        if (hasRawCommitAndTree(objDb, parentId)) {
+                            if (!visited.contains(parentId)) {
+                                queue.add(parentId);
+                            }
+                        } else {
+                            trueShallowBoundaries.add(current.getName());
+                        }
+                    }
+                }
+
+                java.util.Set<String> existingShallow = new java.util.LinkedHashSet<>();
+                boolean hasMissingShallowObject = false;
+                if (shallowFile.exists()) {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(shallowFile), StandardCharsets.UTF_8))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            String sha = line.trim();
+                            if (!sha.isEmpty()) {
+                                existingShallow.add(sha);
+                                try {
+                                    ObjectId sid = ObjectId.fromString(sha);
+                                    if (!hasRawCommitAndTree(objDb, sid)) {
+                                        hasMissingShallowObject = true;
+                                    }
+                                } catch (Exception invalidSha) {
+                                    hasMissingShallowObject = true;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                boolean missingBoundaryInShallow = !existingShallow.containsAll(trueShallowBoundaries);
+                if (hasMissingShallowObject || missingBoundaryInShallow) {
+                    if (trueShallowBoundaries.isEmpty()) {
+                        if (shallowFile.exists()) {
+                            shallowFile.delete();
+                        }
+                    } else {
+                        StringBuilder sb = new StringBuilder();
+                        for (String sha : trueShallowBoundaries) {
+                            sb.append(sha).append("\n");
+                        }
+                        try (FileOutputStream fos = new FileOutputStream(shallowFile, false)) {
+                            fos.write(sb.toString().getBytes(StandardCharsets.UTF_8));
+                            fos.flush();
+                        }
+                    }
+                    Log.w(TAG, "Repaired corrupted .git/shallow for " + sLocalDirectory + " -> " + trueShallowBoundaries);
+                    repaired = true;
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "repairShallowRepositoryIfNeeded error: " + e.getMessage(), e);
+        }
+        return repaired;
+    }
+
+    private static boolean hasRawCommitAndTree(org.eclipse.jgit.lib.ObjectDatabase objDb, ObjectId commitId) {
+        if (commitId == null) return false;
+        try {
+            if (!objDb.has(commitId)) return false;
+            org.eclipse.jgit.lib.ObjectLoader loader = objDb.open(commitId, Constants.OBJ_COMMIT);
+            byte[] raw = loader.getCachedBytes(65536);
+            String text = new String(raw, StandardCharsets.UTF_8);
+            int headerEnd = text.indexOf("\n\n");
+            String header = headerEnd >= 0 ? text.substring(0, headerEnd) : text;
+            String[] lines = header.split("\n");
+            for (String line : lines) {
+                if (line.startsWith("tree ") && line.length() >= 45) {
+                    String treeSha = line.substring(5, 45).trim();
+                    return objDb.has(ObjectId.fromString(treeSha));
+                }
+            }
+        } catch (Exception e) {
+            return false;
+        }
+        return false;
+    }
+
+    private static List<ObjectId> readRawCommitParents(org.eclipse.jgit.lib.ObjectDatabase objDb, ObjectId commitId) {
+        List<ObjectId> parents = new ArrayList<>();
+        try {
+            org.eclipse.jgit.lib.ObjectLoader loader = objDb.open(commitId, Constants.OBJ_COMMIT);
+            byte[] raw = loader.getCachedBytes(65536);
+            String text = new String(raw, StandardCharsets.UTF_8);
+            int headerEnd = text.indexOf("\n\n");
+            String header = headerEnd >= 0 ? text.substring(0, headerEnd) : text;
+            String[] lines = header.split("\n");
+            for (String line : lines) {
+                if (line.startsWith("parent ") && line.length() >= 47) {
+                    String sha = line.substring(7, 47).trim();
+                    try {
+                        parents.add(ObjectId.fromString(sha));
+                    } catch (Exception ignored) {}
+                }
+            }
+        } catch (Exception ignored) {}
+        return parents;
     }
 
     public static void syncFileTimestampsWithGit(String sLocalDirectory) {

@@ -661,7 +661,7 @@ public class MainActivity extends AppCompatActivity {
                         } else if (id == R.id.SyncFileDates) {
                             final EditText inputCommits = new EditText(activity);
                             inputCommits.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-                            inputCommits.setText("300");
+                            inputCommits.setText("50");
                             inputCommits.setSelection(inputCommits.getText().length());
                             int pad = (int) (20 * getResources().getDisplayMetrics().density);
                             FrameLayout inputContainer = new FrameLayout(activity);
@@ -676,13 +676,23 @@ public class MainActivity extends AppCompatActivity {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
                                             String raw = inputCommits.getText().toString().trim();
-                                            int parsedDepth = 300;
+                                            int parsedDepth = 50;
                                             try {
                                                 parsedDepth = Integer.parseInt(raw);
                                             } catch (NumberFormatException ignored) {}
                                             final int commitDepth = Math.max(1, parsedDepth);
+                                            final java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
 
                                             showWaitDialog();
+                                            if (waitDialog != null) {
+                                                waitDialog.setCancelable(true);
+                                                waitDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                                                    @Override
+                                                    public void onCancel(DialogInterface d) {
+                                                        cancelled.set(true);
+                                                    }
+                                                });
+                                            }
                                             new Thread(new Runnable() {
                                                 @Override
                                                 public void run() {
@@ -691,12 +701,24 @@ public class MainActivity extends AppCompatActivity {
                                                         public void onProgress(String statusText) {
                                                             updateWaitDialogMessage(statusText);
                                                         }
+
+                                                        @Override
+                                                        public boolean isCancelled() {
+                                                            return cancelled.get();
+                                                        }
                                                     });
                                                     runOnUiThread(new Runnable() {
                                                         @Override
                                                         public void run() {
+                                                            if (waitDialog != null) {
+                                                                waitDialog.setCancelable(false);
+                                                                waitDialog.setOnCancelListener(null);
+                                                            }
                                                             dismissWaitDialog();
                                                             reloadRepositoryList();
+                                                            if (cancelled.get()) {
+                                                                return;
+                                                            }
                                                             if (!ok) {
                                                                 RemoteGit r = MyGitUtility.getRemoteGit(activity, sRemoteUrl);
                                                                 if (r != null && r.getStatus() == MyGitUtility.GIT_STATUS_AUTH_FAILED) {

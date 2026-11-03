@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.013] - 2026-11-03
+
+### 🚀 New Features & Enhancements
+
+#### 1. Shallow 倉庫中斷自動修復與返回鍵安全取消 (Automatic `.git/shallow` Self-Healing & Safe Cancel)
+- **自動偵測並修復損壞之 `.git/shallow` (`repairShallowRepositoryIfNeeded`)**：當「更新檔案真實日期」或深度拉取中途遭遇強制關閉或網路斷線，導致 JGit 預先寫入尚未下載完成之 Commit SHA（引發 `Missing commit` 錯誤）時，系統在執行 Pull、Push 或更新日期前會自動掃描本地 `ObjectDatabase`，清除殘留 `.lock` 並將 `.git/shallow` 重建為本地實際存在的邊界 Commit，免刪庫即可自動恢復同步。
+- **交易式 `.git/shallow.bak` 備份與返回鍵安全取消**：執行「更新檔案真實日期」前自動建立 `.git/shallow.bak` 備份，支援於等待視窗按返回鍵（Back）安全取消中斷下載並自動還原狀態，同時將預設回溯 Commit 數量優化調整為 50 筆。
+
 ## [4.012] - 2026-11-03
 
 ### 🚀 New Features & Enhancements

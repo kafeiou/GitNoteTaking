@@ -1,5 +1,7 @@
 package inmethod.gitnotetaking.test;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.Test;
 
 import java.io.File;
@@ -305,5 +307,43 @@ public class GitHubAuthRenewalUnitTest {
         assertTrue("cleanDirectoryForClone 應回傳 true", cleaned);
         assertFalse("清理後目標目錄應已完全移除，防止 JGit 拋出 already exists and is not an empty directory",
                 tempDir.exists());
+    }
+
+    /**
+     * 10. 測試強制關閉導致 .git/shallow 指向不存在之 Missing commit 時，能自動修復為本地實際邊界 Commit
+     */
+    @Test
+    public void testRepairShallowRepositoryAfterInterruptedFetch() throws Exception {
+        File repoDir = Files.createTempDirectory("test_shallow_repair_").toFile();
+        try (Git git = Git.init().setDirectory(repoDir).call()) {
+            File noteFile = new File(repoDir, "note.md");
+            Files.write(noteFile.toPath(), "v1".getBytes(StandardCharsets.UTF_8));
+            git.add().addFilepattern("note.md").call();
+            RevCommit commit1 = git.commit().setMessage("commit 1").call();
+
+            Files.write(noteFile.toPath(), "v2".getBytes(StandardCharsets.UTF_8));
+            git.add().addFilepattern("note.md").call();
+            RevCommit commit2 = git.commit().setMessage("commit 2").call();
+
+            // 模擬 depth=1 狀態：移除 commit1 的 loose object，使 commit2 成為本地唯一存在的邊界 Commit
+            String c1Hex = commit1.getName();
+            File c1ObjFile = new File(repoDir, ".git/objects/" + c1Hex.substring(0, 2) + "/" + c1Hex.substring(2));
+            assertTrue("commit1 object 應存在並被刪除以模擬 shallow clone", c1ObjFile.delete());
+
+            // 模擬強制關閉 App 導致 .git/shallow 寫入尚未下載完成的幽靈 Commit (629bf956...) 且殘留 shallow.lock
+            File shallowFile = new File(repoDir, ".git/shallow");
+            File shallowLock = new File(repoDir, ".git/shallow.lock");
+            Files.write(shallowFile.toPath(), "629bf956104b2ecb1ec13905dca75e3636a36aab\n".getBytes(StandardCharsets.UTF_8));
+            Files.write(shallowLock.toPath(), "lock".getBytes(StandardCharsets.UTF_8));
+
+            boolean repaired = MyGitUtility.repairShallowRepositoryIfNeeded(repoDir.getAbsolutePath());
+            assertTrue("應成功偵測並修復損壞的 .git/shallow", repaired);
+            assertFalse("殘留的 shallow.lock 應被清除", shallowLock.exists());
+
+            String repairedContent = new String(Files.readAllBytes(shallowFile.toPath()), StandardCharsets.UTF_8).trim();
+            assertEquals("修復後的 .git/shallow 應指向本地實際存在的邊界 commit2", commit2.getName(), repairedContent);
+        } finally {
+            MyGitUtility.cleanDirectoryForClone(repoDir);
+        }
     }
 }
