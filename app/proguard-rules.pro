@@ -47,3 +47,10 @@
     public static *** d(...);
     public static *** v(...);
 }
+
+# Strip Android 15 (API 35+) deprecated Window status/navigation bar color calls from third-party libraries
+-assumenosideeffects class android.view.Window {
+    public void setStatusBarColor(int);
+    public void setNavigationBarColor(int);
+    public void setNavigationBarDividerColor(int);
+}
