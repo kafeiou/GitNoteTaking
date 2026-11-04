@@ -246,7 +246,7 @@
     <string name="github_reauth_button">Re-login with GitHub Web</string>
     <string name="github_update_auth_title">Update Repository Authorization</string>
     <string name="github_update_auth_confirm_msg">Note \"%1$s\" already exists on this device. Update its token with the current authorization?</string>
-    <string name="main_notes_auth_expired">(Auth Expired)</string>
+    <string name="main_notes_auth_expired">(Auth Expired, tap to update)</string>
 
     <!-- Real-time Clone & Sync Progress strings -->
     <string name="sync_progress_preparing">Preparing repository sync...</string>
@@ -259,4 +259,5 @@
     <string name="dialog_sync_file_dates_msg">Because local sync uses shallow depth (depth = 1), the system will fetch the most recent commits from the remote repository to compare and restore each file\'s true last-modified date.\n\n⚠️ Note: Fetching a large number of commits may degrade performance and take longer to complete.\n\nNumber of recent commits to check:</string>
     <string name="toast_sync_file_dates_success">File dates updated successfully!</string>
     <string name="toast_sync_file_dates_failed">Failed to update file dates</string>
+    <string name="tv_adding_file">Adding...</string>
 </resources>

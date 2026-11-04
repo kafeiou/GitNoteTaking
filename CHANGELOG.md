@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.014] - 2026-11-04
+
+### 🚀 New Features & Enhancements
+
+#### 1. 建立檔案固定 `.txt` 副檔名與建立後立即開啟 (Fixed `.txt` Suffix & Auto-Open on File Creation)
+- **固定 `.txt` 副檔名防呆**：於筆記本目錄點選「建立檔案」時，輸入框改為水平排列，左側預設填入小寫 `"newfile"` 並自動全選文字方便直接覆蓋輸入，右側固定顯示不可修改的 `".txt"` 標籤；內建 `normalizeNewTxtFileName` 自動過濾首尾空白並去除重複輸入的 `.txt`。
+- **建立成功立即打開**：新檔案建立完成後自動啟動 `ViewFileActivity` 打開該檔案，省去在目錄中再次尋找點擊的步驟。
+
+#### 2. 新增文件與附件顯示「正在新增中...」等待視窗與原地刷新 (Loading Indicator & In-Place Refresh for Large Attachments)
+- **大檔案處理進度回饋**：在筆記內執行「新增附件」、「拍照存檔」或於目錄頁執行「加入檔案」時，立即顯示不可誤觸關閉的「正在新增中...」等待視窗（支援繁中、簡中、日文、英文 4 國語系），涵蓋檔案複製與本地 Git Commit 階段，消除大檔案處理時的當機錯覺。
+- **底部附件列原地無縫刷新 (`refreshAttachmentViews`)**：新增附件或拍照完成後直接於當前頁面原地更新底部附件列，不重啟 Activity、不閃爍且不遺失編輯中文字，遠端網路 Push 則於背景非同步完成。
+
+#### 3. 筆記本過期提示優化與字型智慧縮放 (Auth Expired Prompt & Smart Font Scaling)
+- **明確引導點選更新**：將主畫面筆記本過期狀態提示更新為 `(授權已過期，請點選更新)`（4 國語系同步更新），點選該筆記本時立即彈出重新授權視窗。
+- **字型縮放與卡片防裁切**：透過 `RelativeSizeSpan(0.65f)` 將狀態後綴縮放為 `0.65 倍` 字體，並將列表卡片設為 `wrap_content` 自適應高度，防止長名稱換行時裁切底部網址。
+
 ## [4.013] - 2026-11-03
 
 ### 🚀 New Features & Enhancements

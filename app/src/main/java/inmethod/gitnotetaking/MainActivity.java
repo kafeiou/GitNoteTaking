@@ -226,9 +226,15 @@ public class MainActivity extends AppCompatActivity {
                 // Toast.makeText(activity, "click position=" + position, Toast.LENGTH_LONG).show();
                 Intent intent = new Intent(MainActivity.this, FileExplorerActivity.class);
                 Object[] aTextView = GitList.getDeviceInfoFromLayoutId(view);
-                String sGitName = ((TextView) aTextView[0]).getText().toString();
+                String rawGitName = ((TextView) aTextView[0]).getText().toString();
                 String sRemoteUrl = ((TextView) aTextView[1]).getText().toString();
                 RemoteGit aRemoteGit = MyGitUtility.getRemoteGit(activity, sRemoteUrl);
+                final String sGitName = (aRemoteGit != null && aRemoteGit.getNickname() != null && !aRemoteGit.getNickname().trim().isEmpty())
+                        ? aRemoteGit.getNickname()
+                        : rawGitName;
+                if (aRemoteGit != null && aRemoteGit.getStatus() == MyGitUtility.GIT_STATUS_AUTH_FAILED) {
+                    FileExplorerActivity.notifyAuthFailedFromChild(sRemoteUrl);
+                }
                 if (aRemoteGit.getStatus() == MyGitUtility.GIT_STATUS_PULLING) {
                     runOnUiThread(new Runnable() {
                         @Override

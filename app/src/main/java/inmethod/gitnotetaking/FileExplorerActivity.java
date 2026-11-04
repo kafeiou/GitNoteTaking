@@ -25,6 +25,7 @@ import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
 import android.text.style.RelativeSizeSpan;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -33,6 +34,7 @@ import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -79,6 +81,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Scanner;
 
@@ -208,6 +211,7 @@ public class FileExplorerActivity extends AppCompatActivity  implements PickiTCa
         if (sGitRemoteUrl != null && sForceAuthPromptUrls.remove(sGitRemoteUrl)) {
             bHasPromptedAuthInSession = false;
         }
+        checkAndPromptIfAuthFailed(false);
         triggerGitSync(false);
     }
 
@@ -812,48 +816,116 @@ Log.d(TAG,"m_item name = "+m_item.get(position)+",position number = "+ position+
                 }
             });
 
+    public static String normalizeNewTxtFileName(String rawInput) {
+        if (rawInput == null) {
+            return "";
+        }
+        String trimmed = rawInput.trim();
+        if (trimmed.isEmpty()) {
+            return "";
+        }
+        while (trimmed.toLowerCase(Locale.ROOT).endsWith(".txt")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 4).trim();
+        }
+        if (trimmed.isEmpty()) {
+            return "";
+        }
+        return trimmed + ".txt";
+    }
+
+    private AlertDialog showAddingFileLoadingDialog() {
+        if (isFinishing() || isDestroyed()) {
+            return null;
+        }
+        View dialogView = getLayoutInflater().inflate(R.layout.loading_dialog, null);
+        TextView tvMsg = dialogView.findViewById(R.id.tv_loading_msg);
+        if (tvMsg != null) {
+            tvMsg.setText(R.string.tv_adding_file);
+        }
+        AlertDialog loadingDialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setCancelable(false)
+                .create();
+        loadingDialog.show();
+        return loadingDialog;
+    }
+
+    private void dismissLoadingDialogSafely(AlertDialog loadingDialog) {
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            try {
+                loadingDialog.dismiss();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
     void createNewFolder(final int p_opt) {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         final EditText m_edtinput = new EditText(this);
+        m_edtinput.setInputType(InputType.TYPE_CLASS_TEXT);
         if (p_opt == 1) {
             builder.setTitle(getResources().getString(R.string.create_folder));
             m_edtinput.setText("NewFolder");
+            builder.setView(m_edtinput);
         } else {
             builder.setTitle(getResources().getString(R.string.create_file));
-            m_edtinput.setText("NewFile.txt");
+            m_edtinput.setText("newfile");
+            m_edtinput.setSelectAllOnFocus(true);
+
+            LinearLayout fileInputLayout = new LinearLayout(this);
+            fileInputLayout.setOrientation(LinearLayout.HORIZONTAL);
+            fileInputLayout.setGravity(Gravity.CENTER_VERTICAL);
+            int padH = (int) (20 * getResources().getDisplayMetrics().density);
+            int padV = (int) (8 * getResources().getDisplayMetrics().density);
+            fileInputLayout.setPadding(padH, padV, padH, padV);
+
+            LinearLayout.LayoutParams edtParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f);
+            m_edtinput.setLayoutParams(edtParams);
+
+            TextView tvSuffix = new TextView(this);
+            tvSuffix.setText(".txt");
+            tvSuffix.setTextSize(18);
+            tvSuffix.setTextColor(m_edtinput.getCurrentTextColor());
+
+            fileInputLayout.addView(m_edtinput);
+            fileInputLayout.addView(tvSuffix);
+            builder.setView(fileInputLayout);
         }
-        // Set up the input
-        // Specify the type of input expected;
-        m_edtinput.setInputType(InputType.TYPE_CLASS_TEXT);
         // Set up the buttons
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                String m_text = m_edtinput.getText().toString().trim();
-                if (m_text.isEmpty()) {
-                    Toast.makeText(MyApplication.getAppContext(), R.string.input_cannot_be_empty, Toast.LENGTH_SHORT).show();
-                    return;
-                }
                 if (p_opt == 1) {
+                    String m_text = m_edtinput.getText().toString().trim();
+                    if (m_text.isEmpty()) {
+                        Toast.makeText(MyApplication.getAppContext(), R.string.input_cannot_be_empty, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                     File m_newPath = new File(m_curDir, m_text);
                     Log.d(TAG, m_curDir);
                     if (!m_newPath.exists()) {
                         m_newPath.mkdirs();
                     }
+                    getDirFromRoot(m_curDir);
                 } else {
+                    String m_text = normalizeNewTxtFileName(m_edtinput.getText().toString());
+                    if (m_text.isEmpty()) {
+                        Toast.makeText(MyApplication.getAppContext(), R.string.input_cannot_be_empty, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                     File m_newPath = new File(m_curDir, m_text);
                     if (m_newPath.exists()) {
                         Log.d(TAG, "file exists!");
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                Toast.makeText(MyApplication.getAppContext(), MyApplication.getAppContext().getResources().getText(R.string.file_exists), Toast.LENGTH_SHORT);
+                                Toast.makeText(MyApplication.getAppContext(), MyApplication.getAppContext().getResources().getText(R.string.file_exists), Toast.LENGTH_SHORT).show();
                             }
                         });
                         return;
                     }
                     try {
-                        FileOutputStream m_Output = new FileOutputStream((m_curDir + File.separator + m_text), false);
+                        FileOutputStream m_Output = new FileOutputStream(m_newPath, false);
                         m_Output.close();
 
                         final String newFileName = m_text;
@@ -872,11 +944,18 @@ Log.d(TAG,"m_item name = "+m_item.get(position)+",position number = "+ position+
                             }
                         }).start();
 
+                        getDirFromRoot(m_curDir);
+
+                        Intent intent = new Intent(FileExplorerActivity.this, ViewFileActivity.class);
+                        intent.putExtra("FILE_PATH", m_newPath.getAbsoluteFile().toString());
+                        intent.putExtra("GIT_REMOTE_URL", sGitRemoteUrl);
+                        startActivity(intent);
+
                     } catch (FileNotFoundException e) {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                Toast.makeText(MyApplication.getAppContext(), MyApplication.getAppContext().getResources().getText(R.string.file_create_failed), Toast.LENGTH_SHORT);
+                                Toast.makeText(MyApplication.getAppContext(), MyApplication.getAppContext().getResources().getText(R.string.file_create_failed), Toast.LENGTH_SHORT).show();
                             }
                         });
                         e.printStackTrace();
@@ -884,7 +963,6 @@ Log.d(TAG,"m_item name = "+m_item.get(position)+",position number = "+ position+
                         e.printStackTrace();
                     }
                 }
-                getDirFromRoot(m_curDir);
 
             }
         });
@@ -895,8 +973,12 @@ Log.d(TAG,"m_item name = "+m_item.get(position)+",position number = "+ position+
             }
         });
 
-        builder.setView(m_edtinput);
-        builder.show();
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        if (p_opt == 0) {
+            m_edtinput.requestFocus();
+            m_edtinput.selectAll();
+        }
     }
 
     @Override
@@ -1025,6 +1107,7 @@ Log.d(TAG,"m_item name = "+m_item.get(position)+",position number = "+ position+
                             Toast.makeText(MyApplication.getAppContext(), R.string.input_cannot_be_empty, Toast.LENGTH_SHORT).show();
                             return;
                         }
+                        final AlertDialog loadingDialog = showAddingFileLoadingDialog();
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
@@ -1034,11 +1117,13 @@ Log.d(TAG,"m_item name = "+m_item.get(position)+",position number = "+ position+
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
+                                            dismissLoadingDialogSafely(loadingDialog);
                                             Toast.makeText(MyApplication.getAppContext(), "Add Failed!", Toast.LENGTH_SHORT).show();
                                         }
                                     });
                                     return;
                                 }
+                                boolean bCommit = false;
                                 try {
                                     final String sDestFileNameString;
                                     String localGitDir = MyGitUtility.getLocalGitDirectory(activity, sGitRemoteUrl);
@@ -1049,19 +1134,22 @@ Log.d(TAG,"m_item name = "+m_item.get(position)+",position number = "+ position+
                                         sDestFileNameString = aDestFile.getName();
                                     }
 
-                                    boolean bCommit = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, MyApplication.getAppContext().getString(R.string.view_file_add_attachment_file_commit) + sDestFileNameString);
-                                    if (sGitRemoteUrl.indexOf("local") == -1 && bCommit) {
-                                        if (!MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl)) { runOnUiThread(() -> checkAndPromptIfAuthFailed(true)); }
-                                    }
+                                    bCommit = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, MyApplication.getAppContext().getString(R.string.view_file_add_attachment_file_commit) + sDestFileNameString);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
+                                        dismissLoadingDialogSafely(loadingDialog);
                                         getDirFromRoot(m_curDir);
                                     }
                                 });
+                                if (sGitRemoteUrl.indexOf("local") == -1 && bCommit) {
+                                    if (!MyGitUtility.push(MyApplication.getAppContext(), sGitRemoteUrl)) {
+                                        runOnUiThread(() -> checkAndPromptIfAuthFailed(true));
+                                    }
+                                }
                             }
                         }).start();
                     }

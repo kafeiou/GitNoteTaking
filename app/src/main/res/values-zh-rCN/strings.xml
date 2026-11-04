@@ -246,7 +246,7 @@
     <string name="github_reauth_button">通过 GitHub 网页重新登录</string>
     <string name="github_update_auth_title">更新仓库授权</string>
     <string name="github_update_auth_confirm_msg">笔记「%1$s」已存在于手机中。是否使用当前授权更新其 Token？</string>
-    <string name="main_notes_auth_expired">(授权已过期)</string>
+    <string name="main_notes_auth_expired">(授权已过期，请点选更新)</string>
 
     <!-- Real-time Clone & Sync Progress strings -->
     <string name="sync_progress_preparing">正在准备同步数据...</string>
@@ -259,4 +259,5 @@
     <string name="dialog_sync_file_dates_msg">由于本机采用轻量化浅层同步 (depth = 1)，系统将从远端获取最近的 Commit 历史记录以比对并还原各文件的真实最后修改日期。\n\n⚠️ 注意：若 Commit 数量较多，可能会因历史数据量庞大而造成性能不佳、耗时较长。\n\n请输入要回溯比对的 Commit 数量：</string>
     <string name="toast_sync_file_dates_success">文件真实日期更新完成！</string>
     <string name="toast_sync_file_dates_failed">更新文件真实日期失败</string>
+    <string name="tv_adding_file">正在新增中...</string>
 </resources>

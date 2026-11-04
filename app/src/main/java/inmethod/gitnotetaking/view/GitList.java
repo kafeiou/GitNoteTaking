@@ -1,6 +1,8 @@
 package inmethod.gitnotetaking.view;
 
-import android.graphics.Color;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.RelativeSizeSpan;
 import android.view.View;
 import android.widget.TextView;
 
@@ -15,6 +17,7 @@ public class GitList {
     private int iPushStatus = MyGitUtility.GIT_STATUS_SUCCESS;
     private String sBranch = BRANCH_MASTER;
     public static final String BRANCH_MASTER = "master";
+    public static final float STATUS_SUFFIX_SIZE_RATIO = 0.65f;
 
     private GitList() {
     }
@@ -58,41 +61,51 @@ public class GitList {
         return this.sBranch;
     }
 
+    public static SpannableString formatTitleWithStatus(String baseTitle, String statusSuffix) {
+        String safeBase = baseTitle != null ? baseTitle : "";
+        String safeSuffix = statusSuffix != null ? statusSuffix : "";
+        if (safeSuffix.isEmpty()) {
+            return new SpannableString(safeBase);
+        }
+        String fullText = safeBase + " " + safeSuffix;
+        SpannableString span = new SpannableString(fullText);
+        int start = safeBase.length() + 1;
+        span.setSpan(new RelativeSizeSpan(STATUS_SUFFIX_SIZE_RATIO), start, fullText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return span;
+    }
+
     public static void mapDeviceInfoToLayout(Object[] layoutData, Object aGitListObject) {
         GitList aGitList = (GitList) aGitListObject;
         TextView layout0 = ((TextView) layoutData[0]);
+
+        String baseTitle = !aGitList.getBranch().equalsIgnoreCase(BRANCH_MASTER)
+                ? "[" + aGitList.getBranch() + "] " + aGitList.getGitName()
+                : aGitList.getGitName();
 
         if (aGitList.getRemoteUrl().indexOf("local") == -1) {
             if (aGitList.getPushStatus() == MyGitUtility.GIT_STATUS_PUSH_FAIL) {
                 int errorColor = androidx.core.content.ContextCompat.getColor(layout0.getContext(), R.color.colorAccent);
                 layout0.setTextColor(errorColor);
-                if (!aGitList.getBranch().equalsIgnoreCase(BRANCH_MASTER))
-                    layout0.setText("[" + aGitList.getBranch() + "] " + aGitList.getGitName() + " " + MyApplication.getAppContext().getResources().getString(R.string.main_notes_need_push));
-                else
-                    layout0.setText(aGitList.getGitName() + " " + MyApplication.getAppContext().getResources().getString(R.string.main_notes_need_push));
+                String statusSuffix = MyApplication.getAppContext().getResources().getString(R.string.main_notes_need_push);
+                layout0.setText(formatTitleWithStatus(baseTitle, statusSuffix));
             } else if (aGitList.getPushStatus() == MyGitUtility.GIT_STATUS_AUTH_FAILED) {
                 int errorColor = androidx.core.content.ContextCompat.getColor(layout0.getContext(), R.color.colorAccent);
                 layout0.setTextColor(errorColor);
-                if (!aGitList.getBranch().equalsIgnoreCase(BRANCH_MASTER))
-                    layout0.setText("[" + aGitList.getBranch() + "] " + aGitList.getGitName() + " " + MyApplication.getAppContext().getResources().getString(R.string.main_notes_auth_expired));
-                else
-                    layout0.setText(aGitList.getGitName() + " " + MyApplication.getAppContext().getResources().getString(R.string.main_notes_auth_expired));
+                String statusSuffix = MyApplication.getAppContext().getResources().getString(R.string.main_notes_auth_expired);
+                layout0.setText(formatTitleWithStatus(baseTitle, statusSuffix));
             } else if (aGitList.getPushStatus() == MyGitUtility.GIT_STATUS_CLONING) {
                 int errorColor = androidx.core.content.ContextCompat.getColor(layout0.getContext(), R.color.colorAccent);
                 layout0.setTextColor(errorColor);
                 String progress = MyGitUtility.getCloneProgress(aGitList.getRemoteUrl());
                 if (progress != null && !progress.isEmpty()) {
-                    layout0.setText("「" + aGitList.getGitName() + "」" + progress);
+                    layout0.setText(formatTitleWithStatus("「" + aGitList.getGitName() + "」", progress));
                 } else {
-                    layout0.setText("「" + aGitList.getGitName() + "」" + MyApplication.getAppContext().getResources().getString(R.string.main_notes_cloning));
+                    String cloningSuffix = MyApplication.getAppContext().getResources().getString(R.string.main_notes_cloning);
+                    layout0.setText(formatTitleWithStatus("「" + aGitList.getGitName() + "」", cloningSuffix));
                 }
             } else {
                 layout0.setTextColor(androidx.core.content.ContextCompat.getColor(layout0.getContext(), R.color.text_primary));
-
-                if (!aGitList.getBranch().equalsIgnoreCase(BRANCH_MASTER))
-                    layout0.setText("[" + aGitList.getBranch() + "] " + aGitList.getGitName());
-                else
-                    layout0.setText(aGitList.getGitName());
+                layout0.setText(baseTitle);
             }
 
         } else {

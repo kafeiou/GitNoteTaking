@@ -71,6 +71,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -279,46 +280,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                     if (scrollAttachment != null) scrollAttachment.setVisibility(View.VISIBLE);
                 }
 
-                File attachDirectory = new File(file.getAbsolutePath() + "_attach");
-                int iFileCount = 0;
-                if (attachDirectory.isDirectory()) {
-                    for (final File file : attachDirectory.listFiles()) {
-                        if (file.isFile()) {
-                            iFileCount++;
-                            final TextView aTV = new TextView(activity);
-                            aTV.setTextColor(Color.BLUE);
-                            aTV.setBackgroundColor(Color.LTGRAY);
-
-                            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                            lp.setMargins(0, 0, 10, 0);
-                            aTV.setLayoutParams(lp);
-                            final Uri filuri = Uri.fromFile(file);
-                            String sMimeType = getMimeType(filuri, activity);
-                            aTV.setCompoundDrawablesWithIntrinsicBounds(getAttachmentIconResByFileName(file.getName(), sMimeType), 0, 0, 0);
-                            aTV.setText(MyApplication.getAppContext().getText(R.string.attachment).toString() + iFileCount);
-
-                            aTV.setTextSize(iTextSize);
-                            aTV.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    showAttachmentBottomSheet(file, aTV);
-                                }
-                            });
-                            aTV.setOnLongClickListener(new View.OnLongClickListener() {
-                                @Override
-                                public boolean onLongClick(View view) {
-                                    showAttachmentBottomSheet(file, aTV);
-                                    return true;
-                                }
-                            });
-                            layoutAttachment.addView(aTV);
-                        }
-                    }
-                    //           tvCountFiles.setText(countFilesInDirectory(attachDirectory) + getResources().getString(R.string.view_attach_files));
-                    //       tvCountFiles.setTextColor(Color.BLUE);
-                } else {
-                    //        tvCountFiles.setText("");
-                }
+                refreshAttachmentViews();
             } else {
                 Toast.makeText(activity, "File read error!", Toast.LENGTH_SHORT).show();
             }
@@ -327,6 +289,82 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
         }
 
 
+    }
+
+    public void refreshAttachmentViews() {
+        if (layoutAttachment == null || file == null) {
+            return;
+        }
+        layoutAttachment.removeAllViews();
+        int iTextSize = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(activity).getString("GitEditTextSize", "18"));
+        File attachDirectory = new File(file.getAbsolutePath() + "_attach");
+        int iFileCount = 0;
+        if (attachDirectory.isDirectory()) {
+            File[] attachFiles = attachDirectory.listFiles();
+            if (attachFiles != null) {
+                for (final File attachFile : attachFiles) {
+                    if (attachFile.isFile()) {
+                        iFileCount++;
+                        final TextView aTV = new TextView(activity);
+                        aTV.setTextColor(Color.BLUE);
+                        aTV.setBackgroundColor(Color.LTGRAY);
+
+                        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                        lp.setMargins(0, 0, 10, 0);
+                        aTV.setLayoutParams(lp);
+                        final Uri filuri = Uri.fromFile(attachFile);
+                        String sMimeType = getMimeType(filuri, activity);
+                        aTV.setCompoundDrawablesWithIntrinsicBounds(getAttachmentIconResByFileName(attachFile.getName(), sMimeType), 0, 0, 0);
+                        aTV.setText(MyApplication.getAppContext().getText(R.string.attachment).toString() + iFileCount);
+
+                        aTV.setTextSize(iTextSize);
+                        aTV.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                showAttachmentBottomSheet(attachFile, aTV);
+                            }
+                        });
+                        aTV.setOnLongClickListener(new View.OnLongClickListener() {
+                            @Override
+                            public boolean onLongClick(View view) {
+                                showAttachmentBottomSheet(attachFile, aTV);
+                                return true;
+                            }
+                        });
+                        layoutAttachment.addView(aTV);
+                    }
+                }
+            }
+        }
+        if (scrollAttachment != null && !isPreviewMode) {
+            scrollAttachment.setVisibility(iFileCount > 0 ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    private AlertDialog showAddingFileLoadingDialog() {
+        if (isFinishing() || isDestroyed()) {
+            return null;
+        }
+        View dialogView = getLayoutInflater().inflate(R.layout.loading_dialog, null);
+        TextView tvMsg = dialogView.findViewById(R.id.tv_loading_msg);
+        if (tvMsg != null) {
+            tvMsg.setText(R.string.tv_adding_file);
+        }
+        AlertDialog loadingDialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setCancelable(false)
+                .create();
+        loadingDialog.show();
+        return loadingDialog;
+    }
+
+    private void dismissLoadingDialogSafely(AlertDialog loadingDialog) {
+        if (loadingDialog != null && loadingDialog.isShowing()) {
+            try {
+                loadingDialog.dismiss();
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     public static int getAttachmentIconResByFileName(String fileName, String mimeType) {
@@ -1102,14 +1140,16 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
         super.onActivityResult(requestCode, resultCode, resultData);
 
         if (requestCode == READ_REQUEST_CODE) {
-            if (resultData != null && resultData.getData() != null) {
+            if (resultCode == Activity.RESULT_OK && resultData != null && resultData.getData() != null) {
                 showAddAttachmentDialog(resultData.getData());
             }
         } else if (requestCode == REQUEST_TAKE_PHOTO) {
+            if (resultCode != Activity.RESULT_OK || photoFile == null || !photoFile.exists()) {
+                return;
+            }
             try {
 
                 final File aDestFileDirectory = new File(file.getCanonicalPath().toString() + "_attach".trim());
-                //  Log.d(TAG,"aDestFileDirectory file = "+aDestFileDirectory.getCanonicalPath());
                 if (!aDestFileDirectory.isDirectory())
                     aDestFileDirectory.mkdir();
                 final EditText txtUrl = new EditText(this);
@@ -1124,53 +1164,52 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                         .setView(txtUrl)
                         .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
-                                isModify = false;
-                                disable();
+                                final String sPhotoName = txtUrl.getText().toString().trim();
+                                if (sPhotoName.isEmpty()) {
+                                    Toast.makeText(MyApplication.getAppContext(), R.string.input_cannot_be_empty, Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+                                final AlertDialog loadingDialog = showAddingFileLoadingDialog();
 
                                 new Thread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        final String sPhotoName = txtUrl.getText().toString().trim();
-                                        if (sPhotoName.isEmpty()) {
-                                            runOnUiThread(() -> Toast.makeText(MyApplication.getAppContext(), R.string.input_cannot_be_empty, Toast.LENGTH_SHORT).show());
+                                        boolean bCommit = false;
+                                        try {
+                                            final File aDestFile = new File(aDestFileDirectory.getCanonicalPath() + File.separator + sPhotoName);
+                                            Files.copy(photoFile.toPath(), aDestFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+                                            final String sDestFileNameString;
+                                            String localGitDir = MyGitUtility.getLocalGitDirectory(activity, sGitRemoteUrl);
+                                            if (aDestFile.getCanonicalPath().startsWith(localGitDir)) {
+                                                String rel = aDestFile.getCanonicalPath().substring(localGitDir.length());
+                                                sDestFileNameString = (rel.startsWith(File.separator) || rel.startsWith("/")) ? rel.substring(1) : rel;
+                                            } else {
+                                                sDestFileNameString = aDestFile.getName();
+                                            }
+                                            Log.d(TAG,"commit when REQUEST_TAKE_PHOTO be triggered");
+                                            bCommit = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, MyApplication.getAppContext().getString(R.string.view_file_add_attachment_file_commit) + "\n" + sDestFileNameString);
+                                        } catch (Exception e) {
+                                            e.printStackTrace();
+                                            runOnUiThread(() -> {
+                                                dismissLoadingDialogSafely(loadingDialog);
+                                                Toast.makeText(MyApplication.getAppContext(), "Add Failed!", Toast.LENGTH_SHORT).show();
+                                            });
                                             return;
                                         }
-                                        final File aDestFile;
-                                        try {
-                                            aDestFile = new File(aDestFileDirectory.getCanonicalPath() + File.separator + sPhotoName);
-                                            //     Log.d(TAG,"dest file = "+aDestFile.getCanonicalPath());
-                                            final String sDestFileNameString;
-                                            sDestFileNameString = aDestFile.getCanonicalPath().toString().substring(MyGitUtility.getLocalGitDirectory(activity, sGitRemoteUrl).length());
-                                            Files.copy(photoFile.toPath(), aDestFile.toPath());
-                                            new Thread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    try {
-                                                        Thread.sleep(1000);
-                                                    } catch (InterruptedException e) {
-                                                        e.printStackTrace();
-                                                    }
-                                                    boolean bCommit = false;
-                                                    Log.d(TAG,"commit when REQUEST_TAKE_PHOTO be triggered");
-
-                                                    bCommit = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, MyApplication.getAppContext().getString(R.string.view_file_add_attachment_file_commit) + "\n" + sDestFileNameString);
-                                                    if (sGitRemoteUrl.indexOf("local") == -1 && bCommit)
-                                                        pushAndHandleAuthFailure();
-
-                                                }
-                                            }).start();
-
-                                        } catch (IOException e) {
-                                            e.printStackTrace();
+                                        runOnUiThread(() -> {
+                                            dismissLoadingDialogSafely(loadingDialog);
+                                            refreshAttachmentViews();
+                                        });
+                                        if (sGitRemoteUrl.indexOf("local") == -1 && bCommit) {
+                                            pushAndHandleAuthFailure();
                                         }
-
                                     }
                                 }).start();
-                                finish();
-                                startActivity(getIntent());
-
                             }
-                        }).show();
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
 
 
             } catch (Exception e) {
@@ -1260,8 +1299,7 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                                 Toast.makeText(MyApplication.getAppContext(), R.string.input_cannot_be_empty, Toast.LENGTH_SHORT).show();
                                 return;
                             }
-                            isModify = false;
-                            disable();
+                            final AlertDialog loadingDialog = showAddingFileLoadingDialog();
 
                             new Thread(new Runnable() {
                                 @Override
@@ -1269,9 +1307,13 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                                     final File aDestFile = new File(aDestFileDirectory, sFileName);
                                     boolean copied = FileUtility.copyUriToFile(activity, uri, aDestFile);
                                     if (!copied) {
-                                        runOnUiThread(() -> Toast.makeText(MyApplication.getAppContext(), "Add Failed!", Toast.LENGTH_SHORT).show());
+                                        runOnUiThread(() -> {
+                                            dismissLoadingDialogSafely(loadingDialog);
+                                            Toast.makeText(MyApplication.getAppContext(), "Add Failed!", Toast.LENGTH_SHORT).show();
+                                        });
                                         return;
                                     }
+                                    boolean bCommit = false;
                                     try {
                                         final String sDestFileNameString;
                                         String localGitDir = MyGitUtility.getLocalGitDirectory(activity, sGitRemoteUrl);
@@ -1282,17 +1324,17 @@ public class ViewFileActivity extends AppCompatActivity implements PickiTCallbac
                                             sDestFileNameString = aDestFile.getName();
                                         }
 
-                                        boolean bCommit = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, MyApplication.getAppContext().getString(R.string.view_file_add_attachment_file_commit) + "\n" + sDestFileNameString);
-                                        if (sGitRemoteUrl.indexOf("local") == -1 && bCommit)
-                                            pushAndHandleAuthFailure();
-
+                                        bCommit = MyGitUtility.commit(MyApplication.getAppContext(), sGitRemoteUrl, MyApplication.getAppContext().getString(R.string.view_file_add_attachment_file_commit) + "\n" + sDestFileNameString);
                                     } catch (Exception e) {
                                         e.printStackTrace();
                                     }
                                     runOnUiThread(() -> {
-                                        finish();
-                                        startActivity(getIntent());
+                                        dismissLoadingDialogSafely(loadingDialog);
+                                        refreshAttachmentViews();
                                     });
+                                    if (sGitRemoteUrl.indexOf("local") == -1 && bCommit) {
+                                        pushAndHandleAuthFailure();
+                                    }
                                 }
                             }).start();
                         }

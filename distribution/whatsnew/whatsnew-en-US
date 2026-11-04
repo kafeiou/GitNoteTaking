@@ -1,4 +1,5 @@
-• Real-Time Sync Progress: Displays live download stages, percentages, and object counts during initial clone.
-• Restore True File Dates: Added "Update True File Dates" to long-press menu with customizable commit depth (default 50) and safe cancellation.
-• Auto-Repair Interrupted Shallow Repos: Automatically heals corrupted .git/shallow (Missing commit) if force-closed mid-fetch.
-• Proactive GitHub Web OAuth Check (401 auto re-login) & SDK 37 / R8 resource shrinking optimization.
+[What's New in v4.014]
+✨ File Creation UX: Pre-selects "newfile" with a locked ".txt" suffix and auto-opens the file right after creation.
+⏳ Large File Loading Dialog: Shows an "Adding..." indicator when attaching files or photos and refreshes attachments in-place without screen flicker.
+🔑 Auth Expiry Prompt: Updated status to "(Auth Expired, tap to update)" with smart font scaling and instant re-auth on tap.
+🛠️ Automatic self-healing for interrupted shallow syncs.
