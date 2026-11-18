@@ -36,10 +36,10 @@
 ##  開源資訊 Open Source
 - GitHub 專案：https://github.com/kafeiou/GitNoteTaking
 
-## 📚 第三方函式庫與資源授權
+##  第三方函式庫與資源授權
 - [Eclipse JGit](https://www.eclipse.org/jgit) (version 7.7.1)
 - Git Logo by Jason Long is licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
 - 系統需求：只支援 Android 13 (API 33) 或以上版本
 
 ## 🤖 開發工具致謝
-- 本專案使用 **Gemini CLI 1.1.22 版** 與 **OpenSpec 1.11.0** 協助開發。
+- 本專案使用 **Gemini Antigravity CLI** 與 **OpenSpec ** 協助開發。
